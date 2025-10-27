@@ -7,7 +7,7 @@
           <h2 class="text-3xl font-bold">Transmisiones en vivo</h2>
           <button
             @click="abrirFormulario = true"
-            class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-semibold transition"
+            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition"
           >
             + Nueva transmisión
           </button>
@@ -73,7 +73,7 @@
                 v-model="nuevaTrans.titulo"
                 type="text"
                 placeholder="Título de la transmisión"
-                class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500"
+                class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -82,7 +82,7 @@
               <textarea
                 v-model="nuevaTrans.descripcion"
                 placeholder="Descripción de la transmisión"
-                class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500"
+                class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 rows="3"
                 required
               ></textarea>
@@ -106,7 +106,7 @@
               <input
                 v-model="nuevaTrans.fechaHora"
                 type="datetime-local"
-                class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500"
+                class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -120,7 +120,7 @@
               </button>
               <button
                 type="submit"
-                class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-semibold"
+                class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold"
               >
                 💾 Guardar
               </button>

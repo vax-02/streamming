@@ -5,7 +5,7 @@
     <!-- Botón para agregar nuevo usuario -->
     <div class="mb-4">
       <button
-        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold"
         @click="agregarUsuario"
       >
         ➕ Nuevo Usuario
@@ -17,6 +17,7 @@
       <thead class="bg-gray-800 text-gray-300 uppercase text-sm">
         <tr>
           <th class="px-6 py-3 text-left">Nombre</th>
+          <th class="px-6 py-3 text-left">Correo</th>
           <th class="px-6 py-3 text-left">Rol</th>
           <th class="px-6 py-3 text-center">Acciones</th>
         </tr>
@@ -25,6 +26,7 @@
       <tbody class="bg-gray-900 text-gray-200 divide-y divide-gray-700">
         <tr v-for="user in users" :key="user.id" class="hover:bg-gray-800 transition">
           <td class="px-6 py-3">{{ user.nombre }}</td>
+          <td class="px-6 py-3">{{ user.correo }}</td>
           <td class="px-6 py-3">{{ user.rol }}</td>
           <td class="px-6 py-3 text-center space-x-2">
             <button
@@ -51,9 +53,9 @@ import { ref } from 'vue'
 
 // Datos simulados de usuarios
 const users = ref([
-  { id: 1, nombre: 'Ana Pérez', rol: 'Administrador' },
-  { id: 2, nombre: 'Carlos Gómez', rol: 'Docente' },
-  { id: 3, nombre: 'Lucía Torres', rol: 'Estudiante' },
+  { id: 1, nombre: 'Ana Pérez', correo: 'example@gmail.com', rol: 'Administrador' },
+  { id: 2, nombre: 'Carlos Gómez', correo: 'example@gmail.com', rol: 'Docente' },
+  { id: 3, nombre: 'Lucía Torres', correo: 'example@gmail.com', rol: 'Estudiante' },
 ])
 
 // Funciones de ejemplo
@@ -62,11 +64,11 @@ const agregarUsuario = () => {
 }
 
 const editarUsuario = (id) => {
-  const user = users.value.find(u => u.id === id)
+  const user = users.value.find((u) => u.id === id)
   alert(`Editar usuario: ${user.nombre}`)
 }
 
 const eliminarUsuario = (id) => {
-  users.value = users.value.filter(u => u.id !== id)
+  users.value = users.value.filter((u) => u.id !== id)
 }
 </script>

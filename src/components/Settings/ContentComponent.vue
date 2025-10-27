@@ -1,7 +1,5 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white">
-   
-    
     <!-- Contenido principal -->
     <div class="flex-1 p-8 overflow-y-auto">
       <div class="max-w-4xl mx-auto bg-gray-800 p-8 rounded-2xl shadow-lg space-y-6">
@@ -13,7 +11,10 @@
             <h3 class="font-semibold">Calidad de video</h3>
             <p class="text-gray-400 text-sm">Ajusta la resolución de reproducción</p>
           </div>
-          <select v-model="config.calidadVideo" class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none">
+          <select
+            v-model="config.calidadVideo"
+            class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none"
+          >
             <option value="auto">Automática</option>
             <option value="alta">Alta</option>
             <option value="media">Media</option>
@@ -29,7 +30,11 @@
           </div>
           <div class="flex items-center space-x-3">
             <input type="checkbox" v-model="config.subtitulos" class="toggle-checkbox" />
-            <select v-model="config.idiomaSubtitulos" class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none" :disabled="!config.subtitulos">
+            <select
+              v-model="config.idiomaSubtitulos"
+              class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none"
+              :disabled="!config.subtitulos"
+            >
               <option value="es">Español</option>
               <option value="en">Inglés</option>
             </select>
@@ -42,7 +47,10 @@
             <h3 class="font-semibold">Velocidad de reproducción</h3>
             <p class="text-gray-400 text-sm">Ajusta la velocidad del video</p>
           </div>
-          <select v-model="config.velocidad" class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none">
+          <select
+            v-model="config.velocidad"
+            class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none"
+          >
             <option value="0.5">0.5x</option>
             <option value="1">1x</option>
             <option value="1.25">1.25x</option>
@@ -66,7 +74,10 @@
             <h3 class="font-semibold">Preferencias de contenido</h3>
             <p class="text-gray-400 text-sm">Mostrar solo contenido relevante o avanzado</p>
           </div>
-          <select v-model="config.filtroContenido" class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none">
+          <select
+            v-model="config.filtroContenido"
+            class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none"
+          >
             <option value="todos">Todos</option>
             <option value="recomendados">Recomendados</option>
             <option value="solo-avanzado">Solo avanzado</option>
@@ -80,7 +91,10 @@
             <p class="text-gray-400 text-sm">Idioma de audio y audio descriptivo</p>
           </div>
           <div class="flex items-center space-x-3">
-            <select v-model="config.idiomaAudio" class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none">
+            <select
+              v-model="config.idiomaAudio"
+              class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none"
+            >
               <option value="es">Español</option>
               <option value="en">Inglés</option>
             </select>
@@ -90,7 +104,10 @@
 
         <!-- Guardar cambios -->
         <div class="flex justify-end mt-4">
-          <button @click="guardarCambios" class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-semibold transition">
+          <button
+            @click="guardarCambios"
+            class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition"
+          >
             💾 Guardar cambios
           </button>
         </div>
@@ -100,21 +117,21 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref } from 'vue'
 
 const config = ref({
-  calidadVideo: "auto",
+  calidadVideo: 'auto',
   subtitulos: true,
-  idiomaSubtitulos: "es",
+  idiomaSubtitulos: 'es',
   velocidad: 1,
   modoOscuro: true,
-  filtroContenido: "recomendados",
-  idiomaAudio: "es",
+  filtroContenido: 'recomendados',
+  idiomaAudio: 'es',
   audioDescriptivo: false,
-});
+})
 
 function guardarCambios() {
-  alert("✅ Configuración de reproducción guardada correctamente");
+  alert('✅ Configuración de reproducción guardada correctamente')
 }
 </script>
 

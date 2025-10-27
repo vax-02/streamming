@@ -15,7 +15,7 @@ import Live from '@/views/Live.vue'
 import CallingComponent from '@/components/calls/CallingComponent.vue'
 import CallComponente from '@/components/calls/CallComponente.vue'
 import MiniCallComponent from '@/components/calls/MiniCallComponent.vue'
-
+import ApplicationComponent from '@/components/ApplicationComponent.vue'
 const routes = [
   {
     path: '/',
@@ -48,7 +48,7 @@ const routes = [
             name: 'call',
             component: CallComponente,
           },
-          
+
           {
             path: 'miniCall',
             name: 'mini-call',
@@ -56,6 +56,7 @@ const routes = [
           },
         ],
       },
+      { path: 'application', name: 'application', component: ApplicationComponent },
       { path: 'groups', name: 'groups', component: Groups },
 
       { path: 'transmitions', name: 'transmitions', component: Transmitions },
@@ -65,9 +66,9 @@ const routes = [
         name: 'settings',
         component: Settings,
         children: [
-          { path: 'profile', component: ProfileComponent },
-          { path: 'security', component: SecurityPrivacityComponent },
-          { path: 'notifications', component: ContentComponent },
+          { path: 'profile', name: 'profile', component: ProfileComponent },
+          { path: 'security', name: 'security', component: SecurityPrivacityComponent },
+          { path: 'notifications', name: 'notifications', component: ContentComponent },
         ],
       },
     ],

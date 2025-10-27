@@ -1,13 +1,22 @@
 <template>
-  <div class="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white relative overflow-hidden">
-    
+  <div
+    class="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white relative overflow-hidden"
+  >
     <!-- EFECTO DE RESPLANDOR ANIMADO -->
-    <div class="absolute w-72 h-72 bg-blue-500 rounded-full blur-3xl opacity-30 animate-pulse"></div>
+    <div
+      class="absolute w-72 h-72 bg-blue-500 rounded-full blur-3xl opacity-30 animate-pulse"
+    ></div>
 
     <!-- AVATAR / FOTO DE CONTACTO -->
     <div class="relative z-10">
-      <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg animate-fade-in">
-        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Contacto" class="w-full h-full object-cover">
+      <div
+        class="w-40 h-40 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg animate-fade-in"
+      >
+        <img
+          src="https://randomuser.me/api/portraits/women/44.jpg"
+          alt="Contacto"
+          class="w-full h-full object-cover"
+        />
       </div>
     </div>
 
@@ -18,26 +27,37 @@
 
     <!-- TEXTO LLAMANDO... -->
     <p class="mt-2 text-gray-400 text-lg flex gap-1 animate-fade-in delay-200">
-      Llamando<span class="animate-typing">.</span><span class="animate-typing delay-200">.</span><span class="animate-typing delay-400">.</span>
+      Llamando<span class="animate-typing">.</span><span class="animate-typing delay-200">.</span
+      ><span class="animate-typing delay-400">.</span>
     </p>
 
     <!-- BOTÓN COLGAR -->
-    <button class="mt-10 p-4 bg-red-600 hover:bg-red-700 rounded-full shadow-lg transition transform hover:scale-105 z-10">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M22 16.92v3a1 1 0 01-1.09 1 19.86 19.86 0 01-8.91-3.34A19.86 19.86 0 013 17.92a1 1 0 01-1-1v-3a1 1 0 011.09-1 19.86 19.86 0 018.91 3.34A19.86 19.86 0 0121 15.92a1 1 0 011 1z" />
-      </svg>
-    </button>
-
+    <router-link
+    :to="{name : 'chats'}"
+      class="mt-10 p-4 bg-red-600 hover:bg-red-700 rounded-full shadow-lg transition transform hover:scale-105 z-10"
+    >
+      <PhoneXMarkIcon class="w-6 h-6 text-red-500" />
+    </router-link>
+    <span>Colgar llamada</span>
   </div>
 </template>
+
+<script setup>
+import { PhoneXMarkIcon } from '@heroicons/vue/24/solid'
+</script>
 
 <style>
 /* --- Animaciones personalizadas --- */
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .animate-fade-in {
   animation: fade-in 1s ease-out forwards;
@@ -49,8 +69,14 @@
 
 /* Puntos del "Llamando..." */
 @keyframes typing {
-  0%, 20% { opacity: 0; }
-  50%, 100% { opacity: 1; }
+  0%,
+  20% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
 }
 .animate-typing {
   animation: typing 1.5s infinite;
@@ -58,8 +84,15 @@
 
 /* Efecto suave de entrada del fondo */
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.1); opacity: 0.5; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
 }
 .animate-pulse {
   animation: pulse 3s infinite ease-in-out;

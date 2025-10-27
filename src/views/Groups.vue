@@ -7,15 +7,15 @@
         v-for="chat in chats"
         :key="chat.id"
         @click="seleccionarChat(chat)"
-        class="flex items-center space-x-3 p-2 rounded-lg cursor-pointer hover:bg-purple-600 transition"
-        :class="{ 'bg-purple-700': chatSeleccionado && chatSeleccionado.id === chat.id }"
+        class="flex items-center space-x-3 p-2 rounded-lg cursor-pointer hover:bg-blue-600 transition"
+        :class="{ 'bg-blue-700': chatSeleccionado && chatSeleccionado.id === chat.id }"
       >
         <img :src="chat.foto" alt="perfil" class="w-10 h-10 rounded-full object-cover" />
         <div class="flex flex-col">
           <span class="font-semibold">{{ chat.nombre }}</span>
           <span class="text-xs text-gray-300 truncate">{{ chat.mensaje }}</span>
         </div>
-        <span v-if="chat.nuevos > 0" class="ml-auto bg-purple-500 text-xs px-2 py-1 rounded-full">
+        <span v-if="chat.nuevos > 0" class="ml-auto bg-blue-500 text-xs px-2 py-1 rounded-full">
           {{ chat.nuevos }}
         </span>
       </div>
@@ -38,9 +38,9 @@
             </div>
           </div>
           <div class="flex items-center space-x-4 text-gray-300">
-            <button class="hover:text-purple-400">📞</button>
-            <button class="hover:text-purple-400">🎥</button>
-            <button class="hover:text-purple-400">⚙️</button>
+            <button class="hover:text-blue-400">📞</button>
+            <button class="hover:text-blue-400">🎥</button>
+            <button class="hover:text-blue-400">⚙️</button>
           </div>
         </div>
 
@@ -54,7 +54,7 @@
             <div
               :class="[
                 'inline-block px-3 py-2 rounded-xl text-sm max-w-[70%]',
-                msg.enviado ? 'bg-purple-600 ml-auto' : 'bg-gray-700',
+                msg.enviado ? 'bg-blue-600 ml-auto' : 'bg-gray-700',
               ]"
             >
               {{ msg.texto }}
@@ -73,7 +73,7 @@
           />
           <button
             @click="enviarMensaje"
-            class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-full"
+            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full"
           >
             ➤
           </button>

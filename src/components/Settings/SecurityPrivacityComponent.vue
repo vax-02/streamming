@@ -1,6 +1,5 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white">
-
     <!-- Contenido principal -->
     <div class="flex-1 p-8 overflow-y-auto">
       <div class="max-w-3xl mx-auto bg-gray-800 p-8 rounded-2xl shadow-lg space-y-6">
@@ -31,8 +30,6 @@
           </select>
         </div>
 
-      
-
         <!-- Notificaciones -->
         <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
           <div>
@@ -46,7 +43,7 @@
         <div class="flex justify-end mt-4">
           <button
             @click="guardarCambios"
-            class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-semibold transition"
+            class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition"
           >
             💾 Guardar cambios
           </button>
