@@ -1,6 +1,5 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white">
-    <!-- Sidebar -->
     <aside class="w-[15%] bg-gray-800 p-4 flex flex-col space-y-4">
       <h2 class="text-lg font-bold mb-4 text-center">Opciones</h2>
       <router-link
@@ -27,7 +26,6 @@
       >
     </aside>
 
-    <!-- Contenido principal -->
     <div class="flex-1 bg-gray-900 overflow-y-auto">
 
       <router-view />

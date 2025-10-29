@@ -157,35 +157,82 @@
 
   <div
     v-if="addChatModal"
-    class="fixed inset-[30%] bg-gray-500 bg-opacity-90 flex items-center justify-center z-50"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
   >
-    <div class="rounded-lg p-6 max-w-md w-full">
-      <div class="max-w-md mx-auto p-4">
-        <input
-          type="text"
-          placeholder="Buscar contacto..."
-          class="w-full p-2 rounded border border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-600"
-        />
-
-        <ul>
-          <li class="p-2 border-b border-gray-200 hover:bg-blue-100 cursor-pointer">
-            Ana López — ana@example.com
-          </li>
-          <li class="p-2 border-b border-gray-200 hover:bg-blue-100 cursor-pointer">
-            Carlos Pérez — carlos@example.com
-          </li>
-          <li class="p-2 border-b border-gray-200 hover:bg-blue-100 cursor-pointer">
-            María Gómez — maria@example.com
-          </li>
-        </ul>
+    <!-- Modal -->
+    <div class="bg-gray-800 text-white rounded-xl shadow-lg w-full max-w-md">
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b border-gray-700 px-6 py-4">
+        <h2 class="text-lg font-semibold">Iniciar nuevo chat</h2>
+        <button
+          @click="addChatModal = false"
+          class="text-gray-400 hover:text-white text-xl font-bold"
+        >
+          ✖
+        </button>
       </div>
 
-      <button
-        @click="addChatModal = false"
-        class="mt-4 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-      >
-        Cerrar
-      </button>
+      <!-- Input de búsqueda -->
+      <div class="px-6 py-4">
+        <div class="relative">
+          <input
+            type="text"
+            placeholder="Buscar contacto..."
+            class="w-full pl-10 pr-3 py-2 rounded-lg bg-gray-700 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            v-model="searchContact"
+          />
+          <svg
+            class="w-5 h-5 absolute left-3 top-2.5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 3.5a7.5 7.5 0 0013.65 13.65z"
+            ></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Lista de contactos -->
+      <ul class="max-h-64 overflow-y-auto px-6 space-y-1">
+        <li
+          v-for="contacto in filteredContacts"
+          :key="contacto.email"
+          class="flex items-center justify-between p-2 rounded-lg hover:bg-blue-600 cursor-pointer"
+          @click="startChat(contacto)"
+        >
+          <div class="flex items-center space-x-3">
+            <div
+              class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+            >
+              {{ contacto.nombre.charAt(0) }}
+            </div>
+            <div>
+              <p class="text-sm font-medium">{{ contacto.nombre }}</p>
+              <p class="text-xs text-gray-300">{{ contacto.email }}</p>
+            </div>
+          </div>
+          <button class="text-gray-300 hover:text-white text-sm font-semibold">Agregar</button>
+        </li>
+        <li v-if="filteredContacts.length === 0" class="text-gray-400 text-center py-4">
+          No se encontraron contactos
+        </li>
+      </ul>
+
+      <!-- Footer -->
+      <div class="flex justify-end px-6 py-4 border-t border-gray-700">
+        <button
+          @click="addChatModal = false"
+          class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg"
+        >
+          Cerrar
+        </button>
+      </div>
     </div>
   </div>
 
@@ -219,9 +266,7 @@
 <script setup>
 import { PhoneIcon, VideoCameraIcon } from '@heroicons/vue/24/solid'
 import router from '@/router'
-import { ref } from 'vue'
 
-const addChatModal = ref(false)
 const chats = ref([
   {
     id: 1,
@@ -266,6 +311,33 @@ function enviarMensaje() {
 }
 const mostrarPerfil = ref(false)
 
+import { ref, computed } from 'vue'
+
+const addChatModal = ref(true)
+const searchContact = ref('')
+
+const contactos = ref([
+  { nombre: 'Ana López', email: 'ana@example.com' },
+  { nombre: 'Carlos Pérez', email: 'carlos@example.com' },
+  { nombre: 'María Gómez', email: 'maria@example.com' },
+  { nombre: 'Juan Díaz', email: 'juan@example.com' },
+])
+
+// Filtrar contactos según búsqueda
+const filteredContacts = computed(() => {
+  if (!searchContact.value) return contactos.value
+  return contactos.value.filter(
+    (c) =>
+      c.nombre.toLowerCase().includes(searchContact.value.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchContact.value.toLowerCase()),
+  )
+})
+
+// Función para iniciar chat
+function startChat(contacto) {
+  alert(`Iniciando chat con ${contacto.nombre}`)
+  addChatModal.value = false
+}
 </script>
 
 <style scoped>
