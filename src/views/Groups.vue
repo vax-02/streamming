@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white">
     <!-- Lista lateral de chats -->
-    <aside class="w-[25%] bg-gray-800 p-4 flex flex-col space-y-4 overflow-y-auto">
+    <div class="w-[25%] bg-gray-800 p-4 flex flex-col space-y-4 overflow-y-auto">
       <h2 class="text-lg font-bold mb-4 text-center">Grupos</h2>
       <div
         v-for="chat in chats"
@@ -19,14 +19,39 @@
           {{ chat.nuevos }}
         </span>
       </div>
-    </aside>
+
+      <!-- Botón flotante -->
+      <button
+        @click="addChatModal = true"
+        class="absolute bottom-4 right-100 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg focus:outline-none"
+        title="Agregar chat"
+      >
+        <!-- Icono + (puedes cambiarlo por un SVG) -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+    </div>
 
     <!-- Panel de conversación -->
+
     <div class="flex-1 flex flex-col bg-gray-900">
-      <template v-if="chatSeleccionado">
+      <router-view v-if="$route.name === 'calling'"></router-view>
+
+      <template v-else-if="chatSeleccionado">
         <!-- Header del chat -->
-        <div class="flex items-center justify-between bg-gray-800 p-4 border-b border-gray-700">
-          <div class="flex items-center space-x-3">
+        <div class="flex items-center justify-between bg-gray-800 p-2 border-b border-gray-700">
+          <div
+            class="flex items-center space-x-3 hover:bg-gray-600 px-5 cursor-pointer"
+            @click="mostrarPerfil = !mostrarPerfil"
+          >
             <img
               :src="chatSeleccionado.foto"
               alt="perfil"
@@ -34,13 +59,7 @@
             />
             <div>
               <h2 class="text-lg font-semibold">{{ chatSeleccionado.nombre }}</h2>
-              <p class="text-xs text-gray-400">En línea</p>
             </div>
-          </div>
-          <div class="flex items-center space-x-4 text-gray-300">
-            <button class="hover:text-blue-400">📞</button>
-            <button class="hover:text-blue-400">🎥</button>
-            <button class="hover:text-blue-400">⚙️</button>
           </div>
         </div>
 
@@ -79,65 +98,289 @@
           </button>
         </div>
       </template>
-
       <!-- Vista inicial -->
       <template v-else>
-        <div
-          class="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white text-center px-6"
-        >
-          <!-- Ícono animado o logo -->
-          <div class="relative mb-6">
-            <!-- Círculo de resplandor -->
-            <div
-              class="absolute inset-0 rounded-full bg-blue-500 blur-2xl opacity-30 animate-ping"
-            ></div>
-
-            <!-- Ícono de chat -->
-            <div
-              class="relative w-24 h-24 flex items-center justify-center bg-blue-500 rounded-full shadow-lg animate-fade-in"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-12 h-12 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8l-4.5 1.2 1.2-4.5A8.96 8.96 0 013 12C3 7.582 7.03 4 12 4s9 3.582 9 8z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          <!-- Título -->
-          <h1 class="text-2xl md:text-3xl font-semibold tracking-wide animate-fade-in">
-            Seleccione un <span class="text-blue-400">Grupo</span> para iniciar conversación
-          </h1>
-
-          <!-- Subtexto -->
-          <p class="mt-3 text-gray-400 max-w-md animate-fade-in delay-200">
-            Elija una conversación del panel lateral o cree un nuevo chat para comenzar.
-          </p>
-        </div>
+        <banner-messages tipo="grupo" />
       </template>
+    </div>
+  </div>
+
+  <div
+    v-if="addChatModal"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+  >
+    <!-- Modal -->
+    <div class="bg-gray-800 text-white rounded-xl shadow-lg w-full max-w-md">
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b border-gray-700 px-6 py-4">
+        <h2 class="text-lg font-semibold">Crea un nuevo grupo</h2>
+        <button
+          @click="addChatModal = false"
+          class="text-gray-400 hover:text-white text-xl font-bold"
+        >
+          ✖
+        </button>
+      </div>
+
+      <!-- Formulario -->
+      <div class="px-6 py-4 space-y-4">
+        <!-- Nombre del grupo -->
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Nombre del grupo</label>
+          <input
+            type="text"
+            placeholder="Ej: Proyecto Alpha"
+            v-model="nuevoGrupo.nombre"
+            class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Descripción</label>
+          <textarea
+            placeholder="Describe el propósito del grupo..."
+            v-model="nuevoGrupo.descripcion"
+            rows="2"
+            class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          ></textarea>
+        </div>
+
+        <!-- Buscador de miembros -->
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Agregar miembros</label>
+          <div class="relative">
+            <input
+              type="text"
+              placeholder="Buscar contacto..."
+              v-model="searchContact"
+              class="w-full pl-10 pr-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <svg
+              class="w-5 h-5 absolute left-3 top-2.5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 3.5a7.5 7.5 0 0013.65 13.65z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Lista de contactos filtrados -->
+        <ul class="max-h-48 overflow-y-auto mt-2 space-y-1">
+          <li
+            v-for="contacto in filteredContacts"
+            :key="contacto.email"
+            class="flex items-center justify-between p-2 rounded-lg hover:bg-blue-600 cursor-pointer"
+            @click="toggleMiembro(contacto)"
+          >
+            <div class="flex items-center space-x-3">
+              <div
+                class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+              >
+                {{ contacto.nombre.charAt(0) }}
+              </div>
+              <div>
+                <p class="text-sm font-medium">{{ contacto.nombre }}</p>
+                <p class="text-xs text-gray-300">{{ contacto.email }}</p>
+              </div>
+            </div>
+            <span v-if="miembroSeleccionado(contacto)" class="text-green-400 text-sm font-semibold"
+              >Agregado</span
+            >
+            <span v-else class="text-gray-300 hover:text-white text-sm font-semibold">Agregar</span>
+          </li>
+          <li v-if="filteredContacts.length === 0" class="text-gray-400 text-center py-4">
+            No se encontraron contactos
+          </li>
+        </ul>
+
+        <!-- Miembros agregados -->
+        <div v-if="nuevoGrupo.miembros.length > 0" class="mt-4">
+          <h4 class="text-sm text-gray-300 mb-2">Miembros añadidos:</h4>
+          <div class="flex flex-wrap gap-2">
+            <span
+              v-for="(miembro, index) in nuevoGrupo.miembros"
+              :key="index"
+              class="bg-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+            >
+              {{ miembro.nombre }}
+              <button
+                @click.stop="eliminarMiembro(miembro)"
+                class="text-red-300 hover:text-red-400"
+              >
+                ✖
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-700">
+        <button
+          @click="addChatModal = false"
+          class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg"
+        >
+          Cancelar
+        </button>
+        <button @click="crearGrupo" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+          Crear grupo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel lateral derecho de perfil -->
+  <transition name="slide">
+    <div
+      v-if="mostrarPerfil"
+      class="w-80 bg-gray-800 border-l border-gray-700 p-4 flex flex-col absolute right-0 top-0 bottom-0 z-20"
+    >
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-white">Grupo</h3>
+        <button @click="mostrarPerfil = false" class="text-gray-400 hover:text-white">✖</button>
+      </div>
+
+      <!-- Imagen y datos -->
+      <img
+        :src="chatSeleccionado.foto"
+        alt="perfil"
+        class="w-24 h-24 rounded-full object-cover mx-auto mb-4"
+      />
+      <h2 class="text-center text-xl font-semibold mb-1 text-white">
+        {{ chatSeleccionado.nombre }}
+      </h2>
+      <div class="text-gray-300 mb-4">
+        <p><strong>Fecha creación:</strong> 01/01/2023</p>
+        <p><strong>Descripción:</strong> Grupo de trabajo</p>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex justify-around mb-6">
+        <button
+          @click="abrirModalAgregar = true"
+          class="flex flex-col items-center text-gray-300 hover:text-white"
+        >
+          <i class="heroicon heroicon-user-plus w-6 h-6"></i>
+          <span class="text-sm">Agregar</span>
+        </button>
+
+        <button
+          @click="abrirModalEvento = true"
+          class="flex flex-col items-center text-gray-300 hover:text-white"
+        >
+          <i class="heroicon heroicon-calendar-plus w-6 h-6"></i>
+          <span class="text-sm">Evento</span>
+        </button>
+      </div>
+
+      <!-- Lista de miembros -->
+      <div class="flex-1 overflow-y-auto">
+        <h4 class="text-gray-400 uppercase text-sm mb-2">Miembros</h4>
+        <ul class="space-y-2">
+          <li
+            v-for="(miembro, i) in miembros"
+            :key="i"
+            class="flex justify-between items-center text-gray-300 bg-gray-700 rounded-lg p-2"
+          >
+            <span>{{ miembro.nombre }}</span>
+            <button class="text-red-400 hover:text-red-300" @click="expulsar(miembro)">
+              <i class="heroicon heroicon-user-minus w-5 h-5"></i>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Botón salir del grupo -->
+      <button
+        @click="salirGrupo"
+        class="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg"
+      >
+        Dejar grupo
+      </button>
+    </div>
+  </transition>
+
+  <!-- Modal agregar gente -->
+  <div
+    v-if="abrirModalAgregar"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
+  >
+    <div class="bg-gray-900 p-6 rounded-lg w-80">
+      <h3 class="text-lg font-semibold text-white mb-4">Agregar persona</h3>
+      <input
+        type="text"
+        placeholder="Buscar usuario..."
+        v-model="nuevoMiembro"
+        class="w-full p-2 rounded bg-gray-800 text-white mb-4"
+      />
+      <div class="flex justify-end space-x-2">
+        <button @click="abrirModalAgregar = false" class="text-gray-300 hover:text-white">
+          Cancelar
+        </button>
+        <button
+          @click="agregarMiembro"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+        >
+          Agregar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal crear evento -->
+  <div
+    v-if="abrirModalEvento"
+    class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
+  >
+    <div class="bg-gray-900 p-6 rounded-lg w-80">
+      <h3 class="text-lg font-semibold text-white mb-4">Crear evento</h3>
+      <input
+        type="text"
+        placeholder="Título del evento"
+        v-model="eventoTitulo"
+        class="w-full p-2 rounded bg-gray-800 text-white mb-2"
+      />
+      <input
+        type="date"
+        v-model="eventoFecha"
+        class="w-full p-2 rounded bg-gray-800 text-white mb-4"
+      />
+      <div class="flex justify-end space-x-2">
+        <button @click="abrirModalEvento = false" class="text-gray-300 hover:text-white">
+          Cancelar
+        </button>
+        <button
+          @click="crearEvento"
+          class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+        >
+          Crear
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { PhoneIcon, VideoCameraIcon } from '@heroicons/vue/24/solid'
+import router from '@/router'
+import bannerMessages from '@/layouts/bannerMessages.vue'
 
 const chats = ref([
   {
     id: 1,
-    nombre: 'Mat 1207 - Grupo A',
-    mensaje: '¿Revisaste el proyecto?',
-    nuevos: 2,
-    foto: 'https://randomuser.me/api/portraits/women/65.jpg',
+    nombre: 'LIN - 3',
+    mensaje: '...',
+    nuevos: 1,
+    foto: 'https://randomuser.me/api/portraits/men/70.jpg',
     mensajes: [
       { texto: 'Hola 😄', enviado: false },
       { texto: '¿Revisaste el proyecto?', enviado: false },
@@ -146,20 +389,54 @@ const chats = ref([
   },
   {
     id: 2,
-    nombre: 'Qmc 1305 - Grupo B',
-    mensaje: 'Nos vemos mañana',
-    nuevos: 0,
-    foto: 'https://randomuser.me/api/portraits/men/45.jpg',
+    nombre: 'WEB - 1',
+    mensaje: '¿Revisaste el proyecto?',
+    nuevos: 2,
+    foto: 'https://randomuser.me/api/portraits/men/66.jpg',
     mensajes: [
-      { texto: '¿A qué hora la reunión?', enviado: false },
-      { texto: 'A las 9 en punto.', enviado: true },
+      { texto: 'Hola 😄', enviado: false },
+      { texto: '¿Revisaste el proyecto?', enviado: false },
+      { texto: 'Sí, te paso el link ahora.', enviado: true },
     ],
   },
 ])
 
-const chatSeleccionado = ref(null)
+const chatSeleccionado = ref()
 const nuevoMensaje = ref('')
 
+const miembros = ref([{ nombre: 'Javier' }, { nombre: 'María' }, { nombre: 'Carlos' }])
+
+const abrirModalAgregar = ref(false)
+const abrirModalEvento = ref(false)
+const nuevoMiembro = ref('')
+const eventoTitulo = ref('')
+const eventoFecha = ref('')
+
+function agregarMiembro() {
+  if (nuevoMiembro.value.trim()) {
+    miembros.value.push({ nombre: nuevoMiembro.value })
+    nuevoMiembro.value = ''
+    abrirModalAgregar.value = false
+  }
+}
+
+function crearEvento() {
+  if (eventoTitulo.value && eventoFecha.value) {
+    alert(`Evento "${eventoTitulo.value}" creado para ${eventoFecha.value}`)
+    eventoTitulo.value = ''
+    eventoFecha.value = ''
+    abrirModalEvento.value = false
+  }
+}
+
+function expulsar(miembro) {
+  miembros.value = miembros.value.filter((m) => m !== miembro)
+}
+
+function salirGrupo() {
+  alert('Has salido del grupo.')
+  mostrarPerfil.value = false
+}
 function seleccionarChat(chat) {
   chatSeleccionado.value = chat
 }
@@ -172,6 +449,74 @@ function enviarMensaje() {
   })
   nuevoMensaje.value = ''
 }
+const mostrarPerfil = ref(false)
+
+import { ref, computed } from 'vue'
+
+const addChatModal = ref(false)
+const searchContact = ref('')
+
+const contactos = ref([
+  { nombre: 'Ana López', email: 'ana@example.com' },
+  { nombre: 'Carlos Pérez', email: 'carlos@example.com' },
+  { nombre: 'María Gómez', email: 'maria@example.com' },
+  { nombre: 'Juan Díaz', email: 'juan@example.com' },
+])
+
+const nuevoGrupo = ref({
+  nombre: "",
+  descripcion: "",
+  miembros: [],
+});
+// Filtrar contactos según búsqueda
+const filteredContacts = computed(() => {
+  if (!searchContact.value) return contactos.value
+  return contactos.value.filter(
+    (c) =>
+      c.nombre.toLowerCase().includes(searchContact.value.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchContact.value.toLowerCase()),
+  )
+})
+
+// Función para iniciar chat
+function startChat(contacto) {
+  alert(`Iniciando chat con ${contacto.nombre}`)
+  addChatModal.value = false
+}
+
+function toggleMiembro(contacto) {
+  const yaExiste = nuevoGrupo.value.miembros.some(
+    (m) => m.email === contacto.email
+  );
+  if (yaExiste) {
+    nuevoGrupo.value.miembros = nuevoGrupo.value.miembros.filter(
+      (m) => m.email !== contacto.email
+    );
+  } else {
+    nuevoGrupo.value.miembros.push(contacto);
+  }
+}
+
+function miembroSeleccionado(contacto) {
+  return nuevoGrupo.value.miembros.some((m) => m.email === contacto.email);
+}
+
+function eliminarMiembro(contacto) {
+  nuevoGrupo.value.miembros = nuevoGrupo.value.miembros.filter(
+    (m) => m.email !== contacto.email
+  );
+}
+
+function crearGrupo() {
+  if (!nuevoGrupo.value.nombre) {
+    alert("Por favor, ingresa un nombre para el grupo");
+    return;
+  }
+  alert(
+    `Grupo "${nuevoGrupo.value.nombre}" creado con ${nuevoGrupo.value.miembros.length} miembros.`
+  );
+  addChatModal.value = false;
+}
 </script>
 
 <style scoped>
@@ -180,7 +525,33 @@ function enviarMensaje() {
   width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #6b21a8;
+  background: #c9aedf;
   border-radius: 4px;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 1s ease-out forwards;
+}
+.animate-fade-in.delay-200 {
+  animation-delay: 0.2s;
+}
+/* Animación de entrada del panel lateral */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(100%);
 }
 </style>

@@ -93,17 +93,15 @@
               ></textarea>
             </div>
             <div>
-              <label class="block mb-1 text-gray-300">Categoría</label>
+              <label class="block mb-1 text-gray-300">Tipo</label>
               <select
                 v-model="nuevaTrans.categoria"
                 class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 outline-none"
                 required
               >
-                <option value="">Seleccione una categoría</option>
-                <option value="Matemáticas">Matemáticas</option>
-                <option value="Física">Física</option>
-                <option value="Programación">Programación</option>
-                <option value="Electrónica">Electrónica</option>
+                <option value="">Seleccione un tipo</option>
+                <option value="Matemáticas">Público</option>
+                <option value="Física">Privado</option>
               </select>
             </div>
             <div>
