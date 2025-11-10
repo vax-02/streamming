@@ -45,7 +45,8 @@
             @click="guardarCambios"
             class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition"
           >
-            💾 Guardar cambios
+            <BookmarkSquareIcon class="w-5 h-5 inline-block mr-2" />
+            Guardar cambios
           </button>
         </div>
       </div>
@@ -55,6 +56,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { BookmarkSquareIcon } from '@heroicons/vue/24/solid'
 
 const privacidad = ref({
   enLinea: true,
@@ -64,7 +66,7 @@ const privacidad = ref({
 })
 
 function guardarCambios() {
-  alert('✅ Cambios de privacidad guardados correctamente')
+  alert(' Cambios de privacidad guardados correctamente')
 }
 </script>
 

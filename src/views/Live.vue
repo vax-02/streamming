@@ -1,8 +1,19 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white">
     <!-- Panel izquierdo: participantes y sala de espera -->
-    <aside v-show="expandirBool" class="w-[20%]  bg-gray-800 p-4 flex flex-col space-y-4">
-      <h2 class="text-lg font-bold text-center">Participantes</h2>
+    <aside v-show="expandirBool" class="w-[20%] bg-gray-800 p-4 flex flex-col space-y-4">
+      <div class="relative flex items-center justify-center">
+        <h2 class="text-lg font-bold text-center">Participantes</h2>
+        <div class="absolute right-0">
+          <button @click="showOptionsMenu = !showOptionsMenu" class="p-1 hover:bg-gray-600 rounded-full">
+            <EllipsisHorizontalIcon class="w-5 h-5" />
+          </button>
+          <div v-if="showOptionsMenu" class="absolute right-0 mt-2 w-40 bg-gray-700 rounded-lg shadow-lg z-20">
+            <button @click="handleEndStream" class="w-full text-left px-4 py-2 hover:bg-gray-600">Finalizar</button>
+            <button @click="shareStream" class="w-full text-left px-4 py-2 hover:bg-gray-600">Compartir</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Sala de espera -->
       <div>
@@ -26,6 +37,47 @@
           </div>
         </div>
       </div>
+
+        <!-- Modal: Crear Encuesta (tipo WhatsApp - single choice) -->
+        <div v-if="showSurveyModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+          <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto space-y-4">
+            <h3 class="text-2xl font-bold text-center">Crear Encuesta</h3>
+
+            <div>
+              <label class="block text-sm text-gray-300">Pregunta</label>
+              <input ref="surveyQuestionInput" v-model="surveyQuestion" type="text" placeholder="Escribe la pregunta"
+                class="w-full mt-1 px-3 py-2 rounded bg-gray-700 outline-none text-white" />
+              <div v-if="surveyError" class="text-sm text-red-400 mt-1">{{ surveyError }}</div>
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300">Opciones (mínimo 2)</label>
+              <div class="space-y-2 mt-2">
+                <div v-for="(opt, i) in surveyOptions" :key="i" class="flex items-center space-x-2">
+                  <input v-model="surveyOptions[i]" type="text" placeholder="Opción" class="flex-1 px-3 py-2 rounded bg-gray-700 outline-none text-white" />
+                  <button @click="removeSurveyOption(i)" class="px-2 py-1 bg-red-600 rounded text-sm">Eliminar</button>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3 mt-2">
+                <button @click="addSurveyOption" class="px-3 py-1 bg-blue-600 rounded">Añadir opción</button>
+              </div>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+              <button @click="showSurveyModal = false" class="bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2">
+                <XMarkIcon class="w-4 h-4 text-white" />
+                <span class="text-white">Cancelar</span>
+              </button>
+        <button
+          @click.prevent="submitSurvey"
+          class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg flex items-center space-x-2"
+        >
+          <ChartBarIcon class="w-4 h-4 text-white" />
+          <span class="text-white">Enviar encuesta</span>
+        </button>
+            </div>
+          </div>
+        </div>
 
       <!-- Lista de participantes -->
       <!-- Lista de participantes -->
@@ -94,7 +146,10 @@
         <div
           class="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between text-sm text-gray-400"
         >
-          <span>👥 {{ participantes.length }} participantes</span>
+          <span class="flex items-center gap-1">
+            <UserGroupIcon class="w-4 h-4" />
+            {{ participantes.length }} participantes
+          </span>
         </div>
       </div>
     </aside>
@@ -229,8 +284,41 @@
     <aside v-show="expandirBool" class="w-[25%] bg-gray-800 p-4 flex flex-col space-y-2 border-l-2 border-black">
       <h2 class="text-lg font-bold text-center">Chat en vivo</h2>
       <div class="flex-1 overflow-y-auto bg-gray-700 p-2 rounded-lg space-y-1">
-        <div v-for="(msg, i) in chat" :key="i" class="text-sm">
-          <strong>{{ msg.usuario }}:</strong> {{ msg.mensaje }}
+        <div v-for="(msg, i) in chat" :key="msg.id || i" class="text-sm">
+          <!-- Mensaje simple -->
+          <template v-if="!msg.tipo">
+            <strong>{{ msg.usuario }}:</strong> {{ msg.mensaje }}
+          </template>
+
+          <!-- Encuesta (renderizada como texto simple) -->
+          <template v-else-if="msg.tipo === 'encuesta'">
+            <div>
+              <strong>{{ msg.usuario }}:</strong>
+              Encuesta: {{ msg.pregunta }}
+              <span v-if="Array.isArray(msg.opciones)"> — Opciones: {{ msg.opciones.join(' / ') }}</span>
+            </div>
+          </template>
+
+          <!-- Ejercicio -->
+          <template v-else-if="msg.tipo === 'ejercicio'">
+            <div class="bg-gray-800 p-3 rounded-lg">
+              <div class="font-semibold">{{ msg.title }}</div>
+              <div class="text-sm text-gray-300 mt-1">{{ msg.description }}</div>
+              <div v-if="msg.image" class="mt-2">
+                <img :src="msg.image" class="max-w-full rounded" />
+              </div>
+              <div class="mt-2">
+                <button @click="toggleResponseInput(msg.id)" class="px-3 py-1 bg-blue-600 rounded text-sm">Responder</button>
+              </div>
+
+              <div v-if="showResponse[msg.id]" class="mt-2">
+                <textarea v-model="responseText[msg.id]" rows="3" placeholder="Escribe tu respuesta" class="w-full px-3 py-2 rounded bg-gray-700 text-white outline-none max-h-40 overflow-y-auto"></textarea>
+                <div class="flex justify-end mt-2">
+                  <button @click="submitExerciseResponse(msg.id)" class="px-3 py-1 bg-green-600 rounded">Enviar respuesta</button>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
       <div class="relative flex items-center space-x-2 mt-2">
@@ -240,16 +328,18 @@
           class="absolute bottom-full mb-2 w-48 bg-gray-700 rounded-lg shadow-lg p-2 space-y-1 border border-black"
         >
           <button
+            @click="(showSurveyModal = true, showChatMenu = false)"
             class="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-md hover:bg-blue-600"
           >
             <ChartBarIcon class="w-5 h-5" />
             <span>Crear Encuesta</span>
           </button>
           <button
+            @click="showExerciseModal = true"
             class="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-md hover:bg-blue-600"
           >
             <PencilSquareIcon class="w-5 h-5" />
-            <span>Enviar Ejercicio</span>
+            <span>Crear Ejercicio</span>
           </button>
         </div>
 
@@ -266,7 +356,7 @@
           v-model="mensaje"
           type="text"
           placeholder="Escribe un mensaje..."
-          class="flex-1 bg-gray-600 rounded-lg px-2 py-1 outline-none"
+          class="flex-1 bg-gray-600 rounded-lg px-2 py-1 outline-none text-white"
           @focus="showChatMenu = false"
         />
         <button @click="enviarMensaje" class="bg-blue-600 px-3 py-1 rounded-lg text-sm">
@@ -313,6 +403,91 @@
         </button>
       </div>
     </div>
+
+    <!-- Modal de confirmación para finalizar stream -->
+    <div v-if="showEndStreamConfirm" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+      <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm space-y-4">
+        <h3 class="text-lg font-semibold text-center">Finalizar Stream</h3>
+        <p class="text-center text-gray-300">¿Estás seguro de que deseas finalizar el stream?</p>
+        <div class="flex justify-center space-x-4 pt-2">
+          <button @click="showEndStreamConfirm = false" class="bg-gray-600 hover:bg-gray-500 px-6 py-2 rounded-lg">
+            No
+          </button>
+          <button @click="confirmEndStream" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg">
+            Sí
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Ejercicio -->
+  <div
+    v-if="showExerciseModal"
+    class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+  >
+  <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto space-y-4">
+      <h3 class="text-2xl font-bold text-center">Crear Ejercicio</h3>
+
+      <div>
+  <label class="block text-sm text-gray-300">Título</label>
+  <input v-model="exerciseTitle" type="text" placeholder="Título del ejercicio" class="w-full mt-1 px-3 py-2 rounded bg-gray-700 outline-none text-white" />
+      </div>
+
+      <div>
+  <label class="block text-sm text-gray-300">Descripción</label>
+  <textarea v-model="exerciseDescription" rows="3" class="w-full mt-1 px-3 py-2 rounded bg-gray-700 outline-none text-white" placeholder="Instrucciones o enunciado"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-300">Imagen (subir archivo)</label>
+        <input @change="handleExerciseFile" type="file" accept="image/*" class="w-full mt-1 text-sm text-gray-300" />
+        <div v-if="exerciseUploadProgress > 0 && exerciseUploadProgress < 100" class="mt-2">
+          <div class="w-full h-2 bg-gray-600 rounded">
+            <div :style="{ width: exerciseUploadProgress + '%' }" class="h-2 bg-gray-800 rounded"></div>
+          </div>
+          <div class="text-xs text-gray-400 mt-1">Subiendo... {{ exerciseUploadProgress }}%</div>
+        </div>
+        <div v-if="exerciseImageData" class="mt-2 flex flex-col sm:flex-row sm:items-start sm:space-x-4">
+          <div class="max-w-full sm:max-w-xs rounded mb-2 sm:mb-0 overflow-y-auto max-h-[60vh] bg-black/30 p-1">
+            <img :src="exerciseImageData" class="max-w-full rounded" />
+          </div>
+          <div class="flex items-start space-x-2">
+            <button @click="removeExerciseImage" class="flex items-center space-x-2 bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg">
+              <TrashIcon class="w-4 h-4 text-white" />
+              <span class="text-white text-sm">Eliminar imagen</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-300">Preguntas</label>
+        <div class="space-y-2 mt-2">
+          <div v-for="(q, i) in exerciseQuestions" :key="i" class="flex items-center space-x-2">
+            <input v-model="exerciseQuestions[i]" type="text" placeholder="Pregunta" class="flex-1 px-3 py-2 rounded bg-gray-700 outline-none" />
+            <button @click="removeExerciseQuestion(i)" class="px-2 py-1 bg-red-600 rounded text-sm">Eliminar</button>
+          </div>
+        </div>
+        <button @click="addExerciseQuestion" class="mt-2 px-3 py-1 bg-blue-600 rounded">Añadir pregunta</button>
+      </div>
+
+      <div class="flex justify-end space-x-2">
+        <button @click="showExerciseModal = false" class="bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2">
+          <XMarkIcon class="w-4 h-4 text-white" />
+          <span class="text-white">Cancelar</span>
+        </button>
+        <button
+          @click.prevent="submitExercise"
+          :disabled="isSendingExercise"
+          :class="{'opacity-60 cursor-not-allowed': isSendingExercise, 'bg-green-600 hover:bg-green-700': !isSendingExercise}"
+          class="px-4 py-2 rounded-lg flex items-center space-x-2"
+        >
+          <PlusCircleIcon class="w-4 h-4 text-white" />
+          <span class="text-white">{{ isSendingExercise ? 'Enviando...' : 'Enviar ejercicio' }}</span>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -323,7 +498,6 @@ import {
   PlusCircleIcon,
   ChartBarIcon,
   PencilSquareIcon,
-  UserPlusIcon,
   VideoCameraIcon,
   VideoCameraSlashIcon,
   ComputerDesktopIcon,
@@ -332,11 +506,13 @@ import {
   ArrowsPointingOutIcon,
   CheckIcon,
   XMarkIcon,
+  TrashIcon,
   EyeIcon,
   UserGroupIcon,
 } from '@heroicons/vue/24/solid'
 
-import { ref, onUnmounted, onMounted, onBeforeUnmount } from 'vue'
+import router from '@/router'
+import { ref, onUnmounted, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 
 const videoRef = ref(null)
 const modalVideoRef = ref(null)
@@ -357,8 +533,201 @@ const chat = ref([])
 const mensaje = ref('')
 const showChatMenu = ref(false)
 const expandirBool = ref(true)
+const showOptionsMenu = ref(false)
+const showEndStreamConfirm = ref(false)
+
+function handleEndStream() {
+  showOptionsMenu.value = false
+  showEndStreamConfirm.value = true
+}
+
+function confirmEndStream() {
+  showEndStreamConfirm.value = false
+  router.push({ name: 'dashboard' })
+}
+
+function shareStream() {
+  showOptionsMenu.value = false
+  alert('Funcionalidad de compartir no implementada.')
+}
+
+// (removed debug helpers)
 
 const audioLevel = ref(0)
+
+// Modales para ejercicios
+const showExerciseModal = ref(false)
+
+// Encuesta (modal tipo WhatsApp)
+const showSurveyModal = ref(false)
+const surveyQuestion = ref('')
+const surveyOptions = ref(['', ''])
+const surveyError = ref('')
+const surveyQuestionInput = ref(null)
+
+// focus input cuando se abre el modal
+watch(showSurveyModal, async (val) => {
+  if (val) {
+    await nextTick()
+    if (surveyQuestionInput.value && surveyQuestionInput.value.focus) surveyQuestionInput.value.focus()
+  } else {
+    surveyError.value = ''
+  }
+})
+
+function addSurveyOption() {
+  surveyOptions.value.push('')
+}
+
+function removeSurveyOption(index) {
+  if (surveyOptions.value.length > 2) surveyOptions.value.splice(index, 1)
+}
+
+function submitSurvey() {
+  // Build structured encuesta so the chat renderer + votePoll can handle voting
+  const q = (surveyQuestion.value || '').toString().trim()
+  if (!q) {
+    surveyError.value = 'Introduce la pregunta de la encuesta'
+    return
+  }
+
+  try {
+    console.log('[submitSurvey] start', { pregunta: q, rawOptions: surveyOptions.value })
+    const optsRaw = Array.isArray(surveyOptions.value) ? surveyOptions.value : ['','']
+    const opts = optsRaw.map((o) => (o && o.toString().trim() ? o.toString().trim() : null)).filter(Boolean)
+    while (opts.length < 2) opts.push('[vacía]')
+    console.log('[submitSurvey] parsed options', opts)
+
+  const id = nextMessageId.value++
+    const encuesta = { id, tipo: 'encuesta', usuario: 'Docente', pregunta: q, opciones: opts, votos: opts.map(() => 0), multiple: false }
+
+    // close modal first to avoid any UI blocking
+    showSurveyModal.value = false
+    console.log('[submitSurvey] pushing encuesta', encuesta)
+    chat.value.push(encuesta)
+    console.log('[submitSurvey] pushed')
+
+    // limpiar
+    surveyQuestion.value = ''
+    surveyOptions.value = ['', '']
+  } catch (err) {
+    console.error('submitSurvey error:', err)
+    try { chat.value.push({ usuario: 'Sistema', mensaje: 'No se pudo enviar la encuesta.' }) } catch { }
+    surveyError.value = 'Error al enviar la encuesta'
+  }
+}
+
+// Ejercicio
+const exerciseTitle = ref('')
+const exerciseDescription = ref('')
+const exerciseImage = ref('')
+const exerciseImageData = ref('')
+const exerciseQuestions = ref([''])
+
+// bandera para enviar ejercicio (evita doble click/confusión con encuesta)
+const isSendingExercise = ref(false)
+
+function addExerciseQuestion() {
+  exerciseQuestions.value.push('')
+}
+
+function removeExerciseQuestion(i) {
+  if (exerciseQuestions.value.length > 1) exerciseQuestions.value.splice(i, 1)
+}
+
+function submitExercise() {
+  if (!exerciseTitle.value.trim()) return alert('Introduce el título del ejercicio')
+  if (isSendingExercise.value) return
+  isSendingExercise.value = true
+  try {
+    const preguntas = exerciseQuestions.value.filter(Boolean)
+    const id = nextMessageId.value++
+    chat.value.push({ id, tipo: 'ejercicio', usuario: 'Docente', title: exerciseTitle.value, description: exerciseDescription.value, image: exerciseImageData.value || null, preguntas })
+    // limpiar y cerrar
+    exerciseTitle.value = ''
+    exerciseDescription.value = ''
+    exerciseImage.value = ''
+    exerciseImageData.value = ''
+    exerciseQuestions.value = ['']
+    showExerciseModal.value = false
+  } finally {
+    isSendingExercise.value = false
+  }
+}
+
+// Message ids and voting
+const nextMessageId = ref(1)
+// votedPolls: map messageId -> array of selected indices (for multi) or single index
+const votedPolls = ref({})
+
+function votePoll(id, idx) {
+  const m = chat.value.find((c) => c.id === id)
+  if (!m || m.tipo !== 'encuesta') return
+  // multiple selection
+  if (m.multiple) {
+    const existing = Array.isArray(votedPolls.value[id]) ? votedPolls.value[id].slice() : []
+    const selected = existing
+    if (selected.includes(idx)) {
+      // unselect
+      const next = selected.filter((s) => s !== idx)
+      votedPolls.value = { ...votedPolls.value, [id]: next }
+      m.votos[idx] = Math.max(0, (m.votos[idx] || 1) - 1)
+    } else {
+      const next = selected.concat(idx)
+      votedPolls.value = { ...votedPolls.value, [id]: next }
+      m.votos[idx] = (m.votos[idx] || 0) + 1
+    }
+  } else {
+    // single selection: ignore if already voted (check !== undefined to allow index 0)
+    if (votedPolls.value[id] !== undefined) return
+    m.votos[idx] = (m.votos[idx] || 0) + 1
+    votedPolls.value = { ...votedPolls.value, [id]: idx }
+  }
+  // force update so template reflects new vote counts immediately
+  chat.value = [...chat.value]
+}
+
+// Exercise responses
+const showResponse = ref({})
+const responseText = ref({})
+
+function toggleResponseInput(id) {
+  showResponse.value[id] = !showResponse.value[id]
+  if (!responseText.value[id]) responseText.value[id] = ''
+}
+
+function submitExerciseResponse(id) {
+  const text = (responseText.value[id] || '').trim()
+  if (!text) return alert('Escribe una respuesta')
+  chat.value.push({ id: nextMessageId.value++, usuario: 'Alumno', mensaje: `Respuesta al ejercicio ${id}: ${text}` })
+  responseText.value[id] = ''
+  showResponse.value[id] = false
+}
+
+// File upload with progress for exercise image
+const exerciseUploadProgress = ref(0)
+
+function handleExerciseFile(e) {
+  const file = e.target.files && e.target.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onprogress = (ev) => {
+    if (ev.lengthComputable) {
+      exerciseUploadProgress.value = Math.round((ev.loaded / ev.total) * 100)
+    }
+  }
+  reader.onload = (ev) => {
+    exerciseImageData.value = ev.target.result
+    exerciseUploadProgress.value = 100
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeExerciseImage() {
+  exerciseImage.value = ''
+  exerciseImageData.value = ''
+  exerciseUploadProgress.value = 0
+}
 
 let audioContext
 let audioAnalyser
@@ -540,7 +909,7 @@ async function shareScreen() {
   width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #7e22ce;
+  background: #000000;
   border-radius: 4px;
 }
 </style>

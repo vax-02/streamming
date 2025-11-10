@@ -164,6 +164,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import {  TrashIcon, ChatBubbleLeftIcon  } from '@heroicons/vue/24/outline'
+import router from '@/router'
 
 /* 🔹 Tabs del sidebar */
 const tabs = [
@@ -257,6 +258,20 @@ const selectedFriend = ref({})
 const openProfile = (friend) => {
   selectedFriend.value = friend
   showProfileModal.value = true
+}
+
+// Abrir chat con un amigo: navega a la vista de chats pasando datos por query
+function chatFriend(id) {
+  const friend = friends.value.find((f) => f.id === id)
+  if (!friend) return
+  router.push({
+    name: 'chats',
+    query: {
+      openName: friend.name,
+      openEmail: friend.email,
+      openAvatar: friend.avatar,
+    },
+  })
 }
 </script>
 

@@ -287,7 +287,7 @@
         <h4 class="text-gray-400 uppercase text-sm mb-2">Miembros</h4>
         <ul class="space-y-2">
           <li
-            v-for="(miembro, i) in miembros"
+            v-for="(miembro, i) in displayMembers"
             :key="i"
             class="flex justify-between items-center text-gray-300 bg-gray-700 rounded-lg p-2"
           >
@@ -320,8 +320,24 @@
         type="text"
         placeholder="Buscar usuario..."
         v-model="nuevoMiembro"
-        class="w-full p-2 rounded bg-gray-800 text-white mb-4"
+        class="w-full p-2 rounded bg-gray-800 text-white mb-2"
       />
+
+      <!-- Sugerencias dinámicas basadas en lo que escribe el usuario -->
+      <ul v-if="suggestions.length > 0" class="max-h-40 overflow-y-auto mt-2 mb-2 rounded bg-gray-800">
+        <li
+          v-for="s in suggestions"
+          :key="s.email"
+          class="flex items-center justify-between p-2 hover:bg-gray-700 cursor-pointer"
+          @click="agregarConContacto(s)"
+        >
+          <div>
+            <div class="font-medium">{{ s.nombre }}</div>
+            <div class="text-xs text-gray-400">{{ s.email }}</div>
+          </div>
+          <div class="text-blue-400 text-sm">Añadir</div>
+        </li>
+      </ul>
       <div class="flex justify-end space-x-2">
         <button @click="abrirModalAgregar = false" class="text-gray-300 hover:text-white">
           Cancelar
@@ -412,12 +428,78 @@ const nuevoMiembro = ref('')
 const eventoTitulo = ref('')
 const eventoFecha = ref('')
 
+
+
+// Mostrar miembros: si hay un chat seleccionado y tiene miembros, mostrar esos;
+// en caso contrario usar la lista global `miembros`.
+const displayMembers = computed(() => {
+  return chatSeleccionado && chatSeleccionado.value && chatSeleccionado.value.miembros
+    ? chatSeleccionado.value.miembros
+    : miembros.value
+})
+
 function agregarMiembro() {
-  if (nuevoMiembro.value.trim()) {
-    miembros.value.push({ nombre: nuevoMiembro.value })
-    nuevoMiembro.value = ''
-    abrirModalAgregar.value = false
+  const term = nuevoMiembro.value.trim()
+  if (!term) return
+
+  // Buscar el contacto por email exacto o nombre (case-insensitive, permite coincidencias parciales en nombre)
+  const encontrado = contactos.value.find((c) => {
+    const t = term.toLowerCase()
+    return (
+      (c.email && c.email.toLowerCase() === t) ||
+      (c.nombre && c.nombre.toLowerCase() === t) ||
+      (c.nombre && c.nombre.toLowerCase().includes(t))
+    )
+  })
+
+  if (!encontrado) {
+    alert('Usuario no encontrado entre las personas disponibles. Escribe el nombre o email exacto de un contacto existente.')
+    return
   }
+
+  const nuevo = { nombre: encontrado.nombre, email: encontrado.email }
+
+  // Si estamos viendo el perfil de un grupo seleccionado, agregar al grupo
+  if (chatSeleccionado && chatSeleccionado.value) {
+    if (!chatSeleccionado.value.miembros) chatSeleccionado.value.miembros = []
+    // prevenir duplicados por email
+    const existe = chatSeleccionado.value.miembros.some((m) => m.email === nuevo.email)
+    if (!existe) chatSeleccionado.value.miembros.push(nuevo)
+  } else {
+    // sino agregar a la lista global de miembros (mantener email si disponible)
+    const existe = miembros.value.some((m) => m.nombre === nuevo.nombre || m.email === nuevo.email)
+    if (!existe) miembros.value.push(nuevo)
+  }
+
+  nuevoMiembro.value = ''
+  abrirModalAgregar.value = false
+}
+
+// Sugerencias dinámicas para el modal "Agregar persona" basadas en lo escrito
+const suggestions = computed(() => {
+  const term = nuevoMiembro.value.trim().toLowerCase()
+  if (!term) return []
+  return contactos.value.filter((c) => {
+    return (
+      (c.nombre && c.nombre.toLowerCase().includes(term)) ||
+      (c.email && c.email.toLowerCase().includes(term))
+    )
+  })
+})
+
+// Añadir contacto directamente desde la lista de sugerencias
+function agregarConContacto(contacto) {
+  const nuevo = { nombre: contacto.nombre, email: contacto.email }
+  if (chatSeleccionado && chatSeleccionado.value) {
+    if (!chatSeleccionado.value.miembros) chatSeleccionado.value.miembros = []
+    const existe = chatSeleccionado.value.miembros.some((m) => m.email === nuevo.email)
+    if (!existe) chatSeleccionado.value.miembros.push(nuevo)
+  } else {
+    const existe = miembros.value.some((m) => m.nombre === nuevo.nombre || m.email === nuevo.email)
+    if (!existe) miembros.value.push(nuevo)
+  }
+  nuevoMiembro.value = ''
+  abrirModalAgregar.value = false
 }
 
 function crearEvento() {
@@ -430,6 +512,13 @@ function crearEvento() {
 }
 
 function expulsar(miembro) {
+  // Si hay un chat seleccionado con miembros, expulsar desde ese grupo
+  if (chatSeleccionado && chatSeleccionado.value && chatSeleccionado.value.miembros) {
+    chatSeleccionado.value.miembros = chatSeleccionado.value.miembros.filter((m) => m !== miembro)
+    return
+  }
+
+  // Sino expulsar de la lista global
   miembros.value = miembros.value.filter((m) => m !== miembro)
 }
 
@@ -508,14 +597,31 @@ function eliminarMiembro(contacto) {
 }
 
 function crearGrupo() {
+  // Validación mínima
   if (!nuevoGrupo.value.nombre) {
     alert("Por favor, ingresa un nombre para el grupo");
     return;
   }
-  alert(
-    `Grupo "${nuevoGrupo.value.nombre}" creado con ${nuevoGrupo.value.miembros.length} miembros.`
-  );
-  addChatModal.value = false;
+
+  // Crear nuevo grupo y añadirlo a la lista lateral (chats)
+  const nextId = Math.max(0, ...chats.value.map((c) => c.id)) + 1
+  const nuevo = {
+    id: nextId,
+    nombre: nuevoGrupo.value.nombre,
+    mensaje: nuevoGrupo.value.descripcion || '',
+    nuevos: 0,
+    foto: `https://ui-avatars.com/api/?name=${encodeURIComponent(nuevoGrupo.value.nombre)}&background=1f2937&color=fff`,
+    mensajes: [],
+    miembros: [...nuevoGrupo.value.miembros],
+  }
+
+  chats.value.push(nuevo)
+  // Seleccionar el grupo recién creado y limpiar el formulario
+  chatSeleccionado.value = nuevo
+  nuevoGrupo.value.nombre = ''
+  nuevoGrupo.value.descripcion = ''
+  nuevoGrupo.value.miembros = []
+  addChatModal.value = false
 }
 </script>
 

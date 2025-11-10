@@ -28,9 +28,9 @@
 
     <div class="flex-1 bg-gray-900 overflow-y-auto">
 
-      <router-view />
-      <p v-if="$route.name === 'settings'">
-          <div
+    <router-view />
+    <div v-if="$route.name === 'settings'">
+      <div
             class="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white"
           >
             <!-- Logo animado -->
@@ -62,8 +62,8 @@
             <div
               class="mt-8 h-[2px] w-32 bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 animate-pulse rounded-full"
             ></div>
-          </div>
-      </p>
+      </div>
+    </div>
     </div>
   </div>
 </template>

@@ -222,6 +222,7 @@
 <script setup>
 import { PhoneIcon, VideoCameraIcon } from '@heroicons/vue/24/solid'
 import router from '@/router'
+import { useRoute } from 'vue-router'
 import bannerMessages from '@/layouts/bannerMessages.vue'
 const chats = ref([
   {
@@ -268,6 +269,37 @@ function enviarMensaje() {
 const mostrarPerfil = ref(false)
 
 import { ref, computed } from 'vue'
+import { onMounted, watch } from 'vue'
+
+const route = useRoute()
+
+function handleOpenContactQuery(q) {
+  const openName = q.openName
+  const openEmail = q.openEmail
+  const openAvatar = q.openAvatar
+  if (!openName && !openEmail) return
+  const contacto = {
+    nombre: openName || openEmail,
+    email: openEmail,
+    foto: openAvatar,
+  }
+  // startChat ya maneja crear o seleccionar el chat
+  startChat(contacto)
+  // limpiar query para no re-ejecutar
+  // limpiar query para no re-ejecutar
+  router.replace({ name: 'chats' }).catch(() => {})
+}
+
+onMounted(() => {
+  handleOpenContactQuery(route.query)
+})
+
+watch(
+  () => route.query,
+  (q) => {
+    handleOpenContactQuery(q)
+  },
+)
 
 const addChatModal = ref(false)
 const searchContact = ref('')
@@ -291,7 +323,32 @@ const filteredContacts = computed(() => {
 
 // Función para iniciar chat
 function startChat(contacto) {
-  alert(`Iniciando chat con ${contacto.nombre}`)
+  // Si ya existe un chat con este contacto, seleccionarlo
+  const existente = chats.value.find(
+    (c) => c.email === contacto.email || c.nombre === contacto.nombre,
+  )
+  if (existente) {
+    chatSeleccionado.value = existente
+    addChatModal.value = false
+    return
+  }
+
+  // Crear nuevo chat mínimo y seleccionarlo
+  const nextId = Math.max(0, ...chats.value.map((c) => c.id)) + 1
+  const nuevoChat = {
+    id: nextId,
+    nombre: contacto.nombre,
+    mensaje: '',
+    nuevos: 0,
+    // Avatar simple usando servicio público; puedes cambiarlo por la foto real
+    foto: `https://ui-avatars.com/api/?name=${encodeURIComponent(contacto.nombre)}&background=1f2937&color=fff`,
+    mensajes: [],
+    // Mantener referencia al email para futuras búsquedas
+    email: contacto.email,
+  }
+
+  chats.value.push(nuevoChat)
+  chatSeleccionado.value = nuevoChat
   addChatModal.value = false
 }
 </script>
