@@ -8,6 +8,17 @@
       </router-link>
 
       <router-link
+        :to="{ name: 'statistics' }"
+        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        active-class="bg-blue-600 text-white"
+        exact-active-class="bg-blue-500 text-white"
+      >
+        <span class="text-xs">
+ <HomeIcon class="w-6 h-6 text-blue-500" />
+        </span>
+      </router-link>
+
+      <router-link
         :to="{ name: 'users' }"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-600 text-white"
@@ -92,6 +103,7 @@ import {
   ChatBubbleLeftRightIcon,
   VideoCameraIcon,
   Cog6ToothIcon,
+  HomeIcon 
 } from '@heroicons/vue/24/solid' // o @heroicons/vue/24/outline
 import Logo from '@/assets/logo.png'
 import HomeComponent from '@/components/homeComponent.vue'

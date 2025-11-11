@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-900 text-white flex flex-col">
-    <main class="flex-1 flex flex-col items-center justify-center text-center px-4">
+  <div class="min-h-screen bg-gray-900 banner text-white flex flex-col">
+    <main class="banner-text flex-1 flex flex-col items-center justify-center text-center px-4">
       <div class="login bg-gray-800 p-8 rounded-2xl shadow-lg w-full max-w-sm">
         <div class="flex flex-col items-center mb-6">
           <img
@@ -70,4 +70,28 @@ function login() {
   max-width: 300px;
   margin: auto;
 }
+
+
+.banner {
+  position: relative;
+  overflow: hidden;
+}
+
+.banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/images/back.webp') center/cover no-repeat;
+  opacity: 0.4; /* solo el fondo */
+  z-index: 0;
+}
+
+.banner-text {
+  position: relative;
+  z-index: 1; /* texto sobre el fondo */
+  color: white; /* opcional */
+} 
 </style>

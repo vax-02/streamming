@@ -43,7 +43,7 @@
               <button class="text-blue-500 hover:text-blue-700" @click="editarUsuario(user.id)">
                 <PencilIcon class="h-5 w-5" />
               </button>
-              <button class="text-red-500 hover:text-red-700" @click="eliminarUsuario(user.id)">
+              <button class="text-red-500 hover:text-red-700" @click="eliminarUsuarioModal(user.id)">
                 <TrashIcon class="h-5 w-5" />
               </button>
 
@@ -165,7 +165,7 @@
     </transition>
 
     <transition name="fade">
-      <form @submit.prevent="">
+      <form @submit.prevent="modificarUsuario">
         <div
           v-if="editUserModal"
           class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
@@ -257,13 +257,20 @@
       </div>
     </transition-group>
   </div>
+
+  <ConfirmationComponent
+    :visible="removeUserModal"
+    title="Confirmar eliminación"
+    message="¿Estás seguro de que deseas eliminar este usuario?"
+    @confirm="eliminarUsuario"
+    @cancel="removeUserModal = false"
+  />
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { PencilIcon, TrashIcon, LockClosedIcon } from '@heroicons/vue/24/outline'
-
-// Datos simulados
+import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
 const users = ref([
   { id: 1, nombre: 'Ana Pérez', correo: 'ana@gmail.com', rol: 'Administrador', status: true },
   { id: 2, nombre: 'Carlos Gómez', correo: 'carlos@gmail.com', rol: 'Docente', status: true },
@@ -274,7 +281,10 @@ const users = ref([
 ])
 const addUserModal = ref(false)
 const editUserModal = ref(false)
+const removeUserModal = ref(false)
 // Nuevo usuario
+
+const idUser = ref(null)
 const newUser = ref({
   nombre: '',
   correo: '',
@@ -290,6 +300,14 @@ const guardarUsuario = () => {
   addUserModal.value = false
 }
 
+function modificarUsuario() {
+  const index = users.value.findIndex((u) => u.id === updateUser.value.id)
+  if (index !== -1) {
+    users.value[index] = { ...updateUser.value }
+    addToast('Usuario modificado correctamente', 'success')
+    editUserModal.value = false
+  }
+}
 // Filtrado
 const search = ref('')
 
@@ -320,21 +338,6 @@ const editarUsuario = (id) => {
   updateUser.value = { ...user }
 }
 
-const eliminarUsuario = async (id) => {
-  // Espera hasta que el usuario confirme o cancele
-  const confirmado = await showConfirmation(
-    'Eliminar usuario',
-    '¿Estás seguro que deseas eliminar este usuario?',
-  )
-
-  if (!confirmado) return // Si cancela, no hacer nada
-
-  users.value = users.value.filter((u) => u.id !== id)
-
-  if (currentPage.value > totalPages.value) currentPage.value = totalPages.value
-
-  addToast('Usuario eliminado correctamente', 'success')
-}
 function lockUser(id) {
   const user = users.value.find((u) => u.id === id)
   user.status = !user.status
@@ -342,6 +345,8 @@ function lockUser(id) {
   const statusMessage = user.status ? 'desbloqueado' : 'bloqueado'
   addToast(`Usuario ${statusMessage} correctamente`, 'info')
 }
+
+
 
 const toasts = ref([])
 
@@ -354,17 +359,17 @@ const addToast = (message, type = 'info', duration = 3000) => {
   }, duration)
 }
 
+
+function eliminarUsuarioModal(id) {
+  removeUserModal.value = true
+  idUser.value = id
+}
+function eliminarUsuario() {
+  removeUserModal.value = false
+  users.value = users.value.filter((u) => u.id !== idUser.value)
+  addToast('Usuario eliminado correctamente', 'success')
+}
 const removeToast = (id) => {
   toasts.value = toasts.value.filter((t) => t.id !== id)
-}
-
-const showConfirmation = (title, message) => {
-  confirmTitle.value = title
-  confirmMessage.value = message
-  showConfirm.value = true
-
-  return new Promise((resolve) => {
-    resolveCallback = resolve
-  })
 }
 </script>

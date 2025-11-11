@@ -1,62 +1,99 @@
 <template>
   <div class="flex h-screen bg-gray-800 text-white">
-    <div class="flex-1 p-8 overflow-y-auto">
-      <div class="max-w-4xl mx-auto space-y-6">
-        <div class="flex justify-between items-center">
-          <h2 class="text-3xl font-bold">Transmisiones en vivo</h2>
-          <button
-            @click="abrirFormulario = true"
-            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition"
-          >
-            + Nueva transmisión
-          </button>
-        </div>
+    <aside class="w-48 bg-gray-800 border-r border-gray-800 flex flex-col">
+      <h2 class="text-lg font-bold p-4 border-b border-gray-800">Transmisiones</h2>
+      <nav class="flex flex-col">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          @click="currentTab = tab.id"
+          :class="[
+            'text-left px-4 py-2 hover:bg-gray-800 transition',
+            currentTab === tab.id ? 'bg-gray-800 text-blue-400' : 'text-gray-300',
+          ]"
+        >
+          {{ tab.name }}
+        </button>
+      </nav>
+    </aside>
 
-        <div v-if="transmisiones.length" class="space-y-4">
-          <div
-            v-for="(trans, index) in transmisiones"
-            :key="index"
-            class="bg-gray-800 p-4 rounded-lg flex justify-between items-center hover:bg-gray-700 transition"
-          >
-            <div>
-              <h3 class="font-semibold text-lg">{{ trans.titulo }}</h3>
-              <p class="text-gray-400 text-sm">{{ trans.descripcion }}</p>
-              <p class="text-gray-400 text-sm">Categoría: {{ trans.categoria }}</p>
-              <p class="text-gray-400 text-sm">Fecha/Hora: {{ trans.fechaHora }}</p>
+    <div class="flex-1 bg-gray-900 p-8 overflow-y-auto">
+      <section v-if="currentTab === 'programadas'">
+        <div class="max-w-4xl mx-auto space-y-6">
+          <div class="flex justify-between items-center">
+            <h2 class="text-3xl font-bold">Transmisiones en vivo</h2>
+            <button
+              @click="abrirFormulario = true"
+              class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition"
+            >
+              + Nueva transmisión
+            </button>
+          </div>
+
+          <div v-if="transmisiones.length" class="space-y-4 bg-gray-900 p-4 rounded-lg">
+            <div
+              v-for="(trans, index) in transmisiones"
+              :key="index"
+              class="bg-gray-800 p-4 rounded-lg flex justify-between items-center hover:bg-gray-700 transition"
+            >
+              <div>
+                <h3 class="font-semibold text-lg">{{ trans.titulo }}</h3>
+                <p class="text-gray-400 text-sm">{{ trans.descripcion }}</p>
+                <p class="text-gray-400 text-sm">Categoría: {{ trans.categoria }}</p>
+                <p class="text-gray-400 text-sm">Fecha/Hora: {{ trans.fechaHora }}</p>
+              </div>
+              <div class="flex space-x-2">
+                <button
+                  @click="shareTransmision = !shareTransmision"
+                  class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md text-sm"
+                >
+                  <ShareIcon class="w-6 h-6 icon" />
+                </button>
+
+                <router-link
+                  to="/live"
+                  class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-sm"
+                >
+                  <PlayIcon class="W-6 h-6 icon" />
+                </router-link>
+
+                <button
+                  @click="editarTransmision(index)"
+                  class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-md text-sm"
+                >
+                  <PencilIcon class="w-6 h-6 icon" />
+                </button>
+                <button
+                  @click="eliminarTransmision(index)"
+                  class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-sm"
+                >
+                  <TrashIcon class="w-6 h-6 icon" />
+                </button>
+              </div>
             </div>
-            <div class="flex space-x-2">
-              <button
-                @click="shareTransmision = !shareTransmision"
-                class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md text-sm"
-              >
-                <ShareIcon class="w-6 h-6 icon" />
-              </button>
+          </div>
+          <p v-else class="text-gray-400">No hay transmisiones programadas.</p>
+        </div>
+      </section>
 
-              <router-link
-                to="/live"
-                class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-sm"
-              >
-                <PlayIcon class="W-6 h-6 icon" />
-              </router-link>
+      <section class="py-5 bg-gray-900 text-white" v-if="currentTab === 'pasadas'">
+        <h3 class="text-3xl font-bold text-center mb-12">Transmisiones Pasadas</h3>
 
-              <button
-                @click="editarTransmision(index)"
-                class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-md text-sm"
-              >
-                <PencilIcon class="w-6 h-6 icon" />
-              </button>
-              <button
-                @click="eliminarTransmision(index)"
-                class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-sm"
-              >
-                <TrashIcon class="w-6 h-6 icon" />
-              </button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div
+            v-for="video in pastStreams"
+            :key="video.id"
+            class="bg-gray-800 rounded-lg overflow-hidden shadow-lg cursor-pointer hover:scale-105 transition"
+            @click="goToVideo(video.id)"
+          >
+            <img :src="video.thumbnail" alt="thumbnail" class="w-full h-48 object-cover" />
+            <div class="p-4">
+              <h4 class="font-semibold text-lg mb-2">{{ video.title }}</h4>
+              <p class="text-gray-400 text-sm">{{ video.date }}</p>
             </div>
           </div>
         </div>
-        <p v-else class="text-gray-400">No hay transmisiones programadas.</p>
-      </div>
-
+      </section>
       <!-- Modal/Formulario de nueva transmisión -->
       <div
         v-if="abrirFormulario"
@@ -134,9 +171,8 @@
     </div>
   </div>
 
-
-
   <!-- Modal overlay -->
+   
   <div
     v-if="shareTransmision"
     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -146,9 +182,7 @@
       <!-- Header -->
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-semibold">Compartir transmisión</h2>
-        <button @click="shareTransmision = false" class="text-gray-400 hover:text-white">
-          ✖
-        </button>
+        <button @click="shareTransmision = false" class="text-gray-400 hover:text-white">✖</button>
       </div>
 
       <!-- Input búsqueda -->
@@ -206,14 +240,19 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script setup>
 import { ShareIcon, PencilIcon, TrashIcon, PlayIcon } from '@heroicons/vue/24/solid'
-
+import VideoPlayer from '@/components/video/VideoPlayerComponent.vue'
 import router from '@/router'
 import { ref } from 'vue'
+
+const currentTab = ref('programadas')
+const tabs = [
+  { id: 'programadas', name: 'Programadas' },
+  { id: 'pasadas', name: 'Pasadas' },
+]
 
 const transmisiones = ref([])
 const shareTransmision = ref(false)
@@ -226,7 +265,26 @@ const nuevaTrans = ref({
   categoria: '',
   fechaHora: '',
 })
-
+const pastStreams = [
+  {
+    id: 1,
+    title: 'Clase de Matemáticas - Álgebra',
+    url: '/videos/matematicas-algebra.mp4',
+    date: '10 de Noviembre, 2025',
+  },
+  {
+    id: 2,
+    title: 'Conferencia de Física - Termodinámica',
+    url: '/videos/fisica-termodinamica.mp4',
+    date: '08 de Noviembre, 2025',
+  },
+  {
+    id: 3,
+    title: 'Taller de Programación - Vue.js',
+    url: '/videos/vuejs-taller.mp4',
+    date: '05 de Noviembre, 2025',
+  },
+]
 // Guardar nueva transmisión
 function guardarTransmision() {
   transmisiones.value.push({ ...nuevaTrans.value })
@@ -255,8 +313,7 @@ function compartirTransmision(trans) {
   shareTransmision = !shareTransmision
 }
 
-
-import {  computed } from 'vue'
+import { computed } from 'vue'
 
 // Control del modal
 
@@ -277,15 +334,13 @@ const linkTransmision = ref('https://miapp.com/transmision/abc123')
 
 // Filtrar grupos según búsqueda
 const filteredGrupos = computed(() => {
-  return grupos.value.filter(g =>
-    g.nombre.toLowerCase().includes(search.value.toLowerCase())
-  )
+  return grupos.value.filter((g) => g.nombre.toLowerCase().includes(search.value.toLowerCase()))
 })
 
 // Seleccionar o deseleccionar grupo
 function toggleGrupo(id) {
   if (selectedGrupos.value.includes(id)) {
-    selectedGrupos.value = selectedGrupos.value.filter(g => g !== id)
+    selectedGrupos.value = selectedGrupos.value.filter((g) => g !== id)
   } else {
     selectedGrupos.value.push(id)
   }
@@ -299,6 +354,11 @@ function enviarTransmision() {
   search.value = ''
 }
 
+function goToVideo(id) {
+  alert(`Navegando a video con ID: ${id}`)
+  router.push({ name: 'video', params: { id } })
+}
+
 </script>
 
 <style scoped>
@@ -309,5 +369,20 @@ function enviarTransmision() {
 ::-webkit-scrollbar-thumb {
   background: #7e22ce;
   border-radius: 4px;
+}
+
+.flex-1.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 transparent;
+}
+.flex-1.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+.flex-1.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.flex-1.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+  border-radius: 3px;
 }
 </style>
