@@ -1,7 +1,13 @@
 <template>
-  <div class="flex h-screen bg-gray-900 text-white">
+  <div class="flex h-screen bg-gray-900 text-white overflow-hidden">
     <!-- Lista lateral de chats -->
-    <div class="w-[25%] bg-gray-800 p-4 flex flex-col space-y-4 overflow-y-auto">
+    <div
+      class="w-full md:w-[35%] lg:w-[25%] bg-gray-800 p-4 flex-col space-y-4 overflow-y-auto absolute md:static h-full z-30 transition-transform duration-300"
+      :class="[
+        chatSeleccionado && 'hidden md:flex',
+        !chatSeleccionado && 'flex',
+      ]"
+    >
       <h2 class="text-lg font-bold mb-4 text-center">Chats</h2>
       <div
         v-for="chat in chats"
@@ -21,28 +27,36 @@
       </div>
 
       <!-- Botón flotante -->
-      <button
-        @click="addChatModal = true"
-        class="absolute bottom-4 right-100 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg focus:outline-none"
-        title="Agregar chat"
-      >
-        <!-- Icono + (puedes cambiarlo por un SVG) -->
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
+      <div class="absolute bottom-4 right-4 md:left-4">
+        <button
+          @click="addChatModal = true"
+          class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg focus:outline-none flex items-center justify-center"
+          title="Agregar chat"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
+          <!-- Icono + (puedes cambiarlo por un SVG) -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Panel de conversación -->
 
-    <div class="flex-1 flex flex-col bg-gray-900">
+    <div
+      class="flex-1 flex flex-col bg-gray-900 transition-transform duration-300 w-full md:w-auto"
+      :class="[
+        chatSeleccionado && 'flex',
+        !chatSeleccionado && 'hidden md:flex',
+      ]"
+    >
       <router-view v-if="$route.name === 'calling'"></router-view>
 
       <template v-else-if="chatSeleccionado">
@@ -50,6 +64,12 @@
         <div
           class="flex items-center justify-between bg-gray-800 p-2 border-b border-gray-700"
         >
+          <button @click="chatSeleccionado = null" class="md:hidden p-2 text-gray-300 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
           <div class="flex items-center space-x-3 hover:bg-gray-600 px-5 cursor-pointer"  @click="mostrarPerfil = !mostrarPerfil">
             <img
               :src="chatSeleccionado.foto"
@@ -196,7 +216,7 @@
   <transition name="slide">
     <div
       v-if="mostrarPerfil"
-      class="w-80 bg-gray-800 border-l border-gray-700 p-4 flex flex-col absolute right-0 top-0 bottom-0 z-20"
+      class="w-full sm:w-80 bg-gray-800 border-l border-gray-700 p-4 flex flex-col absolute right-0 top-0 bottom-0 z-40"
     >
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold">Perfil</h3>

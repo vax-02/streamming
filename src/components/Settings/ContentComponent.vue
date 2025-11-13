@@ -2,12 +2,12 @@
   <div class="flex h-screen bg-gray-900 text-white">
     <!-- Contenido principal -->
     <div class="flex-1 p-8 overflow-y-auto">
-      <div class="max-w-4xl mx-auto bg-gray-800 p-8 rounded-2xl shadow-lg space-y-6">
+      <div class="max-w-4xl mx-auto bg-gray-800 p-4 sm:p-8 rounded-2xl shadow-lg space-y-6">
         <h2 class="text-3xl font-bold mb-6 text-center">Reproducción y Contenido</h2>
 
         <!-- Calidad de video -->
-        <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-          <div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-700 p-4 rounded-lg gap-4">
+          <div class="flex-grow">
             <h3 class="font-semibold">Calidad de video</h3>
             <p class="text-gray-400 text-sm">Ajusta la resolución de reproducción</p>
           </div>
@@ -23,12 +23,12 @@
         </div>
 
         <!-- Subtítulos -->
-        <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-          <div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-700 p-4 rounded-lg gap-4">
+          <div class="flex-grow">
             <h3 class="font-semibold">Subtítulos</h3>
             <p class="text-gray-400 text-sm">Activa o desactiva subtítulos y transcripciones</p>
           </div>
-          <div class="flex items-center space-x-3">
+          <div class="flex items-center space-x-3 flex-wrap gap-2">
             <input type="checkbox" v-model="config.subtitulos" class="toggle-checkbox" />
             <select
               v-model="config.idiomaSubtitulos"
@@ -42,8 +42,8 @@
         </div>
 
         <!-- Velocidad de reproducción -->
-        <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-          <div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-700 p-4 rounded-lg gap-4">
+          <div class="flex-grow">
             <h3 class="font-semibold">Velocidad de reproducción</h3>
             <p class="text-gray-400 text-sm">Ajusta la velocidad del video</p>
           </div>
@@ -60,8 +60,8 @@
         </div>
 
         <!-- Modo visual -->
-        <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-          <div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-700 p-4 rounded-lg gap-4">
+          <div class="flex-grow">
             <h3 class="font-semibold">Modo visual</h3>
             <p class="text-gray-400 text-sm">Tema oscuro o claro para la plataforma</p>
           </div>
@@ -69,8 +69,8 @@
         </div>
 
         <!-- Preferencias de contenido -->
-        <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-          <div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-700 p-4 rounded-lg gap-4">
+          <div class="flex-grow">
             <h3 class="font-semibold">Preferencias de contenido</h3>
             <p class="text-gray-400 text-sm">Mostrar solo contenido relevante o avanzado</p>
           </div>
@@ -85,12 +85,12 @@
         </div>
 
         <!-- Audio y accesibilidad -->
-        <div class="flex items-center justify-between bg-gray-700 p-4 rounded-lg">
-          <div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-700 p-4 rounded-lg gap-4">
+          <div class="flex-grow">
             <h3 class="font-semibold">Audio y accesibilidad</h3>
             <p class="text-gray-400 text-sm">Idioma de audio y audio descriptivo</p>
           </div>
-          <div class="flex items-center space-x-3">
+          <div class="flex items-center space-x-3 flex-wrap gap-2">
             <select
               v-model="config.idiomaAudio"
               class="bg-gray-800 text-white rounded-lg px-3 py-2 outline-none"

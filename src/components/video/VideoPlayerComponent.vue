@@ -1,7 +1,15 @@
 <template>
   <div class="min-h-screen bg-gray-900 text-white p-6">
-    <h2 class="text-3xl font-bold mb-8 text-center">Transmisiones Pasadas</h2>
-
+    <div class="relative flex justify-center items-center mb-8">
+      <button
+        @click="goBack"
+        class="absolute left-0 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition"
+      >
+        &larr; Salir
+      </button>
+      <h2 class="text-3xl font-bold text-center">Transmisiones Pasadas</h2>
+    </div>
+    
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
       <div
         v-for="video in pastStreams"
@@ -85,12 +93,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const videoRef = ref(null)
-const newComment = ref('')
-const activeVideo = ref(null)
+const router = useRouter();
+const videoRef = ref(null);
+const newComment = ref('');
+const activeVideo = ref(null);
 
+function goBack() {
+  router.back();
+}
 // Ejemplo de videos pasados
 const pastStreams = ref([
   {
@@ -155,4 +168,3 @@ function addComment() {
   border-radius: 3px;
 }
 </style>
-

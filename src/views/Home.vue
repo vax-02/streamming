@@ -20,8 +20,8 @@
     </header>
 
     <main class="banner h-[90vh] flex flex-col items-center justify-center text-center px-4">
-      <h2 class="banner-text text-4xl md:text-5xl font-bold mb-4">Bienvenido a EduStream</h2>
-      <p class="banner-text text-gray-300 text-lg max-w-xl mb-6">
+      <h2 class="banner-text text-3xl sm:text-4xl md:text-5xl font-bold mb-4">Bienvenido a EduStream</h2>
+      <p class="banner-text text-gray-300 text-base sm:text-lg max-w-xl mb-6">
         Tu nueva plataforma para transmisiones en vivo, interacción en tiempo real y contenido
         exclusivo orientado a la educación.
       </p>

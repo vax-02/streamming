@@ -6,10 +6,10 @@
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          @click="currentTab = tab.id"
+          @click="currentTab = currentTab === tab.id ? null : tab.id"
           :class="[
-            'text-left px-4 py-2 hover:bg-gray-800 transition',
-            currentTab === tab.id ? 'bg-gray-800 text-blue-400' : 'text-gray-300',
+            'text-left px-4 py-2 transition-all duration-200 border-l-4',
+            currentTab === tab.id ? 'bg-gray-700 text-white border-blue-500' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent',
           ]"
         >
           {{ tab.name }}
@@ -83,13 +83,20 @@
           <div
             v-for="video in pastStreams"
             :key="video.id"
-            class="bg-gray-800 rounded-lg overflow-hidden shadow-lg cursor-pointer hover:scale-105 transition"
-            @click="goToVideo(video.id)"
+            class="bg-gray-800 rounded-lg overflow-hidden shadow-lg group"
           >
-            <img :src="video.thumbnail" alt="thumbnail" class="w-full h-48 object-cover" />
+            <div class="relative cursor-pointer" @click="playVideo(video)">
+              <img :src="video.thumbnail" alt="thumbnail" class="w-full h-48 object-cover" />
+              <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <PlayIcon class="w-16 h-16 text-white/80" />
+              </div>
+            </div>
             <div class="p-4">
               <h4 class="font-semibold text-lg mb-2">{{ video.title }}</h4>
               <p class="text-gray-400 text-sm">{{ video.date }}</p>
+              <button @click.stop="goToVideo(video.id)" class="mt-3 text-sm text-blue-400 hover:text-blue-300 font-semibold">
+                Ver más
+              </button>
             </div>
           </div>
         </div>
@@ -359,6 +366,11 @@ function goToVideo(id) {
   router.push({ name: 'video', params: { id } })
 }
 
+function playVideo(video) {
+  alert(`Iniciando reproducción directa del video: ${video.title}`)
+  // Aquí podrías navegar a una ruta de reproducción directa, por ejemplo:
+  // router.push({ name: 'player', params: { url: video.url } })
+}
 </script>
 
 <style scoped>

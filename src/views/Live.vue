@@ -29,7 +29,7 @@
               <span>Finalizar transmisión</span>
             </button>
             <button
-              @click="shareStream"
+              @click="openShareModal"
               class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2"
             >
               <ShareIcon class="w-4 h-4 text-blue-400" />
@@ -183,58 +183,54 @@
       </div>
 
       <!-- Controles -->
-      <div class="flex justify-center space-x-4 mb-2">
+      <div class="flex justify-center items-center space-x-3 mb-2">
         <button
           @click="toggleMic"
-          class="bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2"
+          :class="[
+            'p-3 rounded-full transition-all duration-200',
+            micAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500'
+          ]"
         >
-          <span>
-            <template v-if="micAct">
-              <MicrophoneIcon class="w-6 h-6 text-green-600" />
-            </template>
-            <template v-else>
-              <MicrophoneIcon class="w-6 h-6 text-red-400" />
-            </template>
-          </span>
+          <MicrophoneIcon class="w-6 h-6 text-white" />
         </button>
 
         <button
           @click="toggleCamara"
-          class="bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2"
+          :class="[
+            'p-3 rounded-full transition-all duration-200',
+            camaraAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500'
+          ]"
         >
           <template v-if="camaraAct">
-            <VideoCameraIcon class="w-6 h-6 text-green-600" />
+            <VideoCameraIcon class="w-6 h-6 text-white" />
           </template>
           <template v-else>
-            <VideoCameraSlashIcon class="w-6 h-6 text-red-400" />
+            <VideoCameraSlashIcon class="w-6 h-6 text-white" />
           </template>
         </button>
+
         <button
           @click="(togglePantalla(), shareScreen())"
-          class="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2"
+          :class="[
+            'p-3 rounded-full transition-all duration-200',
+            pantallaAct ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600'
+          ]"
         >
-          <template v-if="pantallaAct">
-            <ComputerDesktopIcon class="w-6 h-6 text-green-600" />
-          </template>
-          <template v-else>
-            <ComputerDesktopIcon class="w-6 h-6 text-gray-400" />
-          </template>
-
-          <template v-if="pantallAct"> <ComputerDesktopIcon class="w-6 h-6" /> aca </template>
+          <ComputerDesktopIcon class="w-6 h-6 text-white" />
         </button>
 
         <button
           @click="expandir"
-          class="bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2"
+          class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
         >
-          <ArrowsPointingOutIcon class="w-6 h-6 text-gray-300" />
+          <ArrowsPointingOutIcon class="w-6 h-6 text-white" />
         </button>
 
         <button
           @click="modalTest = true"
-          class="bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2"
+          class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
         >
-          <EllipsisHorizontalIcon class="w-5 h-5 text-gray-300" />
+          <EllipsisHorizontalIcon class="w-6 h-6 text-white" />
         </button>
       </div>
     </div>
@@ -253,47 +249,87 @@
           </template>
 
           <!-- Encuesta (renderizada como texto simple) -->
-          <template v-else-if="msg.tipo === 'encuesta'">
-            <div>
-              <strong>{{ msg.usuario }}:</strong>
-              Encuesta: {{ msg.pregunta }}
-              <span v-if="Array.isArray(msg.opciones)">
-                — Opciones: {{ msg.opciones.join(' / ') }}</span
-              >
+          <template v-else-if="msg.tipo === 'encuesta' && Array.isArray(msg.opciones)">
+            <div class="bg-gray-800 p-3 rounded-lg my-2">
+              <div class="font-semibold mb-3">
+                <ChartBarIcon class="w-5 h-5 inline-block mr-2 text-blue-400" />
+                {{ msg.pregunta }}
+              </div>
+              <div class="space-y-2">
+                <div v-for="(opcion, idx) in msg.opciones" :key="idx">
+                  <button
+                    @click="votePoll(msg.id, idx)"
+                    :class="[
+                      'w-full text-left p-2 rounded-md border transition-all flex items-center gap-3',
+                      msg.multiple
+                        ? (votedPolls[msg.id] || []).includes(idx) ? 'bg-blue-700 border-blue-500' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+                        : votedPolls[msg.id] === idx ? 'bg-blue-700 border-blue-500' : 'bg-gray-700 border-gray-600 hover:bg-gray-600',
+                      !msg.multiple && votedPolls[msg.id] !== undefined ? 'cursor-not-allowed' : 'cursor-pointer'
+                    ]"
+                    :disabled="!msg.multiple && votedPolls[msg.id] !== undefined"
+                  >
+                    <!-- Checkbox/Radio visual -->
+                    <div class="w-4 h-4 rounded-full border-2 flex-shrink-0" :class="[
+                      msg.multiple ? 'rounded-sm' : 'rounded-full',
+                      (msg.multiple ? (votedPolls[msg.id] || []).includes(idx) : votedPolls[msg.id] === idx)
+                        ? 'bg-blue-500 border-blue-400'
+                        : 'border-gray-500'
+                    ]"></div>
+
+                    <div class="flex justify-between items-center">
+                      <span>{{ opcion }}</span>
+                      <span v-if="msg.multiple ? (votedPolls[msg.id] || []).includes(idx) : votedPolls[msg.id] === idx" class="text-green-400">
+                        <CheckIcon class="w-4 h-4" />
+                      </span>
+                    </div>
+                  </button>
+                  <div v-if="votedPolls[msg.id] !== undefined" class="mt-1 flex items-center gap-2">
+                    <div class="w-full bg-gray-600 rounded-full h-1.5">
+                      <div class="bg-blue-500 h-1.5 rounded-full" :style="{ width: `${(msg.votos[idx] / (msg.votos.reduce((a, b) => a + b, 0) || 1)) * 100}%` }"></div>
+                    </div>
+                    <span class="text-xs text-gray-400">{{ Math.round((msg.votos[idx] / (msg.votos.reduce((a, b) => a + b, 0) || 1)) * 100) }}%</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </template>
 
           <!-- Ejercicio -->
           <template v-else-if="msg.tipo === 'ejercicio'">
-            <div class="bg-gray-800 p-3 rounded-lg">
-              <div class="font-semibold">{{ msg.title }}</div>
-              <div class="text-sm text-gray-300 mt-1">{{ msg.description }}</div>
-              <div v-if="msg.image" class="mt-2">
-                <img :src="msg.image" class="max-w-full rounded" />
+            <div class="bg-gray-800 rounded-lg my-2 overflow-hidden">
+              <div class="bg-gray-900/50 p-3 border-b border-gray-700">
+                <div class="font-semibold text-base">
+                  <PencilSquareIcon class="w-5 h-5 inline-block mr-2 text-yellow-400" />
+                  Ejercicio: {{ msg.title }}
+                </div>
               </div>
-              <div class="mt-2">
-                <button
-                  @click="toggleResponseInput(msg.id)"
-                  class="px-3 py-1 bg-blue-600 rounded text-sm"
-                >
-                  Responder
-                </button>
-              </div>
+              <div class="p-3 space-y-3">
+                <!-- Renderizado dinámico de contenido -->
+                <div v-for="(block, blockIdx) in msg.content" :key="blockIdx">
+                  <div v-if="block.type === 'text'" class="bg-gray-700/50 p-3 rounded-md space-y-3">
+                    <p class="text-gray-200 whitespace-pre-wrap">{{ block.question }}</p>
+                    
+                    <!-- Lista de respuestas -->
+                    <div v-if="block.responses && block.responses.length > 0" class="border-t border-gray-600/50 pt-2 space-y-2">
+                      <div v-for="(response, rIdx) in block.responses" :key="rIdx" class="text-xs">
+                        <strong class="text-blue-300">{{ response.user }}:</strong>
+                        <span class="text-gray-300">{{ response.text }}</span>
+                      </div>
+                    </div>
 
-              <div v-if="showResponse[msg.id]" class="mt-2">
-                <textarea
-                  v-model="responseText[msg.id]"
-                  rows="3"
-                  placeholder="Escribe tu respuesta"
-                  class="w-full px-3 py-2 rounded bg-gray-700 text-white outline-none max-h-40 overflow-y-auto"
-                ></textarea>
-                <div class="flex justify-end mt-2">
-                  <button
-                    @click="submitExerciseResponse(msg.id)"
-                    class="px-3 py-1 bg-green-600 rounded"
-                  >
-                    Enviar respuesta
-                  </button>
+                    <!-- Formulario para responder -->
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-model="responseText[`${msg.id}-${blockIdx}`]"
+                        type="text"
+                        placeholder="Escribe tu respuesta..."
+                        class="flex-1 px-3 py-1.5 rounded bg-gray-600 text-white outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        @keyup.enter="submitExerciseResponse(msg.id, blockIdx)"
+                      />
+                      <button @click="submitExerciseResponse(msg.id, blockIdx)" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">Enviar</button>
+                    </div>
+                  </div>
+                  <img v-if="block.type === 'image'" :src="block.src" class="max-w-full rounded-md mt-2" />
                 </div>
               </div>
             </div>
@@ -442,7 +478,6 @@
           </button>
         </div>
       </div>
-
       <!-- Aceptar -->
       <button
         @click="modalTest = false"
@@ -452,6 +487,179 @@
       </button>
     </div>
   </div>
+
+    <!-- Modal: Compartir -->
+    <div v-if="showShareModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-800 text-white rounded-xl w-full max-w-lg p-6 relative shadow-lg flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold">Compartir transmisión</h2>
+          <button @click="showShareModal = false" class="text-gray-400 hover:text-white">✖</button>
+        </div>
+
+        <!-- Link de transmisión y botones de redes -->
+        <div class="mb-4">
+          <label class="block mb-2 text-sm font-medium">Enlace de la transmisión</label>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              :value="streamLink"
+              readonly
+              class="flex-1 px-3 py-2 rounded-lg bg-gray-700 text-white cursor-not-allowed"
+            />
+            <button @click="copyLink" class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500">Copiar</button>
+          </div>
+        </div>
+        
+        <div class="flex justify-center mb-4">
+            <button @click="shareOnWhatsApp" class="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.487 5.235 3.487 8.413.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.731 6.086l.001.004 1.559 2.563-1.56 1.559-3.808 1.001 1.002-3.807z"/></svg>
+              WhatsApp
+            </button>
+        </div>
+
+        <div class="border-t border-gray-700 pt-4 flex-1 flex flex-col min-h-0">
+          <h3 class="text-md font-semibold mb-2">Compartir en la aplicación</h3>
+          
+          <!-- Pestañas -->
+          <div class="flex border-b border-gray-700 mb-2">
+            <button @click="shareTab = 'friends'" :class="['px-4 py-2 text-sm', shareTab === 'friends' ? 'border-b-2 border-blue-500 text-white' : 'text-gray-400']">Amigos</button>
+            <button @click="shareTab = 'groups'" :class="['px-4 py-2 text-sm', shareTab === 'groups' ? 'border-b-2 border-blue-500 text-white' : 'text-gray-400']">Grupos</button>
+          </div>
+
+          <!-- Contenido de Pestañas -->
+          <div class="flex-1 flex flex-col min-h-0">
+            <!-- Input búsqueda -->
+            <div class="mb-2">
+              <input
+                type="text"
+                :placeholder="`Buscar ${shareTab === 'friends' ? 'amigo' : 'grupo'}...`"
+                v-model="shareSearch"
+                class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <!-- Lista de amigos/grupos filtrados -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+              <div v-if="shareTab === 'friends'">
+                <div
+                  v-for="item in filteredFriends"
+                  :key="item.id"
+                  class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-700 cursor-pointer"
+                  @click="toggleShareTarget(item)"
+                >
+                  <div class="flex items-center gap-3">
+                    <img :src="item.avatar" class="w-8 h-8 rounded-full object-cover" />
+                    <span>{{ item.name }}</span>
+                  </div>
+                  <input type="checkbox" :checked="selectedShareTargets.some(t => t.id === item.id)" class="pointer-events-none rounded" />
+                </div>
+                <div v-if="filteredFriends.length === 0" class="text-gray-400 text-sm text-center py-4">No se encontraron amigos</div>
+              </div>
+
+              <div v-if="shareTab === 'groups'">
+                <div
+                  v-for="item in filteredGroups"
+                  :key="item.id"
+                  class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-700 cursor-pointer"
+                  @click="toggleShareTarget(item)"
+                >
+                  <div class="flex items-center gap-3">
+                    <img :src="item.foto" class="w-8 h-8 rounded-full object-cover" />
+                    <span>{{ item.nombre }}</span>
+                  </div>
+                  <input type="checkbox" :checked="selectedShareTargets.some(t => t.id === item.id)" class="pointer-events-none rounded" />
+                </div>
+                <div v-if="filteredGroups.length === 0" class="text-gray-400 text-sm text-center py-4">No se encontraron grupos</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-end space-x-2 mt-4 pt-4 border-t border-gray-700">
+          <button
+            @click="showShareModal = false"
+            class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500"
+          >
+            Cancelar
+          </button>
+          <button
+            @click="sendToSelected"
+            :disabled="selectedShareTargets.length === 0"
+            class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50"
+          >
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Crear Encuesta -->
+    <div
+      v-if="showSurveyModal"
+      class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4"
+    >
+      <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-md space-y-4 relative shadow-lg">
+        <h3 class="text-xl font-bold text-center">Crear Encuesta</h3>
+
+        <!-- Cerrar modal -->
+        <button
+          @click="showSurveyModal = false"
+          class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold"
+        >
+          ✖
+        </button>
+
+        <!-- Formulario de encuesta -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-300 mb-1">Pregunta</label>
+            <input
+              ref="surveyQuestionInput"
+              v-model="surveyQuestion"
+              type="text"
+              placeholder="Haz una pregunta..."
+              class="w-full px-3 py-2 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p v-if="surveyError" class="text-red-400 text-xs mt-1">{{ surveyError }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-300 mb-1">Opciones</label>
+            <div v-for="(opcion, index) in surveyOptions" :key="index" class="flex items-center space-x-2 mb-2">
+              <input
+                v-model="surveyOptions[index]"
+                type="text"
+                :placeholder="'Opción ' + (index + 1)"
+                class="flex-1 px-3 py-2 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button v-if="surveyOptions.length > 2" @click="removeSurveyOption(index)" class="text-gray-400 hover:text-red-400">
+                <XMarkIcon class="w-5 h-5" />
+              </button>
+            </div>
+            <button @click="addSurveyOption" class="mt-2 text-sm text-blue-400 hover:text-blue-300 font-semibold">
+              + Añadir opción
+            </button>
+          </div>
+        </div>
+        
+        <!-- Selección Múltiple -->
+        <div class="flex items-center space-x-2 pt-2">
+          <input type="checkbox" v-model="surveyMultipleChoice" id="multiple-choice-checkbox" class="w-4 h-4 rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600">
+          <label for="multiple-choice-checkbox" class="text-sm text-gray-300">Permitir selección múltiple</label>
+        </div>
+
+
+        <!-- Botones de acción -->
+        <div class="flex justify-end space-x-2 pt-2">
+          <button @click="showSurveyModal = false" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg">Cancelar</button>
+          <button @click="submitSurvey" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold">
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
 
 
     <!-- Modal de confirmación para finalizar stream -->
@@ -485,110 +693,77 @@
     v-if="showExerciseModal"
     class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
   >
-    <div
-      class="bg-gray-800 p-6 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto space-y-4"
-    >
-      <h3 class="text-2xl font-bold text-center">Crear Ejercicio</h3>
-
-      <div>
-        <label class="block text-sm text-gray-300">Título</label>
-        <input
-          v-model="exerciseTitle"
-          type="text"
-          placeholder="Título del ejercicio"
-          class="w-full mt-1 px-3 py-2 rounded bg-gray-700 outline-none text-white"
-        />
+    <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-xl flex flex-col shadow-lg">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-white">Crear Ejercicio</h3>
+        <button @click="showExerciseModal = false" class="text-gray-400 hover:text-white">✖</button>
       </div>
 
-      <div>
-        <label class="block text-sm text-gray-300">Descripción</label>
-        <textarea
-          v-model="exerciseDescription"
-          rows="3"
-          class="w-full mt-1 px-3 py-2 rounded bg-gray-700 outline-none text-white"
-          placeholder="Instrucciones o enunciado"
-        ></textarea>
+      <div class="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar max-h-[70vh]">
+        <!-- Título del Ejercicio -->
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Título</label>
+          <input
+            v-model="exerciseTitle"
+            type="text"
+            placeholder="Ej: Repaso de Álgebra"
+            class="w-full px-3 py-2 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <!-- Bloques de Contenido Dinámico -->
+        <div v-for="(block, index) in exerciseContent" :key="index" class="bg-gray-900/50 p-3 rounded-lg relative">
+          <!-- Botón para eliminar bloque -->
+          <button @click="exerciseContent.splice(index, 1)" class="absolute top-2 right-2 text-gray-500 hover:text-red-400">
+            <XMarkIcon class="w-4 h-4" />
+          </button>
+
+          <!-- Bloque de Texto/Pregunta -->
+          <div v-if="block.type === 'text'">
+            <label class="block text-xs text-gray-400 mb-1">Pregunta o Texto</label>
+            <textarea
+              v-model="block.question"
+              rows="2"
+              class="w-full px-3 py-2 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Escribe una pregunta o instrucción..."
+            ></textarea>
+          </div>
+
+          <!-- Bloque de Imagen -->
+          <div v-if="block.type === 'image'">
+            <label class="block text-xs text-gray-400 mb-1">Imagen</label>
+            <img :src="block.src" class="max-w-full max-h-60 rounded-md mx-auto" />
+          </div>
+        </div>
+
+        <!-- Input de archivo oculto -->
+        <input type="file" ref="fileInput" @change="handleExerciseFile" accept="image/*" class="hidden" />
       </div>
 
-      <div>
-        <label class="block text-sm text-gray-300">Imagen (subir archivo)</label>
-        <input
-          @change="handleExerciseFile"
-          type="file"
-          accept="image/*"
-          class="w-full mt-1 text-sm text-gray-300"
-        />
-        <div v-if="exerciseUploadProgress > 0 && exerciseUploadProgress < 100" class="mt-2">
-          <div class="w-full h-2 bg-gray-600 rounded">
-            <div
-              :style="{ width: exerciseUploadProgress + '%' }"
-              class="h-2 bg-gray-800 rounded"
-            ></div>
-          </div>
-          <div class="text-xs text-gray-400 mt-1">Subiendo... {{ exerciseUploadProgress }}%</div>
-        </div>
-        <div
-          v-if="exerciseImageData"
-          class="mt-2 flex flex-col sm:flex-row sm:items-start sm:space-x-4"
-        >
-          <div
-            class="max-w-full sm:max-w-xs rounded mb-2 sm:mb-0 overflow-y-auto max-h-[60vh] bg-black/30 p-1"
-          >
-            <img :src="exerciseImageData" class="max-w-full rounded" />
-          </div>
-          <div class="flex items-start space-x-2">
-            <button
-              @click="removeExerciseImage"
-              class="flex items-center space-x-2 bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg"
-            >
-              <TrashIcon class="w-4 h-4 text-white" />
-              <span class="text-white text-sm">Eliminar imagen</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-300">Preguntas</label>
-        <div class="space-y-2 mt-2">
-          <div v-for="(q, i) in exerciseQuestions" :key="i" class="flex items-center space-x-2">
-            <input
-              v-model="exerciseQuestions[i]"
-              type="text"
-              placeholder="Pregunta"
-              class="flex-1 px-3 py-2 rounded bg-gray-700 outline-none"
-            />
-            <button @click="removeExerciseQuestion(i)" class="px-2 py-1 bg-red-600 rounded text-sm">
-              Eliminar
-            </button>
-          </div>
-        </div>
-        <button @click="addExerciseQuestion" class="mt-2 px-3 py-1 bg-blue-600 rounded">
-          Añadir pregunta
+      <!-- Acciones para añadir bloques -->
+      <div class="mt-4 pt-4 border-t border-gray-700 flex flex-wrap gap-2">
+        <button @click="addContentBlock('text')" class="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition-colors">
+          <PencilSquareIcon class="w-5 h-5" />
+          Añadir Pregunta
+        </button>
+        <button @click="addContentBlock('image')" class="flex items-center gap-2 text-sm bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg transition-colors">
+          <PhotoIcon class="w-5 h-5" />
+          Añadir Imagen
         </button>
       </div>
 
-      <div class="flex justify-end space-x-2">
-        <button
-          @click="showExerciseModal = false"
-          class="bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2"
-        >
-          <XMarkIcon class="w-4 h-4 text-white" />
-          <span class="text-white">Cancelar</span>
+      <!-- Botones de Envío/Cancelación -->
+      <div class="flex justify-end space-x-2 mt-6">
+        <button @click="showExerciseModal = false" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg">
+          Cancelar
         </button>
         <button
           @click.prevent="submitExercise"
           :disabled="isSendingExercise"
-          :class="{
-            'opacity-60 cursor-not-allowed': isSendingExercise,
-            'bg-green-600 hover:bg-green-700': !isSendingExercise,
-          }"
-          class="px-4 py-2 rounded-lg flex items-center space-x-2"
+          :class="{ 'opacity-60 cursor-not-allowed': isSendingExercise, 'bg-blue-600 hover:bg-blue-700': !isSendingExercise }"
+          class="px-4 py-2 rounded-lg font-semibold"
         >
-          <PlusCircleIcon class="w-4 h-4 text-white" />
-          <span class="text-white">{{
-            isSendingExercise ? 'Enviando...' : 'Enviar ejercicio'
-          }}</span>
+          {{ isSendingExercise ? 'Enviando...' : 'Enviar Ejercicio' }}
         </button>
       </div>
     </div>
@@ -612,10 +787,14 @@ import {
   TrashIcon,
   EyeIcon,
   UserGroupIcon,
+  ShareIcon,
+  UserIcon,
+  ChevronRightIcon,
+  PhotoIcon,
 } from '@heroicons/vue/24/solid'
 
 import router from '@/router'
-import { ref, onUnmounted, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, onUnmounted, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
 
 const miniVideoRef = ref(null)
 let stream = null
@@ -677,35 +856,6 @@ function confirmEndStream() {
   router.push({ name: 'dashboard' })
 }
 
-function shareStream() {
-  showOptionsMenu.value = false //
-
-  alert('Funcionalidad de compartir no implementada.')
-}
-
-
-
-// Modales para ejercicios
-const showExerciseModal = ref(false)
-
-// Encuesta (modal tipo WhatsApp)
-const showSurveyModal = ref(false)
-const surveyQuestion = ref('')
-const surveyOptions = ref(['', ''])
-const surveyError = ref('')
-const surveyQuestionInput = ref(null)
-
-// focus input cuando se abre el modal
-watch(showSurveyModal, async (val) => {
-  if (val) {
-    await nextTick()
-    if (surveyQuestionInput.value && surveyQuestionInput.value.focus)
-      surveyQuestionInput.value.focus()
-  } else {
-    surveyError.value = ''
-  }
-})
-
 function addSurveyOption() {
   surveyOptions.value.push('')
 }
@@ -739,7 +889,7 @@ function submitSurvey() {
       pregunta: q,
       opciones: opts,
       votos: opts.map(() => 0),
-      multiple: false,
+      multiple: surveyMultipleChoice.value,
     }
 
     // close modal first to avoid any UI blocking
@@ -751,6 +901,7 @@ function submitSurvey() {
     // limpiar
     surveyQuestion.value = ''
     surveyOptions.value = ['', '']
+    surveyMultipleChoice.value = false
   } catch (err) {
     console.error('submitSurvey error:', err)
     try {
@@ -760,22 +911,34 @@ function submitSurvey() {
   }
 }
 
+function resetSurveyModal() {
+  showSurveyModal.value = false
+  surveyQuestion.value = ''
+  surveyOptions.value = ['', '']
+  surveyError.value = ''
+  surveyMultipleChoice.value = false
+  showSurveyModal.value = false
+}
+
 // Ejercicio
 const exerciseTitle = ref('')
 const exerciseDescription = ref('')
 const exerciseImage = ref('')
 const exerciseImageData = ref('')
-const exerciseQuestions = ref([''])
+const exerciseQuestions = ref(['']) // Mantenido por si se necesita en otro lugar.
+const exerciseContent = ref([{ type: 'text', question: '', responses: [] }])
 
 // bandera para enviar ejercicio (evita doble click/confusión con encuesta)
 const isSendingExercise = ref(false)
 
-function addExerciseQuestion() {
-  exerciseQuestions.value.push('')
-}
+const fileInput = ref(null)
 
-function removeExerciseQuestion(i) {
-  if (exerciseQuestions.value.length > 1) exerciseQuestions.value.splice(i, 1)
+function addContentBlock(type) {
+  if (type === 'image') {
+    fileInput.value.click()
+  } else {
+    exerciseContent.value.push({ type: 'text', question: '', responses: [] })
+  }
 }
 
 function submitExercise() {
@@ -784,22 +947,29 @@ function submitExercise() {
   isSendingExercise.value = true
   try {
     const preguntas = exerciseQuestions.value.filter(Boolean)
+    const content = exerciseContent.value.filter(block => {
+      if (block.type === 'text') {
+        return block.question.trim();
+      }
+      return block.type === 'image';
+    });
+
+    if (content.length === 0) {
+      alert('El ejercicio debe tener al menos una pregunta o imagen.');
+      return;
+    }
+
     const id = nextMessageId.value++
     chat.value.push({
       id,
       tipo: 'ejercicio',
       usuario: 'Docente',
       title: exerciseTitle.value,
-      description: exerciseDescription.value,
-      image: exerciseImageData.value || null,
-      preguntas,
+      content: content, // Usamos la nueva estructura de contenido
     })
     // limpiar y cerrar
     exerciseTitle.value = ''
-    exerciseDescription.value = ''
-    exerciseImage.value = ''
-    exerciseImageData.value = ''
-    exerciseQuestions.value = ['']
+    exerciseContent.value = [{ type: 'text', question: '', responses: [] }]
     showExerciseModal.value = false
   } finally {
     isSendingExercise.value = false
@@ -847,16 +1017,93 @@ function toggleResponseInput(id) {
   if (!responseText.value[id]) responseText.value[id] = ''
 }
 
-function submitExerciseResponse(id) {
-  const text = (responseText.value[id] || '').trim()
+function submitExerciseResponse(exerciseId, blockIndex) {
+  const responseKey = `${exerciseId}-${blockIndex}`;
+  const text = (responseText.value[responseKey] || '').trim()
   if (!text) return alert('Escribe una respuesta')
+
+  const exercise = chat.value.find(msg => msg.id === exerciseId);
+  if (!exercise) return;
+
+  // Calcular el número de pregunta real, contando solo los bloques de texto.
+  let questionNumber = 0;
+  for (let i = 0; i <= blockIndex; i++) {
+    if (exercise.content[i].type === 'text') {
+      questionNumber++;
+    }
+  }
+
   chat.value.push({
     id: nextMessageId.value++,
     usuario: 'Alumno',
-    mensaje: `Respuesta al ejercicio ${id}: ${text}`,
+    mensaje: `Respuesta a la pregunta #${questionNumber} del ejercicio: ${text}`,
   })
-  responseText.value[id] = ''
-  showResponse.value[id] = false
+  // Limpiar el campo de texto para esa pregunta específica
+  responseText.value[responseKey] = ''
+}
+
+// Lógica para compartir
+const showShareModal = ref(false)
+const streamLink = ref('https://edustream.app/live/xyz-123') // Enlace falso
+const shareTab = ref('friends') // 'friends' o 'groups'
+const shareSearch = ref('')
+const selectedShareTargets = ref([])
+
+// Datos simulados de amigos y grupos
+const friendsList = ref([
+  { id: 'friend-1', name: 'Laura García', tipo: 'friend', avatar: 'https://i.pravatar.cc/100?img=6' },
+  { id: 'friend-2', name: 'José Martínez', tipo: 'friend', avatar: 'https://i.pravatar.cc/100?img=15' },
+])
+const groupsList = ref([
+  { id: 'group-1', nombre: 'LIN - 3', tipo: 'group', foto: 'https://ui-avatars.com/api/?name=LIN' },
+  { id: 'group-2', nombre: 'WEB - 1', tipo: 'group', foto: 'https://ui-avatars.com/api/?name=WEB' },
+])
+
+const filteredFriends = computed(() => {
+  if (!shareSearch.value) return friendsList.value
+  return friendsList.value.filter(f => f.name.toLowerCase().includes(shareSearch.value.toLowerCase()))
+})
+
+const filteredGroups = computed(() => {
+  if (!shareSearch.value) return groupsList.value
+  return groupsList.value.filter(g => g.nombre.toLowerCase().includes(shareSearch.value.toLowerCase()))
+})
+
+function openShareModal() {
+  showOptionsMenu.value = false
+  showShareModal.value = true
+  // Resetear estado del modal de compartir
+  shareSearch.value = ''
+  selectedShareTargets.value = []
+  shareTab.value = 'friends'
+}
+
+function toggleShareTarget(target) {
+  const index = selectedShareTargets.value.findIndex(t => t.id === target.id)
+  if (index > -1) {
+    selectedShareTargets.value.splice(index, 1)
+  } else {
+    selectedShareTargets.value.push(target)
+  }
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(streamLink.value).then(() => {
+    alert('Enlace copiado al portapapeles')
+  })
+}
+
+function shareOnWhatsApp() {
+  const message = `¡Únete a mi transmisión en vivo! ${streamLink.value}`
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`
+  window.open(whatsappUrl, '_blank')
+}
+
+function sendToSelected() {
+  if (selectedShareTargets.value.length === 0) return
+  const targetNames = selectedShareTargets.value.map(t => t.name || t.nombre).join(', ')
+  alert(`Enlace enviado a: ${targetNames}`)
+  showShareModal.value = false
 }
 
 // File upload with progress for exercise image
@@ -866,14 +1113,13 @@ function handleExerciseFile(e) {
   const file = e.target.files && e.target.files[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onprogress = (ev) => {
-    if (ev.lengthComputable) {
-      exerciseUploadProgress.value = Math.round((ev.loaded / ev.total) * 100)
-    }
-  }
   reader.onload = (ev) => {
-    exerciseImageData.value = ev.target.result
-    exerciseUploadProgress.value = 100
+    exerciseContent.value.push({
+      type: 'image',
+      src: ev.target.result
+    });
+    // Reset file input so the same file can be selected again
+    e.target.value = '';
   }
   reader.readAsDataURL(file)
 }
@@ -1091,6 +1337,19 @@ async function shareScreen() {
 ::-webkit-scrollbar-thumb {
   background: #000000;
   border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1f2937; /* bg-gray-800 */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563; /* bg-gray-600 */
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* bg-gray-500 */
 }
 
 </style>
