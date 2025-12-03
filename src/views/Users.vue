@@ -1,12 +1,8 @@
 <template>
   <div class="flex-col h-screen p-3 bg-gray-800">
-    <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold text-gray-200">Gestión de Usuarios</h1>
     </div>
-
-    <!-- Buscador -->
-
     <div class="mb-[8vh] flex items-center justify-between mb-4">
       <input
         type="text"
@@ -22,7 +18,6 @@
       </button>
     </div>
 
-    <!-- Tabla -->
     <table class="min-w-full border border-gray-700 rounded-lg overflow-hidden">
       <thead class="bg-gray-800 text-gray-300 uppercase text-sm">
         <tr>
@@ -35,15 +30,18 @@
 
       <tbody class="bg-gray-900 text-gray-200 divide-y divide-gray-700">
         <tr v-for="user in paginatedUsers" :key="user.id" class="hover:bg-gray-800 transition">
-          <td class="px-6 py-3">{{ user.nombre }}</td>
-          <td class="px-6 py-3">{{ user.correo }}</td>
-          <td class="px-6 py-3">{{ user.rol }}</td>
+          <td class="px-6 py-3">{{ user.name }}</td>
+          <td class="px-6 py-3">{{ user.email }}</td>
+          <td class="px-6 py-3">{{ roles[user.rol-1] }}</td>
           <td class="px-6 py-3 text-center">
             <div class="flex justify-center items-center space-x-3">
               <button class="text-blue-500 hover:text-blue-700" @click="editarUsuario(user.id)">
                 <PencilIcon class="h-5 w-5" />
               </button>
-              <button class="text-red-500 hover:text-red-700" @click="eliminarUsuarioModal(user.id)">
+              <button
+                class="text-red-500 hover:text-red-700"
+                @click="eliminarUsuarioModal(user.id)"
+              >
                 <TrashIcon class="h-5 w-5" />
               </button>
 
@@ -113,7 +111,7 @@
               <div>
                 <label class="block text-gray-300 mb-1">Nombre</label>
                 <input
-                  v-model="newUser.nombre"
+                  v-model="newUser.name"
                   type="text"
                   placeholder="Nombre completo"
                   class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -124,7 +122,7 @@
               <div>
                 <label class="block text-gray-300 mb-1">Correo</label>
                 <input
-                  v-model="newUser.correo"
+                  v-model="newUser.email"
                   type="email"
                   placeholder="correo@example.com"
                   class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -140,9 +138,9 @@
                   required
                 >
                   <option value="">Selecciona un rol</option>
-                  <option value="Administrador">Administrador</option>
-                  <option value="Docente">Docente</option>
-                  <option value="Estudiante">Estudiante</option>
+                  <option value="1">Administrador</option>
+                  <option value="2">Docente</option>
+                  <option value="3">Estudiante</option>
                 </select>
               </div>
             </div>
@@ -187,7 +185,7 @@
               <div>
                 <label class="block text-gray-300 mb-1">Nombre</label>
                 <input
-                  v-model="updateUser.nombre"
+                  v-model="updateUser.name"
                   type="text"
                   placeholder="Nombre completo"
                   class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -198,7 +196,7 @@
               <div>
                 <label class="block text-gray-300 mb-1">Correo</label>
                 <input
-                  v-model="updateUser.correo"
+                  v-model="updateUser.email"
                   type="email"
                   placeholder="correo@example.com"
                   class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -214,9 +212,9 @@
                   required
                 >
                   <option value="">Selecciona un rol</option>
-                  <option value="Administrador">Administrador</option>
-                  <option value="Docente">Docente</option>
-                  <option value="Estudiante">Estudiante</option>
+                  <option value="1">Administrador</option>
+                  <option value="2">Docente</option>
+                  <option value="3">Estudiante</option>
                 </select>
               </div>
             </div>
@@ -267,109 +265,179 @@
   />
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script>
 import { PencilIcon, TrashIcon, LockClosedIcon } from '@heroicons/vue/24/outline'
 import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
-const users = ref([
-  { id: 1, nombre: 'Ana Pérez', correo: 'ana@gmail.com', rol: 'Administrador', status: true },
-  { id: 2, nombre: 'Carlos Gómez', correo: 'carlos@gmail.com', rol: 'Docente', status: true },
-  { id: 3, nombre: 'Lucía Torres', correo: 'lucia@gmail.com', rol: 'Estudiante', status: false },
-  { id: 4, nombre: 'Mario López', correo: 'mario@gmail.com', rol: 'Estudiante', status: true },
-  { id: 5, nombre: 'Laura Méndez', correo: 'laura@gmail.com', rol: 'Docente', status: false },
-  { id: 6, nombre: 'Pedro Ramírez', correo: 'pedro@gmail.com', rol: 'Administrador', status: true },
-])
-const addUserModal = ref(false)
-const editUserModal = ref(false)
-const removeUserModal = ref(false)
-// Nuevo usuario
+import api from '@/services/api.js'
 
-const idUser = ref(null)
-const newUser = ref({
-  nombre: '',
-  correo: '',
-  rol: '',
-})
-const updateUser = ref(newUser)
-const guardarUsuario = () => {
-  const id = users.value.length ? users.value[users.value.length - 1].id + 1 : 1
-  users.value.push({ ...newUser.value, id })
+export default {
+  components: {
+    ConfirmationComponent,
+    PencilIcon,
+    TrashIcon,
+    LockClosedIcon,
+  },
 
-  addToast('Usuario agregado correctamente', 'success')
-  newUser.value = { nombre: '', correo: '', rol: '' }
-  addUserModal.value = false
-}
+  data() {
+    return {
+      users: [],
+      roles: ['Administrador', 'Docente', 'Estudiante'],
+      addUserModal: false,
+      editUserModal: false,
+      removeUserModal: false,
+      idUser: null,
+      newUser: {
+        name: '',
+        email: '',
+        rol: '',
+        status: true,
+      },
+      updateUser: {},
+      search: '',
+      currentPage: 1,
+      perPage: 8,
+      toasts: [],
+    }
+  },
 
-function modificarUsuario() {
-  const index = users.value.findIndex((u) => u.id === updateUser.value.id)
-  if (index !== -1) {
-    users.value[index] = { ...updateUser.value }
-    addToast('Usuario modificado correctamente', 'success')
-    editUserModal.value = false
-  }
-}
-// Filtrado
-const search = ref('')
+  computed: {
+    filteredUsers() {
+      return this.users.filter(
+        (u) =>
+          u.name.toLowerCase().includes(this.search.toLowerCase()) ||
+          u.email.toLowerCase().includes(this.search.toLowerCase()) ||
+          u.rol.toLowerCase().includes(this.search.toLowerCase()),
+      )
+    },
 
-// Paginación
-const currentPage = ref(1)
-const perPage = 8
+    totalPages() {
+      return Math.ceil(this.filteredUsers.length / this.perPage)
+    },
 
-const filteredUsers = computed(() => {
-  return users.value.filter(
-    (u) =>
-      u.nombre.toLowerCase().includes(search.value.toLowerCase()) ||
-      u.correo.toLowerCase().includes(search.value.toLowerCase()) ||
-      u.rol.toLowerCase().includes(search.value.toLowerCase()),
-  )
-})
+    paginatedUsers() {
+      const start = (this.currentPage - 1) * this.perPage
+      const end = start + this.perPage
+      return this.filteredUsers.slice(start, end)
+    },
+  },
 
-const totalPages = computed(() => Math.ceil(filteredUsers.value.length / perPage))
+  mounted() {
+    this.loadUsers()
+  },
+  methods: {
+    async loadUsers() {
+      try {
+        const response = await api.get('/users')
+        const temp = response.data.data // ⚡ Axios ya convierte a JSON
+        this.users = temp.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          rol: u.rol,
+          status: u.status,
+        }))
+      } catch (error) {
+        this.addToast('Error al cargar los usuarios', 'error')
+      }
+    },
 
-const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * perPage
-  const end = start + perPage
-  return filteredUsers.value.slice(start, end)
-})
+    async guardarUsuario() {
+      try{
+        const response = await api.post('/user', {
+          name: this.newUser.name,
+          email: this.newUser.email,
+          password: this.newUser.email, // Asignar una contraseña por defecto o generar una
+          rol: this.newUser.rol,
+          photo: '/images/user-default.png'
+        })
+        if(response.status === 200){
+          this.addToast('Usuario agregado correctamente', 'success')
+        } else {
+          this.addToast('Error al agregar el usuario', 'error')
+        }
+        const id = response.data.data.id
+        this.users.push({ ...this.newUser, id })
+      
+        this.newUser = { name: '', email: '', rol: '', status: true }
+        this.addUserModal = false
+      }catch(error){
+        this.addToast('Error al agregar el usuario', 'error')
+      }
+    },
 
-const editarUsuario = (id) => {
-  const user = users.value.find((u) => u.id === id)
-  editUserModal.value = true
-  updateUser.value = { ...user }
-}
+    async modificarUsuario() {
+      try {
+        await api.put(`/user/${this.updateUser.id}`, {
+          name: this.updateUser.name,
+          email: this.updateUser.email,
+          rol: this.updateUser.rol,
+        })
+        const index = this.users.findIndex((u) => u.id === this.updateUser.id)
+      
+        if (index !== -1) {
+          this.users[index] = { ...this.updateUser }
+          this.addToast('Usuario modificado correctamente', 'success')
+          this.editUserModal = false
+        }
+      } catch (error) {
+        this.addToast('Error al modificar el usuario', 'error')
+      }
+      
+    },
 
-function lockUser(id) {
-  const user = users.value.find((u) => u.id === id)
-  user.status = !user.status
+    editarUsuario(id) {
+      const user = this.users.find((u) => u.id === id)
+      this.updateUser = { ...user }
+      this.editUserModal = true
+    },
 
-  const statusMessage = user.status ? 'desbloqueado' : 'bloqueado'
-  addToast(`Usuario ${statusMessage} correctamente`, 'info')
-}
+    async lockUser(id) {
+      try{
+        const response = await api.get('/user/lock-unlock/'+id)
+        if(response.status == 200){
+          const user = this.users.find((u) => u.id === id)
+          user.status = !user.status
+          const statusMessage = user.status ? 'desbloqueado' : 'bloqueado'
+          this.addToast(`Usuario ${statusMessage} correctamente`, 'info')
+        }else{
+          this.addToast('Error al bloquear/desploquear usuario','error');
+        }
+      }catch(error){
 
+      }
+    },
 
+    eliminarUsuarioModal(id) {
+      this.idUser = id
+      this.removeUserModal = true
+    },
 
-const toasts = ref([])
+    async eliminarUsuario() {
+      this.users = this.users.filter((u) => u.id !== this.idUser)
+      this.removeUserModal = false
+      try{
+        const response = await api.delete(`/user/${this.idUser}`)
+        if(response.status === 200){
+          this.addToast('Usuario eliminado correctamente', 'success')
+        } else {
+          this.addToast('Error al eliminar el usuario', 'error')
+        }
+      }catch(error){
+        this.addToast('Error al eliminar el usuario', 'error')
+      }
+    },
 
-const addToast = (message, type = 'info', duration = 3000) => {
-  const id = Date.now()
-  toasts.value.push({ id, message, type })
+    addToast(message, type = 'info', duration = 3000) {
+      const id = Date.now()
+      this.toasts.push({ id, message, type })
+      setTimeout(() => {
+        this.removeToast(id)
+      }, duration)
+    },
 
-  setTimeout(() => {
-    removeToast(id)
-  }, duration)
-}
-
-
-function eliminarUsuarioModal(id) {
-  removeUserModal.value = true
-  idUser.value = id
-}
-function eliminarUsuario() {
-  removeUserModal.value = false
-  users.value = users.value.filter((u) => u.id !== idUser.value)
-  addToast('Usuario eliminado correctamente', 'success')
-}
-const removeToast = (id) => {
-  toasts.value = toasts.value.filter((t) => t.id !== id)
+    removeToast(id) {
+      this.toasts = this.toasts.filter((t) => t.id !== id)
+    },
+  },
 }
 </script>

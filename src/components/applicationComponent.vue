@@ -9,8 +9,10 @@
           :key="tab.id"
           @click="currentTab = tab.id"
           :class="[
-            'text-left px-4 py-2 hover:bg-gray-800 transition',
-            currentTab === tab.id ? 'bg-gray-800 text-blue-400' : 'text-gray-300',
+            'text-left px-4 py-2 transition-all duration-200 border-l-4',
+            currentTab === tab.id
+              ? 'bg-gray-700 text-white border-blue-500'
+              : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent',
           ]"
         >
           {{ tab.name }}
@@ -91,7 +93,7 @@
               />
               <div>
                 <p class="font-medium">{{ request.name }}</p>
-                <p class="text-xs text-gray-400">{{ request.mutualFriends }} amigos en común</p>
+                <span> correo: {{ request.email || 'No disponible' }} </span>
               </div>
             </div>
 
@@ -113,6 +115,51 @@
         </div>
 
         <p v-else class="text-gray-400">No tienes solicitudes pendientes 💤</p>
+      </section>
+
+      <section v-if="currentTab === 'nuevos'">
+        <h2 class="text-2xl font-semibold mb-4">Nuevos amigos</h2>
+
+        <div class="mb-4">
+          <input
+            type="text"
+            v-model="searchQuery2"
+            placeholder="Buscar amigo..."
+            class="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div v-if="filteredFriends2.length" class="space-y-3">
+          <div
+            v-for="newFriends in filteredFriends2"
+            :key="newFriends.id"
+            class="flex items-center justify-between bg-gray-800 p-3 rounded-lg hover:bg-gray-700 transition"
+          >
+            <div class="flex items-center gap-3">
+              <!-- 🔹 Clic en la foto abre el modal -->
+              <img
+                :src="newFriends.avatar"
+                alt="avatar"
+                class="w-10 h-10 rounded-full border border-gray-600 cursor-pointer hover:scale-105 transition"
+              />
+              <div>
+                <p class="font-medium">{{ newFriends.name }}</p>
+                <span> correo: {{ newFriends.email || 'No disponible' }} </span>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button
+                class="text-red-400 hover:text-blue-500 text-sm"
+                @click="sendRequest(newFriends.id)"
+              >
+                <TrashIcon class="h-5 w-5" />
+                Enviar solicitud
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p v-else class="text-gray-400">No se encontro</p>
       </section>
     </main>
 
@@ -161,117 +208,140 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
-import {  TrashIcon, ChatBubbleLeftIcon  } from '@heroicons/vue/24/outline'
+<script>
+import { TrashIcon, ChatBubbleLeftIcon } from '@heroicons/vue/24/outline'
 import router from '@/router'
+import api from '@/services/api.js'
 
-/* 🔹 Tabs del sidebar */
-const tabs = [
-  { id: 'amigos', name: 'Amigos' },
-  { id: 'solicitudes', name: 'Solicitudes' },
-]
+export default {
+  name: 'FriendsComponent',
 
-const currentTab = ref('amigos')
-
-/* 👥 Datos simulados */
-const friends = ref([
-  {
-    id: 1,
-    name: 'Laura García',
-    avatar: 'https://i.pravatar.cc/100?img=6',
-    online: true,
-    email: 'laura.garcia@email.com',
-    city: 'Madrid',
-    since: '2023',
+  components: {
+    TrashIcon,
+    ChatBubbleLeftIcon,
   },
-  {
-    id: 2,
-    name: 'José Martínez',
-    avatar: 'https://i.pravatar.cc/100?img=15',
-    online: false,
-    email: 'jose.martinez@email.com',
-    city: 'Buenos Aires',
-    since: '2022',
+
+  data() {
+    return {
+      tabs: [
+        { id: 'amigos', name: 'Amigos' },
+        { id: 'solicitudes', name: 'Solicitudes' },
+        { id: 'nuevos', name: 'Nuevos' },
+      ],
+      currentTab: 'amigos',
+      friends: [],
+      newFriends: [],
+      friendRequests: [],
+      searchQuery: '',
+      searchQuery2: '',
+      showProfileModal: false,
+      selectedFriend: {},
+    }
   },
-  {
-    id: 3,
-    name: 'Sofía Fernández',
-    avatar: 'https://i.pravatar.cc/100?img=12',
-    online: true,
-    email: 'sofia.fernandez@email.com',
-    city: 'La Paz',
-    since: '2024',
-  },
-])
 
-const friendRequests = ref([
-  {
-    id: 1,
-    name: 'Ana López',
-    avatar: 'https://i.pravatar.cc/100?img=5',
-    mutualFriends: 3,
-  },
-  {
-    id: 2,
-    name: 'Carlos Ruiz',
-    avatar: 'https://i.pravatar.cc/100?img=8',
-    mutualFriends: 1,
-  },
-])
-
-/* 🔎 Buscador */
-const searchQuery = ref('')
-const filteredFriends = computed(() => {
-  const query = searchQuery.value.toLowerCase()
-  return friends.value.filter((f) => f.name.toLowerCase().includes(query))
-})
-
-/* ✅ Aceptar solicitud */
-const acceptRequest = (request) => {
-  friendRequests.value = friendRequests.value.filter((r) => r.id !== request.id)
-  friends.value.push({
-    id: request.id,
-    name: request.name,
-    avatar: request.avatar,
-    online: true,
-    email: 'nuevo.amigo@email.com',
-    city: 'Ciudad desconocida',
-    since: '2025',
-  })
-}
-
-/* ❌ Rechazar solicitud */
-const declineRequest = (id) => {
-  friendRequests.value = friendRequests.value.filter((r) => r.id !== id)
-}
-
-/* 🗑️ Eliminar amigo */
-const removeFriend = (id) => {
-  friends.value = friends.value.filter((f) => f.id !== id)
-}
-
-/* 👤 Modal de perfil */
-const showProfileModal = ref(false)
-const selectedFriend = ref({})
-
-const openProfile = (friend) => {
-  selectedFriend.value = friend
-  showProfileModal.value = true
-}
-
-// Abrir chat con un amigo: navega a la vista de chats pasando datos por query
-function chatFriend(id) {
-  const friend = friends.value.find((f) => f.id === id)
-  if (!friend) return
-  router.push({
-    name: 'chats',
-    query: {
-      openName: friend.name,
-      openEmail: friend.email,
-      openAvatar: friend.avatar,
+  computed: {
+    filteredFriends() {
+      const query = this.searchQuery.toLowerCase()
+      return this.friends.filter((f) => f.name.toLowerCase().includes(query))
     },
-  })
+    filteredFriends2() {
+      const query = this.searchQuery2.toLowerCase()
+      return this.newFriends.filter((f) => f.name.toLowerCase().includes(query))
+    },
+  },
+  mounted() {
+    this.loadFriends()
+    this.loadRequests()
+    this.loadNewFriends()
+  },
+  methods: {
+    async loadFriends() {
+      try {
+        const response = await api.get('/friends')
+        const temp = response.data.data
+        this.friends = temp.map((u) => ({
+          id: u.id,
+          name: u.name,
+          avatar: u.photo,
+          email: u.email,
+          online: u.online,
+        }))
+      } catch (error) {
+        console.error('Error al cargar amigos:', error)
+      }
+    },
+    async loadRequests() {
+      try {
+        const response = await api.get('/requests')
+        const temp = response.data.data
+        this.friendRequests = temp.map((u) => ({
+          id: u.id,
+          name: u.name,
+          avatar: u.photo,
+          email: u.email,
+        }))
+      } catch (error) {
+        console.error('Error al cargar solicitudes de amistad:', error)
+      }
+    },
+
+    async loadNewFriends() {
+      try {
+        const response = await api.get('/new-friends')
+        const temp = response.data.data
+        this.newFriends = temp.map((u) => ({
+          id: u.id,
+          name: u.name,
+          avatar: u.photo,
+          email: u.email,
+        }))
+      } catch (error) {
+        console.error('Error al cargar nuevos de amistad:', error)
+      }
+    },
+
+    async acceptRequest(request) {
+      try {
+        const response = await api.post(`/requests/accept`, { id: request.id })
+        this.loadFriends()
+        this.friendRequests = this.friendRequests.filter((r) => r.id !== request.id)
+      } catch (error) {
+        console.error('Error al aceptar la solicitud de amistad:', error)
+      }
+    },
+
+    async declineRequest(id) {
+      try {
+        const response = await api.post(`requests/deny`, { id: id })
+        this.friendRequests = this.friendRequests.filter((r) => r.id !== id)
+      } catch (error) {
+        console.error('Error al rechazar la solicitud de amistad:', error)
+      }
+    },
+
+    removeFriend(id) {
+      this.friends = this.friends.filter((f) => f.id !== id)
+    },
+
+    openProfile(friend) {
+      this.selectedFriend = friend
+      this.showProfileModal = true
+    },
+
+    chatFriend(id) {
+      const friend = this.friends.find((f) => f.id === id)
+      if (!friend) return
+
+      router.push({
+        name: 'chats',
+        query: {
+          openName: friend.name,
+          openEmail: friend.email,
+          openAvatar: friend.avatar,
+        },
+      })
+    },
+  },
 }
 </script>
 

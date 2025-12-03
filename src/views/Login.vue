@@ -14,10 +14,11 @@
         <form @submit.prevent="login">
           <div class="flex flex-col gap-4">
             <input
-              type="text"
+              type="email"
               v-model="username"
               placeholder="Usuario"
               class="px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
 
             <input
@@ -25,6 +26,7 @@
               v-model="password"
               placeholder="Contraseña"
               class="px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
 
             <button
@@ -48,19 +50,27 @@
 
 <script setup>
 import { ref } from 'vue'
-
 import { useRouter } from 'vue-router'
 import UserImg from '@/assets/login.png'
-
+import api from '@/services/api'
 const username = ref('')
 const password = ref('')
 const router = useRouter()
 
-function login() {
-  if (username.value === 'admin' && password.value === 'admin') {
+async function login() {
+  try {
+    const response = await api.post('/login', {
+      email: username.value,
+      password: password.value,
+    })
+    const token = response.data.token
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(response.data.user))
     router.push('/dashboard')
-  } else {
-    alert('Credenciales incorrectas')
+  } catch (error) {
+    username.value = password.value = ''
+    console.log(error)
+    //router.push('/login')
   }
 }
 </script>
@@ -70,7 +80,6 @@ function login() {
   max-width: 300px;
   margin: auto;
 }
-
 
 .banner {
   position: relative;
@@ -93,5 +102,5 @@ function login() {
   position: relative;
   z-index: 1; /* texto sobre el fondo */
   color: white; /* opcional */
-} 
+}
 </style>

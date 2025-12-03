@@ -9,7 +9,9 @@
           @click="currentTab = currentTab === tab.id ? null : tab.id"
           :class="[
             'text-left px-4 py-2 transition-all duration-200 border-l-4',
-            currentTab === tab.id ? 'bg-gray-700 text-white border-blue-500' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent',
+            currentTab === tab.id
+              ? 'bg-gray-700 text-white border-blue-500'
+              : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent',
           ]"
         >
           {{ tab.name }}
@@ -72,6 +74,7 @@
               </div>
             </div>
           </div>
+
           <p v-else class="text-gray-400">No hay transmisiones programadas.</p>
         </div>
       </section>
@@ -87,14 +90,19 @@
           >
             <div class="relative cursor-pointer" @click="playVideo(video)">
               <img :src="video.thumbnail" alt="thumbnail" class="w-full h-48 object-cover" />
-              <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div
+                class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
                 <PlayIcon class="w-16 h-16 text-white/80" />
               </div>
             </div>
             <div class="p-4">
               <h4 class="font-semibold text-lg mb-2">{{ video.title }}</h4>
               <p class="text-gray-400 text-sm">{{ video.date }}</p>
-              <button @click.stop="goToVideo(video.id)" class="mt-3 text-sm text-blue-400 hover:text-blue-300 font-semibold">
+              <button
+                @click.stop="goToVideo(video.id)"
+                class="mt-3 text-sm text-blue-400 hover:text-blue-300 font-semibold"
+              >
                 Ver más
               </button>
             </div>
@@ -179,7 +187,7 @@
   </div>
 
   <!-- Modal overlay -->
-   
+
   <div
     v-if="shareTransmision"
     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -249,127 +257,136 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { ShareIcon, PencilIcon, TrashIcon, PlayIcon } from '@heroicons/vue/24/solid'
 import VideoPlayer from '@/components/video/VideoPlayerComponent.vue'
 import router from '@/router'
-import { ref } from 'vue'
-
-const currentTab = ref('programadas')
-const tabs = [
-  { id: 'programadas', name: 'Programadas' },
-  { id: 'pasadas', name: 'Pasadas' },
-]
-
-const transmisiones = ref([])
-const shareTransmision = ref(false)
-
-const abrirFormulario = ref(false)
-
-const nuevaTrans = ref({
-  titulo: '',
-  descripcion: '',
-  categoria: '',
-  fechaHora: '',
-})
-const pastStreams = [
-  {
-    id: 1,
-    title: 'Clase de Matemáticas - Álgebra',
-    url: '/videos/matematicas-algebra.mp4',
-    date: '10 de Noviembre, 2025',
+import api from '@/services/api.js'
+export default {
+  components: {
+    VideoPlayer,
+    ShareIcon,
+    PencilIcon,
+    TrashIcon,
+    PlayIcon,
   },
-  {
-    id: 2,
-    title: 'Conferencia de Física - Termodinámica',
-    url: '/videos/fisica-termodinamica.mp4',
-    date: '08 de Noviembre, 2025',
+
+  data() {
+    return {
+      currentTab: 'programadas',
+      tabs: [
+        { id: 'programadas', name: 'Programadas' },
+        { id: 'pasadas', name: 'Pasadas' },
+      ],
+      transmisiones: [],
+      shareTransmision: false,
+      abrirFormulario: false,
+      nuevaTrans: {
+        titulo: '',
+        descripcion: '',
+        categoria: '',
+        fechaHora: '',
+      },
+      pastStreams: [
+        {
+          id: 1,
+          title: 'Clase de Matemáticas - Álgebra',
+          url: '/videos/matematicas-algebra.mp4',
+          date: '10 de Noviembre, 2025',
+        },
+      ],
+      grupos: [
+        { id: 1, nombre: 'Grupo A' },
+        { id: 2, nombre: 'Grupo B' },
+        { id: 3, nombre: 'Grupo C' },
+        { id: 4, nombre: 'Grupo D' },
+      ],
+
+      selectedGrupos: [],
+      search: '',
+      linkTransmision: 'https://miapp.com/transmision/abc123',
+    }
   },
-  {
-    id: 3,
-    title: 'Taller de Programación - Vue.js',
-    url: '/videos/vuejs-taller.mp4',
-    date: '05 de Noviembre, 2025',
+  computed: {
+    filteredGrupos() {
+      return grupos.value.filter((g) => g.nombre.toLowerCase().includes(search.value.toLowerCase()))
+    },
   },
-]
-// Guardar nueva transmisión
-function guardarTransmision() {
-  transmisiones.value.push({ ...nuevaTrans.value })
-  // Limpiar formulario
-  nuevaTrans.value = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
-  abrirFormulario.value = false
-}
+  mounted() {
+    this.loadTransmissions()
+  },
+  methods: {
+    async loadTransmissions() {
+      try {
+        alert('eje')
+        const response = await api.get('/transmissions')
+        console.log(response)
+        const temp = response.data.data
 
-// Editar transmisión (simple ejemplo)
-function editarTransmision(index) {
-  const trans = transmisiones.value[index]
-  nuevaTrans.value = { ...trans }
-  abrirFormulario.value = true
-  // Eliminamos la antigua para reemplazar al guardar
-  transmisiones.value.splice(index, 1)
-}
+        this.transmisiones = temp.map((u) => ({
+          id: u.id,
+          titulo: u.name,
+          descripcion: u.description,
+          categoria: ((u.type == 0)? 'Privado' : 'Publico') ,
+          fechaHora: u.date_t + ' '+ u.time_t,
+          status : u.status,
+          link: u.link
+        }))
+      } catch (error) {
+        console.log('Error al cargar los t' + error)
+      }
+    },
+    guardarTransmision() {
+      transmisiones.value.push({ ...nuevaTrans.value })
+      // Limpiar formulario
+      nuevaTrans.value = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
+      abrirFormulario.value = false
+    },
 
-// Eliminar transmisión
-function eliminarTransmision(index) {
-  if (confirm('¿Deseas eliminar esta transmisión?')) {
-    transmisiones.value.splice(index, 1)
-  }
-}
+    // Editar transmisión (simple ejemplo)
+    editarTransmision(index) {
+      const trans = transmisiones.value[index]
+      nuevaTrans.value = { ...trans }
+      abrirFormulario.value = true
+      // Eliminamos la antigua para reemplazar al guardar
+      transmisiones.value.splice(index, 1)
+    },
 
-function compartirTransmision(trans) {
-  shareTransmision = !shareTransmision
-}
+    // Eliminar transmisión
+    eliminarTransmision(index) {
+      if (confirm('¿Deseas eliminar esta transmisión?')) {
+        transmisiones.value.splice(index, 1)
+      }
+    },
 
-import { computed } from 'vue'
+    compartirTransmision(trans) {
+      shareTransmision = !shareTransmision
+    },
+    toggleGrupo(id) {
+      if (selectedGrupos.value.includes(id)) {
+        selectedGrupos.value = selectedGrupos.value.filter((g) => g !== id)
+      } else {
+        selectedGrupos.value.push(id)
+      }
+    },
 
-// Control del modal
+    enviarTransmision() {
+      alert(`Enviando link a grupos: ${selectedGrupos.value.join(', ')}`)
+      shareTransmision.value = false
+      selectedGrupos.value = []
+      search.value = ''
+    },
+    goToVideo(id) {
+      alert(`Navegando a video con ID: ${id}`)
+      router.push({ name: 'video', params: { id } })
+    },
 
-// Lista de grupos (ejemplo)
-const grupos = ref([
-  { id: 1, nombre: 'Grupo A' },
-  { id: 2, nombre: 'Grupo B' },
-  { id: 3, nombre: 'Grupo C' },
-  { id: 4, nombre: 'Grupo D' },
-])
-
-// Selección y búsqueda
-const selectedGrupos = ref([])
-const search = ref('')
-
-// Link de transmisión
-const linkTransmision = ref('https://miapp.com/transmision/abc123')
-
-// Filtrar grupos según búsqueda
-const filteredGrupos = computed(() => {
-  return grupos.value.filter((g) => g.nombre.toLowerCase().includes(search.value.toLowerCase()))
-})
-
-// Seleccionar o deseleccionar grupo
-function toggleGrupo(id) {
-  if (selectedGrupos.value.includes(id)) {
-    selectedGrupos.value = selectedGrupos.value.filter((g) => g !== id)
-  } else {
-    selectedGrupos.value.push(id)
-  }
-}
-
-// Función para "enviar" la transmisión
-function enviarTransmision() {
-  alert(`Enviando link a grupos: ${selectedGrupos.value.join(', ')}`)
-  shareTransmision.value = false
-  selectedGrupos.value = []
-  search.value = ''
-}
-
-function goToVideo(id) {
-  alert(`Navegando a video con ID: ${id}`)
-  router.push({ name: 'video', params: { id } })
-}
-
-function playVideo(video) {
-  alert(`Iniciando reproducción directa del video: ${video.title}`)
-  // Aquí podrías navegar a una ruta de reproducción directa, por ejemplo:
-  // router.push({ name: 'player', params: { url: video.url } })
+    playVideo(video) {
+      alert(`Iniciando reproducción directa del video: ${video.title}`)
+      // Aquí podrías navegar a una ruta de reproducción directa, por ejemplo:
+      // router.push({ name: 'player', params: { url: video.url } })
+    },
+  },
 }
 </script>
 
