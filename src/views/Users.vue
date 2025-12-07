@@ -32,7 +32,7 @@
         <tr v-for="user in paginatedUsers" :key="user.id" class="hover:bg-gray-800 transition">
           <td class="px-6 py-3">{{ user.name }}</td>
           <td class="px-6 py-3">{{ user.email }}</td>
-          <td class="px-6 py-3">{{ roles[user.rol-1] }}</td>
+          <td class="px-6 py-3">{{ roles[user.rol - 1] }}</td>
           <td class="px-6 py-3 text-center">
             <div class="flex justify-center items-center space-x-3">
               <button class="text-blue-500 hover:text-blue-700" @click="editarUsuario(user.id)">
@@ -309,7 +309,6 @@ export default {
           u.rol.toLowerCase().includes(this.search.toLowerCase()),
       )
     },
-
     totalPages() {
       return Math.ceil(this.filteredUsers.length / this.perPage)
     },
@@ -342,25 +341,25 @@ export default {
     },
 
     async guardarUsuario() {
-      try{
+      try {
         const response = await api.post('/user', {
           name: this.newUser.name,
           email: this.newUser.email,
           password: this.newUser.email, // Asignar una contraseña por defecto o generar una
           rol: this.newUser.rol,
-          photo: '/images/user-default.png'
+          photo: '/images/user-default.png',
         })
-        if(response.status === 200){
+        if (response.status === 200) {
           this.addToast('Usuario agregado correctamente', 'success')
         } else {
           this.addToast('Error al agregar el usuario', 'error')
         }
         const id = response.data.data.id
         this.users.push({ ...this.newUser, id })
-      
+
         this.newUser = { name: '', email: '', rol: '', status: true }
         this.addUserModal = false
-      }catch(error){
+      } catch (error) {
         this.addToast('Error al agregar el usuario', 'error')
       }
     },
@@ -373,7 +372,7 @@ export default {
           rol: this.updateUser.rol,
         })
         const index = this.users.findIndex((u) => u.id === this.updateUser.id)
-      
+
         if (index !== -1) {
           this.users[index] = { ...this.updateUser }
           this.addToast('Usuario modificado correctamente', 'success')
@@ -382,7 +381,6 @@ export default {
       } catch (error) {
         this.addToast('Error al modificar el usuario', 'error')
       }
-      
     },
 
     editarUsuario(id) {
@@ -392,19 +390,17 @@ export default {
     },
 
     async lockUser(id) {
-      try{
-        const response = await api.get('/user/lock-unlock/'+id)
-        if(response.status == 200){
+      try {
+        const response = await api.get('/user/lock-unlock/' + id)
+        if (response.status == 200) {
           const user = this.users.find((u) => u.id === id)
           user.status = !user.status
           const statusMessage = user.status ? 'desbloqueado' : 'bloqueado'
           this.addToast(`Usuario ${statusMessage} correctamente`, 'info')
-        }else{
-          this.addToast('Error al bloquear/desploquear usuario','error');
+        } else {
+          this.addToast('Error al bloquear/desploquear usuario', 'error')
         }
-      }catch(error){
-
-      }
+      } catch (error) {}
     },
 
     eliminarUsuarioModal(id) {
@@ -415,14 +411,14 @@ export default {
     async eliminarUsuario() {
       this.users = this.users.filter((u) => u.id !== this.idUser)
       this.removeUserModal = false
-      try{
+      try {
         const response = await api.delete(`/user/${this.idUser}`)
-        if(response.status === 200){
+        if (response.status === 200) {
           this.addToast('Usuario eliminado correctamente', 'success')
         } else {
           this.addToast('Error al eliminar el usuario', 'error')
         }
-      }catch(error){
+      } catch (error) {
         this.addToast('Error al eliminar el usuario', 'error')
       }
     },

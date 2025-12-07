@@ -48,30 +48,37 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script>
 import UserImg from '@/assets/login.png'
 import api from '@/services/api'
-const username = ref('')
-const password = ref('')
-const router = useRouter()
+import router from '@/router' // <-- FALTABA ESTO
 
-async function login() {
-  try {
-    const response = await api.post('/login', {
-      email: username.value,
-      password: password.value,
-    })
-    const token = response.data.token
-    localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(response.data.user))
-    router.push('/dashboard')
-  } catch (error) {
-    username.value = password.value = ''
-    console.log(error)
-    //router.push('/login')
-  }
+export default {
+  data() {
+    return {
+      username: '',
+      password: '',
+    }
+  },
+  methods: {
+    async login() {
+      try {
+        const response = await api.post('/login', {
+          email: this.username,
+          password: this.password,
+        })
+        const token = response.data.token
+        localStorage.setItem('token', token)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+
+        router.push('/dashboard')
+      } catch (error) {
+        username.value = password.value = ''
+        console.log(error)
+        //router.push('/login')
+      }
+    },
+  },
 }
 </script>
 

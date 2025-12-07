@@ -72,7 +72,7 @@
           </div>
         </div>
 
-        <p v-else class="text-gray-400">No se encontraron amigos 😅</p>
+        <p v-else class="text-gray-400">No se encontraron amigos</p>
       </section>
 
       <!-- 📨 Sección: Solicitudes de amistad -->
@@ -147,13 +147,54 @@
                 <span> correo: {{ newFriends.email || 'No disponible' }} </span>
               </div>
             </div>
-            <div class="flex gap-2">
+
+            <div class="flex gap-2 text-center">
               <button
-                class="text-red-400 hover:text-blue-500 text-sm"
+                class="text-blue-400 hover:text-blue-500 text-sm flex items-center justify-center gap-1"
                 @click="sendRequest(newFriends.id)"
               >
-                <TrashIcon class="h-5 w-5" />
-                Enviar solicitud
+                <UserPlusIcon class="w-5 h-5" />
+                <span>Enviar solicitud</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p v-else class="text-gray-400">No se encontro</p>
+      </section>
+
+      <section v-if="currentTab === 'solicitudesEnvadas'">
+        <h2 class="text-2xl font-semibold mb-4">Solicitudes enviadas</h2>
+
+        <div v-if="myRequests.length" class="space-y-3">
+          <div
+            v-for="friend in myRequests"
+            :key="friend.id"
+            class="flex items-center justify-between bg-gray-800 p-3 rounded-lg hover:bg-gray-700 transition"
+          >
+            <div class="flex items-center gap-3">
+              <img
+                :src="friend.avatar"
+                alt="avatar"
+                class="w-10 h-10 rounded-full border border-gray-600 cursor-pointer hover:scale-105 transition"
+              />
+              <div>
+                <p class="font-medium">{{ friend.name }}</p>
+                <span> correo: {{ friend.email || 'No disponible' }} </span>
+              </div>
+            </div>
+
+            <div class="flex gap-2 text-center">
+              <button
+                class="text-blue-400 hover:text-blue-500 text-sm flex items-center justify-center gap-1"
+                @click="sendRequest(friend.id)"
+              >
+                <UserPlusIcon class="w-5 h-5" />
+                <div>
+                  <p v-if="friend.status === 1">S. Enviada</p>
+                  <p v-else-if="friend.status === 2">S. Aceptada</p>
+                  <p v-else>Rechazada</p>
+                </div>
               </button>
             </div>
           </div>
@@ -162,54 +203,11 @@
         <p v-else class="text-gray-400">No se encontro</p>
       </section>
     </main>
-
-    <!-- 🟦 Modal de información del perfil -->
-    <div
-      v-if="showProfileModal"
-      class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-    >
-      <div class="bg-gray-800 rounded-lg shadow-lg w-80 p-6 relative">
-        <!-- Botón cerrar -->
-        <button
-          class="absolute top-2 right-3 text-gray-400 hover:text-white"
-          @click="showProfileModal = false"
-        >
-          ✕
-        </button>
-
-        <div class="flex flex-col items-center">
-          <img
-            :src="selectedFriend.avatar"
-            alt="avatar"
-            class="w-20 h-20 rounded-full border-2 border-blue-400 mb-3"
-          />
-          <h3 class="text-xl font-semibold">{{ selectedFriend.name }}</h3>
-          <p
-            class="text-sm mb-4"
-            :class="selectedFriend.online ? 'text-green-400' : 'text-gray-400'"
-          >
-            {{ selectedFriend.online ? 'En línea' : 'Desconectado' }}
-          </p>
-
-          <div class="text-sm text-gray-300 space-y-2 w-full">
-            <p>
-              <span class="font-semibold">Correo:</span>
-              {{ selectedFriend.email || 'No disponible' }}
-            </p>
-            <p>
-              <span class="font-semibold">Ciudad:</span>
-              {{ selectedFriend.city || 'No especificada' }}
-            </p>
-            <p><span class="font-semibold">Desde:</span> {{ selectedFriend.since || '2024' }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
-import { TrashIcon, ChatBubbleLeftIcon } from '@heroicons/vue/24/outline'
+import { ChatBubbleLeftIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 import router from '@/router'
 import api from '@/services/api.js'
 
@@ -217,7 +215,7 @@ export default {
   name: 'FriendsComponent',
 
   components: {
-    TrashIcon,
+    UserPlusIcon,
     ChatBubbleLeftIcon,
   },
 
@@ -227,11 +225,13 @@ export default {
         { id: 'amigos', name: 'Amigos' },
         { id: 'solicitudes', name: 'Solicitudes' },
         { id: 'nuevos', name: 'Nuevos' },
+        { id: 'solicitudesEnvadas', name: 'Solicitudes enviadas' },
       ],
       currentTab: 'amigos',
       friends: [],
       newFriends: [],
       friendRequests: [],
+      myRequests: [],
       searchQuery: '',
       searchQuery2: '',
       showProfileModal: false,
@@ -253,8 +253,25 @@ export default {
     this.loadFriends()
     this.loadRequests()
     this.loadNewFriends()
+    this.allMyRequests()
   },
   methods: {
+    async allMyRequests() {
+      try {
+        const response = await api.get('/myRequests')
+        const temp = response.data.data
+        this.myRequests = temp.map((u) => ({
+          id: u.id,
+          name: u.name,
+          avatar: u.photo,
+          email: u.email,
+          online: u.online,
+          status: u.status_r
+        }))
+      } catch (error) {
+        console.log('Error al cargar solicitudes:', error)
+      }
+    },
     async loadFriends() {
       try {
         const response = await api.get('/friends')
@@ -289,6 +306,7 @@ export default {
       try {
         const response = await api.get('/new-friends')
         const temp = response.data.data
+        console.log('Nuevos amigos:', temp)
         this.newFriends = temp.map((u) => ({
           id: u.id,
           name: u.name,
@@ -319,8 +337,28 @@ export default {
       }
     },
 
+    async sendRequest(id) {
+      try {
+        const response = await api.post('send-request/' + id)
+        this.loadNewFriends()
+        this.allMyRequests()
+        alert('solicitud enviada')
+      } catch (error) {
+        alert('error')
+      }
+    },
     removeFriend(id) {
-      this.friends = this.friends.filter((f) => f.id !== id)
+      try {
+        const response = api.delete(`friend/${id}`)
+        if (response.data) {
+          alert('Amigo eliminado exitosamente')
+          this.loadFriends()
+        } else {
+          alert('Error al eliminar el amigo')
+        }
+      } catch (e) {
+        alert('Error al eliminar amigo ' + e)
+      }
     },
 
     openProfile(friend) {
@@ -328,7 +366,19 @@ export default {
       this.showProfileModal = true
     },
 
-    chatFriend(id) {
+    async chatFriend(id) {
+      alert('Iniciando chat con ID: ' + id)
+      try {
+        const response = await api.post(`/chat/${id}`)
+        if (response.data) {
+          alert('Chat iniciado exitosamente')
+        } else {
+          alert('Error al iniciar el chat')
+        }
+      } catch (e) {
+        alert('Error al iniciar el chat ' + e)
+      }
+      /*
       const friend = this.friends.find((f) => f.id === id)
       if (!friend) return
 
@@ -339,7 +389,7 @@ export default {
           openEmail: friend.email,
           openAvatar: friend.avatar,
         },
-      })
+      })*/
     },
   },
 }
