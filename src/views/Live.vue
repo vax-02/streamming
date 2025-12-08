@@ -851,6 +851,12 @@ function handleEndStream() {
   showEndStreamConfirm.value = true
 }
 
+const showSurveyModal = ref(false)
+const surveyQuestion = ref('')
+const surveyOptions = ref(['', ''])
+const surveyMultipleChoice = ref(false)
+const surveyError = ref('')
+
 function confirmEndStream() {
   showEndStreamConfirm.value = false
   router.push({ name: 'dashboard' })
