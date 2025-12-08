@@ -309,7 +309,7 @@ export default {
   },
   computed: {
     filteredGrupos() {
-      return grupos.value.filter((g) => g.nombre.toLowerCase().includes(search.value.toLowerCase()))
+      return this.grupos.filter((g) => g.nombre.toLowerCase().includes(this.search.toLowerCase()))
     },
   },
   mounted() {
@@ -318,7 +318,6 @@ export default {
   methods: {
     async loadTransmissions() {
       try {
-        alert('eje')
         const response = await api.get('/transmissions')
         console.log(response)
         const temp = response.data.data
@@ -337,36 +336,36 @@ export default {
       }
     },
     guardarTransmision() {
-      transmisiones.value.push({ ...nuevaTrans.value })
+      this.transmisiones.push({ ...this.nuevaTrans })
       // Limpiar formulario
-      nuevaTrans.value = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
-      abrirFormulario.value = false
+      this.nuevaTrans = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
+      this.abrirFormulario = false
     },
 
     // Editar transmisión (simple ejemplo)
     editarTransmision(index) {
-      const trans = transmisiones.value[index]
-      nuevaTrans.value = { ...trans }
-      abrirFormulario.value = true
+      const trans = this.transmisiones[index]
+      this.nuevaTrans = { ...trans }
+      this.abrirFormulario = true
       // Eliminamos la antigua para reemplazar al guardar
-      transmisiones.value.splice(index, 1)
+      this.transmisiones.splice(index, 1)
     },
 
     // Eliminar transmisión
     eliminarTransmision(index) {
       if (confirm('¿Deseas eliminar esta transmisión?')) {
-        transmisiones.value.splice(index, 1)
+        this.transmisiones.splice(index, 1)
       }
     },
 
     compartirTransmision(trans) {
-      shareTransmision = !shareTransmision
+      this.shareTransmision = !this.shareTransmision
     },
     toggleGrupo(id) {
-      if (selectedGrupos.value.includes(id)) {
-        selectedGrupos.value = selectedGrupos.value.filter((g) => g !== id)
+      if (this.selectedGrupos.includes(id)) {
+        this.selectedGrupos = this.selectedGrupos.filter((g) => g !== id)
       } else {
-        selectedGrupos.value.push(id)
+        this.selectedGrupos.push(id)
       }
     },
 
