@@ -165,7 +165,6 @@
 
       <section v-if="currentTab === 'solicitudesEnvadas'">
         <h2 class="text-2xl font-semibold mb-4">Solicitudes enviadas</h2>
-
         <div v-if="myRequests.length" class="space-y-3">
           <div
             v-for="friend in myRequests"
@@ -187,13 +186,20 @@
             <div class="flex gap-2 text-center">
               <button
                 class="text-blue-400 hover:text-blue-500 text-sm flex items-center justify-center gap-1"
-                @click="sendRequest(friend.id)"
               >
-                <UserPlusIcon class="w-5 h-5" />
-                <div>
-                  <p v-if="friend.status === 1">S. Enviada</p>
-                  <p v-else-if="friend.status === 2">S. Aceptada</p>
-                  <p v-else>Rechazada</p>
+                <div class="flex items-center justify-center gap-2">
+                  <UserPlusIcon
+                    class="w-5 h-5"
+                    :class="{
+                      'text-blue-500': friend.status === 1, // Solicitud enviada
+                      'text-green-500': friend.status === 2, // Aceptada
+                      'text-red-500': friend.status !== 1 && friend.status !== 2, // Rechazada u otro estado
+                    }"
+                  />
+
+                  <p v-if="friend.status === 1" class="text-blue-500">S. Enviada</p>
+                  <p v-else-if="friend.status === 2" class="text-green-500">S. Aceptada</p>
+                  <p v-else class="text-red-500">Rechazada</p>
                 </div>
               </button>
             </div>
@@ -266,7 +272,7 @@ export default {
           avatar: u.photo,
           email: u.email,
           online: u.online,
-          status: u.status_r
+          status: u.status_r,
         }))
       } catch (error) {
         console.log('Error al cargar solicitudes:', error)
@@ -330,10 +336,10 @@ export default {
 
     async declineRequest(id) {
       try {
-        const response = await api.post(`requests/deny`, { id: id })
+        const response = await api.post(`/requests/deny`, { id: id })
         this.friendRequests = this.friendRequests.filter((r) => r.id !== id)
       } catch (error) {
-        console.error('Error al rechazar la solicitud de amistad:', error)
+        alert('Error al rechazar la solicitud de amistad:', error)
       }
     },
 
@@ -367,29 +373,19 @@ export default {
     },
 
     async chatFriend(id) {
-      alert('Iniciando chat con ID: ' + id)
       try {
         const response = await api.post(`/chat/${id}`)
         if (response.data) {
           alert('Chat iniciado exitosamente')
+          router.push({
+            name: 'chats',
+          })
         } else {
           alert('Error al iniciar el chat')
         }
       } catch (e) {
         alert('Error al iniciar el chat ' + e)
       }
-      /*
-      const friend = this.friends.find((f) => f.id === id)
-      if (!friend) return
-
-      router.push({
-        name: 'chats',
-        query: {
-          openName: friend.name,
-          openEmail: friend.email,
-          openAvatar: friend.avatar,
-        },
-      })*/
     },
   },
 }

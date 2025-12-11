@@ -1,36 +1,38 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white">
-    <aside class="w-[15%] bg-gray-800 p-4 flex flex-col space-y-4">
-      <h2 class="text-lg font-bold mb-4 text-center">Opciones</h2>
-      <router-link
-        :to="{ name: 'profile' }"
-        class="flex items-center space-x-2 p-2 rounded-md font-semibold text-white hover:bg-blue-600 transition"
-        active-class="bg-blue-600 text-white"
-        exact-active-class="bg-blue-500 text-white"
-      >
-        <UserCircleIcon class="h-6 w-6" />
-        <span>Perfil</span>
-      </router-link>
+    <aside class="w-[15%] bg-gray-800 flex flex-col space-y-4">
+      <h2 class="text-lg font-bold p-4 border-b border-gray-800">Opciones</h2>
+      <nav class="flex flex-col">
+        <router-link
+          :to="{ name: 'profile' }"
+          class="flex items-center gap-2 text-left px-4 py-2 transition-all duration-200 border-l-4 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent"
+          active-class="bg-gray-700 text-white border-blue-500"
+          exact-active-class="bg-blue-500 text-white"
+        >
+          <UserCircleIcon class="h-6 w-6" />
+          <span>Perfil</span>
+        </router-link>
 
-      <router-link
-        :to="{ name: 'security' }"
-        class="flex items-center space-x-2 p-2 rounded-md font-semibold text-white hover:bg-blue-600 transition"
-        active-class="bg-blue-600 text-white"
-        exact-active-class="bg-blue-500 text-white"
-      >
-        <ShieldCheckIcon class="h-6 w-6" />
-        <span> Seguridad y Privacidad </span>
-      </router-link>
+        <router-link
+          :to="{ name: 'security' }"
+          class="flex items-center gap-2 text-left px-4 py-2 transition-all duration-200 border-l-4 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent"
+          active-class="bg-gray-700 text-white border-blue-500"
+          exact-active-class="bg-blue-500 text-white"
+        >
+          <ShieldCheckIcon class="h-6 w-6" />
+          <span> Seguridad y Privacidad </span>
+        </router-link>
 
-      <router-link
-        :to="{ name: 'notifications' }"
-        class="flex items-center space-x-2 p-2 rounded-md font-semibold text-white hover:bg-blue-600 transition"
-        active-class="bg-blue-600 text-white"
-        exact-active-class="bg-blue-500 text-white"
-      >
-        <PlayCircleIcon class="h-6 w-6" />
-        <span> Reproduccion y contenido </span>
-      </router-link>
+        <router-link
+          :to="{ name: 'notifications' }"
+          class="flex items-center gap-2 text-left px-4 py-2 transition-all duration-200 border-l-4 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent"
+          active-class="bg-gray-700 text-white border-blue-500"
+          exact-active-class="bg-blue-500 text-white"
+        >
+          <PlayCircleIcon class="h-6 w-6" />
+          <span> Reproduccion y contenido </span>
+        </router-link>
+      </nav>
     </aside>
 
     <div class="flex-1 bg-gray-900 overflow-y-auto">

@@ -10,7 +10,8 @@
       <router-link
         :to="{ name: 'statistics' }"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-600 text-white"
+        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
+
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
@@ -21,7 +22,8 @@
       <router-link
         :to="{ name: 'users' }"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-600 text-white"
+        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
+
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
@@ -32,7 +34,7 @@
       <router-link
         :to="{ name: 'application' }"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-600 text-white"
+        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
@@ -43,7 +45,7 @@
       <router-link
         :to="{ name: 'chats' }"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-600 text-white"
+        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
@@ -54,7 +56,7 @@
       <router-link
         :to="{ name: 'groups' }"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-600 text-white"
+        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
@@ -65,7 +67,7 @@
       <router-link
         :to="{ name: 'transmitions' }"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-600 text-white"
+        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
@@ -76,7 +78,7 @@
       <router-link
         :to="{ name: 'settings' }"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-600 text-white"
+        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
@@ -87,7 +89,7 @@
       <button
         @click="logout"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-600 text-white"
+        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">

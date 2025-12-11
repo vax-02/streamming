@@ -98,15 +98,15 @@
           <div
             v-for="(msg, i) in chatSeleccionado.mensajes"
             :key="i"
-            :class="msg.enviado ? 'text-right' : 'text-left'"
+            :class="msg.sender_id == userData.id ? 'text-right' : 'text-left'"
           >
             <div
               :class="[
                 'inline-block px-3 py-2 rounded-xl text-sm max-w-[70%]',
-                msg.enviado ? 'bg-blue-600 ml-auto' : 'bg-gray-700',
+                msg.sender_id == userData.id ? 'bg-blue-600 ml-auto' : 'bg-gray-700',
               ]"
             >
-              {{ msg.texto }}
+              {{ msg.message }}
             </div>
           </div>
         </div>
@@ -154,7 +154,7 @@
           <div class="relative">
             <input
               type="text"
-              placeholder="Buscar contacto..."
+              placeholder="Buscar amigo..."
               class="w-full pl-10 pr-3 py-2 rounded-lg bg-gray-700 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               v-model="searchContact"
             />
@@ -175,7 +175,7 @@
           </div>
         </div>
 
-        <!-- Lista de contactos -->
+        <!-- Lista de friends -->
         <ul class="max-h-64 overflow-y-auto px-6 space-y-1">
           <li
             v-for="contacto in filteredContacts"
@@ -196,7 +196,7 @@
             </div>
           </li>
           <li v-if="filteredContacts.length === 0" class="text-gray-400 text-center py-4">
-            No se encontraron contactos
+            No se encontraron friends
           </li>
         </ul>
 
@@ -229,12 +229,12 @@
           class="w-24 h-24 rounded-full object-cover mx-auto mb-4"
         />
         <h2 class="text-center text-xl font-semibold mb-1">{{ chatSeleccionado.nombre }}</h2>
-        <p class="text-center text-gray-400 mb-4">En línea</p>
+        <p class="text-center text-gray-400 mb-4">
+          {{ chatSeleccionado.online ? 'En Línea' : 'Fuera de Línea' }}
+        </p>
 
         <div class="text-gray-300">
-          <p><strong>Email:</strong> juan@example.com</p>
-          <p><strong>Teléfono:</strong> +123456789</p>
-          <p><strong>Estado:</strong> Disponible</p>
+          <p><strong>Email:</strong> {{ chatSeleccionado.email }}</p>
         </div>
       </div>
     </transition>
@@ -265,27 +265,27 @@ export default {
 
       addChatModal: false,
       searchContact: '',
-      contactos: [{ nombre: 'Ana López', email: 'ana@example.com' }],
+      friends: [{ id: 1, nombre: 'Ana López', email: 'ana@example.com' }],
     }
   },
 
   computed: {
     filteredContacts() {
-      if (!this.searchContact) return this.contactos
+      if (!this.searchContact) return this.friends
       const q = this.searchContact.toLowerCase()
 
-      return this.contactos.filter(
+      return this.friends.filter(
         (c) => c.nombre.toLowerCase().includes(q) || c.email.toLowerCase().includes(q),
       )
     },
   },
 
   mounted() {
-    //socket.emit('joinChat', 4)
     const route = useRoute()
     this.handleOpenContactQuery(route.query)
     this.loadChats()
     this.connectToUserChats()
+    this.loadFriends()
   },
   methods: {
     async connectToUserChats() {
@@ -304,6 +304,22 @@ export default {
           })
 
           console.log("Emitido 'initial room connections' con las salas:", rooms)
+
+          //Escucha de mensajes de llegada
+          socket.on('newMessage', (dataMessage) => {
+            console.log('Nuevo mensaje recibido', dataMessage.message, dataMessage.id_chat)
+            const chat = this.chats.find((c) => c.id === dataMessage.id_chat)
+            if (chat) {
+              chat.mensajes.push({
+                message: dataMessage.message,
+                sender_id: 1,
+                recibido: true,
+              })
+              if (this.chatSeleccionado?.id !== chat.id) {
+                chat.nuevos = (chat.nuevos || 0) + 1
+              }
+            }
+          })
         }
       } catch (error) {
         console.error('Error al obtener y conectar a las salas:', error)
@@ -315,18 +331,34 @@ export default {
         const temp = response.data.data
         this.chats = temp.map((u) => ({
           id: u.id,
+          email: u.email,
+          online: u.online,
           nombre: u.name,
           mensaje: '¿Revisaste el proyecto?',
           nuevos: 2,
           foto: u.photo,
-          mensajes: [
+          mensajes: u.messages,
+          /*[
             { texto: 'Hola 😄', enviado: false },
             { texto: '¿Revisaste el proyecto?', enviado: false },
             { texto: 'Sí, te paso el link ahora.', enviado: true },
-          ],
+          ],*/
         }))
       } catch (error) {
         console.log('Error al cargar solicitudes:', error)
+      }
+    },
+    async loadFriends() {
+      try {
+        const response = await api.get('/listNewChat')
+        this.friends = response.data.data.map((u) => ({
+          id: u.id,
+          nombre: u.name,
+          email: u.email,
+          foto: u.photo,
+        }))
+      } catch (error) {
+        console.log('Error al cargar friends:', error)
       }
     },
     seleccionarChat(chat) {
@@ -337,13 +369,13 @@ export default {
       if (!this.nuevoMensaje.trim()) return
       socket.emit('sendMessage', {
         id_chat: id,
-        senderId: this.userData.id, 
+        senderId: this.userData.id,
         message: this.nuevoMensaje,
       })
 
       this.chatSeleccionado.mensajes.push({
-        texto: this.nuevoMensaje,
-        enviado: true,
+        message: this.nuevoMensaje,
+        sender_id: this.userData.id,
       })
       this.nuevoMensaje = ''
     },
@@ -364,7 +396,7 @@ export default {
       router.replace({ name: 'chats' }).catch(() => {})
     },
 
-    startChat(contacto) {
+    async startChat(contacto) {
       const existente = this.chats.find(
         (c) => c.email === contacto.email || c.nombre === contacto.nombre,
       )
@@ -375,24 +407,16 @@ export default {
         return
       }
 
-      const nextId = Math.max(0, ...this.chats.map((c) => c.id)) + 1
-
-      const nuevoChat = {
-        id: nextId,
-        nombre: contacto.nombre,
-        mensaje: '',
-        nuevos: 0,
-        foto:
-          contacto.foto ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-            contacto.nombre,
-          )}&background=1f2937&color=fff`,
-        mensajes: [],
-        email: contacto.email,
+      try {
+        const response = await api.post(`/chat/${contacto.id}`)
+        if (response.data) {
+          this.connectToUserChats()
+          this.loadChats()
+        } else {
+        }
+      } catch (e) {
+        alert('Error al iniciar el chat ' + e)
       }
-
-      this.chats.push(nuevoChat)
-      this.chatSeleccionado = nuevoChat
       this.addChatModal = false
     },
   },
@@ -409,6 +433,7 @@ export default {
 /* Scroll suave */
 ::-webkit-scrollbar {
   width: 6px;
+  overflow-y: auto;
 }
 ::-webkit-scrollbar-thumb {
   background: #c9aedf;

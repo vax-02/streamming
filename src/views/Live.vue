@@ -1,7 +1,6 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white">
     <!-- Panel izquierdo: participantes y sala de espera -->
-
     <aside
       v-show="expandirBool"
       class="w-[22%] bg-gray-900 text-white p-4 flex flex-col space-y-5 border-l border-gray-800 shadow-xl"
@@ -1357,5 +1356,4 @@ async function shareScreen() {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #6b7280; /* bg-gray-500 */
 }
-
 </style>
