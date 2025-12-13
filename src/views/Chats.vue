@@ -196,7 +196,7 @@
             </div>
           </li>
           <li v-if="filteredContacts.length === 0" class="text-gray-400 text-center py-4">
-            No se encontraron friends
+            No hay amigos
           </li>
         </ul>
 
@@ -270,6 +270,7 @@ export default {
   },
 
   computed: {
+    
     filteredContacts() {
       if (!this.searchContact) return this.friends
       const q = this.searchContact.toLowerCase()
@@ -283,8 +284,9 @@ export default {
   mounted() {
     const route = useRoute()
     this.handleOpenContactQuery(route.query)
-    this.loadChats()
+    
     this.connectToUserChats()
+    this.loadChats()
     this.loadFriends()
   },
   methods: {
@@ -312,7 +314,7 @@ export default {
             if (chat) {
               chat.mensajes.push({
                 message: dataMessage.message,
-                sender_id: 1,
+                sender_id: dataMessage.sender_id,
                 recibido: true,
               })
               if (this.chatSeleccionado?.id !== chat.id) {
@@ -338,11 +340,6 @@ export default {
           nuevos: 2,
           foto: u.photo,
           mensajes: u.messages,
-          /*[
-            { texto: 'Hola 😄', enviado: false },
-            { texto: '¿Revisaste el proyecto?', enviado: false },
-            { texto: 'Sí, te paso el link ahora.', enviado: true },
-          ],*/
         }))
       } catch (error) {
         console.log('Error al cargar solicitudes:', error)

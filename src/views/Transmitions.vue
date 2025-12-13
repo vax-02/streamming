@@ -28,7 +28,7 @@
               @click="abrirFormulario = true"
               class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition"
             >
-              + Nueva transmisión
+              <PlusIcon class="h-5 w-5 text-white" />
             </button>
           </div>
 
@@ -52,12 +52,12 @@
                   <ShareIcon class="w-6 h-6 icon" />
                 </button>
 
-                <router-link
-                  to="/live"
+                <button
+                  @click="toLive(trans.id, trans.user_id)"
                   class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-sm"
                 >
-                  <PlayIcon class="W-6 h-6 icon" />
-                </router-link>
+                  <PlayIcon class="w-6 h-6 icon" />
+                </button>
 
                 <button
                   @click="editarTransmision(index)"
@@ -66,7 +66,7 @@
                   <PencilIcon class="w-6 h-6 icon" />
                 </button>
                 <button
-                  @click="eliminarTransmision(index)"
+                  @click="deleteTransmition(trans.id, index)"
                   class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-sm"
                 >
                   <TrashIcon class="w-6 h-6 icon" />
@@ -109,6 +109,55 @@
           </div>
         </div>
       </section>
+
+      <section class="py-5 bg-gray-900 text-white" v-if="currentTab === 'publicas'">
+        <h3 class="text-3xl font-bold text-center mb-12">Transmisiones Públicas</h3>
+        <div v-if="publicStreams.length" class="space-y-4 bg-gray-900 p-4 rounded-lg">
+          <div
+            v-for="(trans, index) in publicStreams"
+            :key="index"
+            class="bg-gray-800 p-4 rounded-lg flex justify-between items-center hover:bg-gray-700 transition"
+          >
+            <div>
+              <h3 class="font-semibold text-lg">{{ trans.titulo }}</h3>
+              <p class="text-gray-400 text-sm">{{ trans.descripcion }}</p>
+              <p class="text-gray-400 text-sm">Categoría: {{ trans.categoria }}</p>
+              <p class="text-gray-400 text-sm">Fecha/Hora: {{ trans.fechaHora }}</p>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                @click="shareTransmision = !shareTransmision"
+                class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md text-sm"
+              >
+                <ShareIcon class="w-6 h-6 icon" />
+              </button>
+
+              <button
+                @click="toLive(trans.id, trans.user_id)"
+                class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-sm"
+              >
+                <PlayIcon class="w-6 h-6 icon" />
+              </button>
+
+              <button
+                @click="editarTransmision(index)"
+                class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-md text-sm"
+              >
+                <PencilIcon class="w-6 h-6 icon" />
+              </button>
+              <button
+                @click="deleteTransmition(trans.id, index)"
+                class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-sm"
+              >
+                <TrashIcon class="w-6 h-6 icon" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p v-else class="text-gray-400">No hay transmisiones programadas.</p>
+      </section>
+
       <!-- Modal/Formulario de nueva transmisión -->
       <div
         v-if="abrirFormulario"
@@ -258,7 +307,7 @@
 </template>
 
 <script>
-import { ShareIcon, PencilIcon, TrashIcon, PlayIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon, ShareIcon, PencilIcon, TrashIcon, PlayIcon } from '@heroicons/vue/24/solid'
 import VideoPlayer from '@/components/video/VideoPlayerComponent.vue'
 import router from '@/router'
 import api from '@/services/api.js'
@@ -269,16 +318,20 @@ export default {
     PencilIcon,
     TrashIcon,
     PlayIcon,
+    PlusIcon,
   },
 
   data() {
     return {
+      userData: JSON.parse(localStorage.getItem('user')),
       currentTab: 'programadas',
       tabs: [
         { id: 'programadas', name: 'Programadas' },
         { id: 'pasadas', name: 'Pasadas' },
+        { id: 'publicas', name: 'Publicas' },
       ],
       transmisiones: [],
+      publicStreams: [],
       shareTransmision: false,
       abrirFormulario: false,
       nuevaTrans: {
@@ -295,6 +348,7 @@ export default {
           date: '10 de Noviembre, 2025',
         },
       ],
+
       grupos: [
         { id: 1, nombre: 'Grupo A' },
         { id: 2, nombre: 'Grupo B' },
@@ -305,6 +359,11 @@ export default {
       selectedGrupos: [],
       search: '',
       linkTransmision: 'https://miapp.com/transmision/abc123',
+
+      roomId: crypto.randomUUID(),
+
+      shareUrl: `${location.origin}/watch/27`,
+      pc: null,
     }
   },
   computed: {
@@ -314,8 +373,14 @@ export default {
   },
   mounted() {
     this.loadTransmissions()
+    this.loadPublicTransmissions()
   },
   methods: {
+    toLive(id, ownerId) {
+      localStorage.setItem('live_owner', ownerId)
+      localStorage.setItem('live_id', id)
+      router.push(`/live/${id}`)
+    },
     async loadTransmissions() {
       try {
         const response = await api.get('/transmissions')
@@ -326,20 +391,53 @@ export default {
           id: u.id,
           titulo: u.name,
           descripcion: u.description,
-          categoria: ((u.type == 0)? 'Privado' : 'Publico') ,
-          fechaHora: u.date_t + ' '+ u.time_t,
-          status : u.status,
-          link: u.link
+          categoria: u.type == 0 ? 'Privado' : 'Publico',
+          fechaHora: u.date_t + ' ' + u.time_t,
+          status: u.status,
+          link: u.link,
         }))
       } catch (error) {
         console.log('Error al cargar los t' + error)
       }
     },
-    guardarTransmision() {
-      this.transmisiones.push({ ...this.nuevaTrans })
-      // Limpiar formulario
-      this.nuevaTrans = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
-      this.abrirFormulario = false
+
+    async loadPublicTransmissions() {
+      try {
+        const response = await api.get('/publicTransmissions')
+        const temp = response.data.data
+        this.publicStreams = temp.map((u) => ({
+          id: u.id,
+          titulo: u.name,
+          descripcion: u.description,
+          categoria: u.type == 0 ? 'Privado' : 'Publico',
+          fechaHora: u.date_t + ' ' + u.time_t,
+          status: u.status,
+          link: u.link,
+        }))
+      } catch (error) {
+        console.log('Error al cargar los t' + error)
+      }
+    },
+
+    async guardarTransmision() {
+      try {
+        const response = await api.post('/transmissions', {
+          id_user: this.userData.id,
+          name: this.nuevaTrans.titulo,
+          description: this.nuevaTrans.descripcion,
+          type: this.nuevaTrans.categoria == 'Privado' ? 0 : 1,
+          date_t: this.nuevaTrans.fechaHora.split('T')[0],
+          time_t: this.nuevaTrans.fechaHora.split('T')[1],
+          status: 0,
+          link: '',
+        })
+        this.nuevaTrans.id = response.data.data.insertId
+        this.transmisiones.push({ ...this.nuevaTrans })
+        this.nuevaTrans = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
+        this.abrirFormulario = false
+      } catch (e) {
+        console.log('Error al guardar la transmision: ' + e)
+      }
     },
 
     // Editar transmisión (simple ejemplo)
@@ -351,10 +449,12 @@ export default {
       this.transmisiones.splice(index, 1)
     },
 
-    // Eliminar transmisión
-    eliminarTransmision(index) {
-      if (confirm('¿Deseas eliminar esta transmisión?')) {
+    async deleteTransmition(id, index) {
+      try {
+        await api.delete(`/transmission/${id}`)
         this.transmisiones.splice(index, 1)
+      } catch (e) {
+        console.log('eerr')
       }
     },
 
