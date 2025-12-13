@@ -264,6 +264,9 @@
         <p class="text-center text-gray-500 text-xs mt-auto">Grupo creado el:</p>
       </div>
     </transition>
+
+    <!-- Notificaciones -->
+    <ToastNotification ref="toastRef" />
   </div>
 
   <!---MODAL AGREGAR AL GRUPO-->
@@ -360,11 +363,11 @@
     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
   >
     <!-- Contenedor del modal -->
-    <div class="bg-gray-800 rounded-lg w-full max-w-md p-6 relative">
+    <form @submit.prevent="editGroup" class="bg-gray-800 rounded-lg w-full max-w-md p-6 relative">
       <!-- Header -->
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold text-white">Editar Grupo</h3>
-        <button @click="modalEditarGrupo = false" class="text-gray-400 hover:text-white">✖</button>
+        <button type="button" @click="modalEditarGrupo = false" class="text-gray-400 hover:text-white">✖</button>
       </div>
 
       <!-- Foto del grupo -->
@@ -383,7 +386,9 @@
         <input
           v-model="form.name"
           type="text"
+          placeholder="Nombre del grupo"
           class="w-full px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring focus:ring-blue-500"
+          required
         />
       </div>
 
@@ -392,8 +397,11 @@
         <label class="block text-gray-300 text-sm font-medium mb-1">Descripción</label>
         <textarea
           v-model="form.description"
+          type="text"
+          placeholder="Describe el propósito del grupo"
           rows="3"
           class="w-full px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring focus:ring-blue-500"
+          required
         ></textarea>
       </div>
 
@@ -418,19 +426,20 @@
       <!-- Botones -->
       <div class="flex justify-end gap-2">
         <button
+          type="button"
           @click="modalEditarGrupo = false"
           class="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-500"
         >
           Cancelar
         </button>
         <button
-          @click="editGroup"
+          type="submit"
           class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500"
         >
           Guardar
         </button>
       </div>
-    </div>
+    </form>
   </div>
 
    <!--MODAL DE CREAR GRUPO-->
@@ -439,11 +448,11 @@
     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
   >
     <!-- Contenedor del modal -->
-    <div class="bg-gray-800 rounded-lg w-full max-w-md p-6 relative">
+    <form @submit.prevent="newGroup" class="bg-gray-800 rounded-lg w-full max-w-md p-6 relative">
       <!-- Header -->
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold text-white">Crear Grupo</h3>
-        <button @click="modalCrearGrupo = false" class="text-gray-400 hover:text-white">✖</button>
+        <button type="button" @click="modalCrearGrupo = false" class="text-gray-400 hover:text-white">✖</button>
       </div>
 
       <!-- Foto del grupo -->
@@ -461,7 +470,9 @@
         <input
           v-model="form.name"
           type="text"
+          placeholder="Nombre del grupo"
           class="w-full px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring focus:ring-blue-500"
+          required
         />
       </div>
 
@@ -470,8 +481,11 @@
         <label class="block text-gray-300 text-sm font-medium mb-1">Descripción</label>
         <textarea
           v-model="form.description"
+          type="text"
+          placeholder="Describe el propósito del grupo"
           rows="3"
           class="w-full px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring focus:ring-blue-500"
+          required
         ></textarea>
       </div>
 
@@ -496,19 +510,20 @@
       <!-- Botones -->
       <div class="flex justify-end gap-2">
         <button
+          type="button"
           @click="modalCrearGrupo = false"
           class="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-500"
         >
           Cancelar
         </button>
         <button
-          @click="newGroup"
+          type="submit"
           class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500"
         >
           Guardar
         </button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
@@ -518,10 +533,11 @@ const socket = io('http://localhost:3001') // Conecta al servidor
 import { UserPlusIcon, CalendarDaysIcon, UserMinusIcon } from '@heroicons/vue/24/solid'
 import bannerMessages from '@/layouts/bannerMessages.vue'
 import api from '@/services/api.js'
+import ToastNotification from '@/components/ToastNotification.vue'
 import { createProgram } from 'typescript'
 
 export default {
-  components: { UserPlusIcon, CalendarDaysIcon, UserMinusIcon, bannerMessages },
+  components: { UserPlusIcon, CalendarDaysIcon, UserMinusIcon, bannerMessages, ToastNotification },
   data() {
     return {
       form: {
@@ -629,6 +645,9 @@ export default {
         console.error('Error al obtener y conectar a las salas:', error)
       }
     },
+    addToast(message, type) {
+      this.$refs.toastRef.addToast(message, type)
+    },
 
     async loadGroups() {
       try {
@@ -646,25 +665,47 @@ export default {
           participantes: u.participants,
         }))
       } catch (error) {
-        alert('Error al cargar grupos:', error)
+        this.addToast('Error al cargar grupos', 'error')
+      }
+    },
+    onFileChange(e) {
+      const file = e.target.files[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.form.photo = e.target.result
+        }
+        reader.readAsDataURL(file)
       }
     },
     async newGroup() {
+      if (!this.form.name.trim()) {
+        return this.addToast('El nombre del grupo es obligatorio', 'warning')
+      }
       try {
+        if (!this.form.photo) {
+          this.form.photo = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.form.name)}&background=random&color=fff`
+        }
         await api.post('/group', this.form)
         await this.loadGroups()
         this.modalCrearGrupo = false
+        this.addToast('Grupo creado exitosamente', 'success')
+        this.form = { id: 0, name: '', description: '', photo: '', status: false }
       } catch (e) {
-        alert('Error al crear grupo:', e)
+        this.addToast('Error al crear grupo', 'error')
       }
     },
     async editGroup() {
+      if (!this.form.name.trim()) {
+        return this.addToast('El nombre del grupo es obligatorio', 'warning')
+      }
       try {
         await api.put(`/group/${this.form.id}`, this.form)
         await this.loadGroups()
         this.modalEditarGrupo = false
+        this.addToast('Grupo editado exitosamente', 'success')
       } catch (e) {
-        alert('Error al editar grupo:', e)
+        this.addToast('Error al editar grupo', 'error')
       }
     },
     async hacerAdmin(userId) {

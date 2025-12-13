@@ -18,11 +18,10 @@ import MiniCallComponent from '@/components/calls/MiniCallComponent.vue'
 import ApplicationComponent from '@/components/ApplicationComponent.vue'
 import VideoPlayerComponent from '@/components/video/VideoPlayerComponent.vue'
 import Dashboard from '@/views/Dashboard.vue'
-import StreamViewer from '@/views/StreamViewer.vue'
+
 const routes = [
   {
     path: '/watch/:roomId',
-    component: StreamViewer,
   },
 
   {

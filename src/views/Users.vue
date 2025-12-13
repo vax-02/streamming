@@ -108,11 +108,26 @@
 
             <!-- Formulario -->
             <div class="px-6 py-4 space-y-4">
+              <div class="flex flex-col items-center">
+                <div class="relative">
+                  <img
+                    :src="newUserPhotoPreview || '/images/user-default.png'"
+                    alt="Foto de usuario"
+                    class="w-24 h-24 rounded-full object-cover border-4 border-gray-700 shadow-md"
+                  />
+                  <label class="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700 transition shadow-sm">
+                    <PencilIcon class="w-4 h-4 text-white" />
+                    <input type="file" class="hidden" @change="handleNewUserPhoto" accept="image/*" />
+                  </label>
+                </div>
+                <span class="text-xs text-gray-400 mt-2">Foto de perfil (Opcional)</span>
+              </div>
               <div>
                 <label class="block text-gray-300 mb-1">Nombre</label>
                 <input
                   v-model="newUser.name"
                   type="text"
+                  autocomplete="name"
                   placeholder="Nombre completo"
                   class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
@@ -187,6 +202,7 @@
                 <input
                   v-model="updateUser.name"
                   type="text"
+                  autocomplete="name"
                   placeholder="Nombre completo"
                   class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
@@ -237,24 +253,8 @@
     </transition>
   </div>
 
-  <!-- Contenedor de toasts en la esquina superior derecha -->
-  <div class="fixed top-5 right-5 flex flex-col space-y-2 z-50 py-2 pt-0">
-    <transition-group name="toast" tag="div">
-      <div
-        v-for="(toast, index) in toasts"
-        :key="toast.id"
-        :class="[
-          'px-4 py-2 rounded-lg shadow-lg text-white  px-4 py-2 flex items-center justify-between min-w-[200px]',
-          toast.type === 'success' ? 'bg-green-300/30' : '',
-          toast.type === 'error' ? 'bg-red-300/30' : '',
-          toast.type === 'info' ? 'bg-blue-300/30' : '',
-        ]"
-      >
-        <span>{{ toast.message }}</span>
-        <button @click="removeToast(toast.id)" class="ml-2">x</button>
-      </div>
-    </transition-group>
-  </div>
+  <!-- Componente de notificaciones -->
+  <ToastNotification ref="toastRef" />
 
   <ConfirmationComponent
     :visible="removeUserModal"
@@ -268,6 +268,7 @@
 <script>
 import { PencilIcon, TrashIcon, LockClosedIcon } from '@heroicons/vue/24/outline'
 import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
+import ToastNotification from '@/components/ToastNotification.vue'
 import api from '@/services/api.js'
 
 export default {
@@ -276,6 +277,7 @@ export default {
     PencilIcon,
     TrashIcon,
     LockClosedIcon,
+    ToastNotification,
   },
 
   data() {
@@ -293,10 +295,10 @@ export default {
         status: true,
       },
       updateUser: {},
+      newUserPhotoPreview: null,
       search: '',
       currentPage: 1,
       perPage: 8,
-      toasts: [],
     }
   },
 
@@ -340,14 +342,30 @@ export default {
       }
     },
 
+    handleNewUserPhoto(event) {
+      const file = event.target.files[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.newUserPhotoPreview = e.target.result
+          this.newUser.photo = e.target.result
+        }
+        reader.readAsDataURL(file)
+      }
+    },
+
     async guardarUsuario() {
       try {
+        const photo =
+          this.newUser.photo ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(this.newUser.name)}&background=random&color=fff`
+
         const response = await api.post('/user', {
           name: this.newUser.name,
           email: this.newUser.email,
           password: this.newUser.email, // Asignar una contraseña por defecto o generar una
           rol: this.newUser.rol,
-          photo: '/images/user-default.png',
+          photo: photo,
         })
         if (response.status === 200) {
           this.addToast('Usuario agregado correctamente', 'success')
@@ -355,9 +373,10 @@ export default {
           this.addToast('Error al agregar el usuario', 'error')
         }
         const id = response.data.data.id
-        this.users.push({ ...this.newUser, id })
+        this.users.push({ ...this.newUser, id, photo })
 
         this.newUser = { name: '', email: '', rol: '', status: true }
+        this.newUserPhotoPreview = null
         this.addUserModal = false
       } catch (error) {
         this.addToast('Error al agregar el usuario', 'error')
@@ -424,15 +443,8 @@ export default {
     },
 
     addToast(message, type = 'info', duration = 3000) {
-      const id = Date.now()
-      this.toasts.push({ id, message, type })
-      setTimeout(() => {
-        this.removeToast(id)
-      }, duration)
-    },
-
-    removeToast(id) {
-      this.toasts = this.toasts.filter((t) => t.id !== id)
+      // Llamamos al método del componente hijo usando la referencia
+      this.$refs.toastRef.addToast(message, type, duration)
     },
   },
 }
