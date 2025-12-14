@@ -66,6 +66,8 @@
 <script>
 import { ArchiveBoxArrowDownIcon } from '@heroicons/vue/24/solid'
 import ToastNotification from '@/components/ToastNotification.vue'
+import api from '@/services/api.js'
+
 export default {
   components: {
     ArchiveBoxArrowDownIcon,
@@ -104,8 +106,32 @@ export default {
       this.user.photo = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.user.nickname)}&background=random&color=fff`
     },
 
-    guardarCambios() {
-      this.addToast('Cambios guardados correctamente', 'success')
+    async guardarCambios() {
+      try {
+        // Usamos la instancia 'api' del proyecto que ya maneja el token y la URL base
+        const response = await api.put('/settings', {
+            name: this.user.nickname,
+            photo: this.vistaPrevia || this.user.photo,
+        })
+
+        // Axios devuelve los datos directamente en .data
+        const data = response.data
+
+        // 3. Manejar la respuesta
+        if (data.success) {
+          // Actualizar localStorage para mantener la consistencia si el usuario recarga
+          this.userData.name = this.user.nickname
+          this.userData.photo = this.vistaPrevia || this.user.photo
+          localStorage.setItem('user', JSON.stringify(this.userData))
+          this.addToast('Perfil actualizado con éxito', 'success')
+        } else {
+          this.addToast(`Error al actualizar: ${data.message}`, 'error')
+        }
+      } catch (error) {
+        console.error('Error al guardar:', error)
+        const mensaje = error.response?.data?.message || 'Error de conexión'
+        this.addToast(mensaje, 'error')
+      }
     },
     addToast(message, type) {
       this.$refs.toastRef.addToast(message, type)
