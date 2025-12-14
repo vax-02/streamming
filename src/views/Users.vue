@@ -339,6 +339,8 @@ export default {
         }))
       } catch (error) {
         this.addToast('Error al cargar los usuarios', 'error')
+        const mensaje = error.response?.data || 'Error al cargar los usuarios';
+        this.addToast(mensaje, 'error')
       }
     },
 

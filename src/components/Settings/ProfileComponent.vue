@@ -11,10 +11,18 @@
             alt="Foto de perfil"
             class="w-32 h-32 rounded-full border-4 border-blue-600 object-cover"
           />
-          <label class="cursor-pointer text-blue-400 hover:underline text-sm">
-            Cambiar foto
-            <input type="file" class="hidden" @change="cargarFoto" accept="image/*" />
-          </label>
+          <div class="flex gap-3">
+            <label class="cursor-pointer text-blue-400 hover:underline text-sm">
+              Cambiar foto
+              <input type="file" class="hidden" @change="cargarFoto" accept="image/*" />
+            </label>
+            <button
+              @click="eliminarFoto"
+              class="text-red-400 hover:underline text-sm cursor-pointer"
+            >
+              Eliminar foto
+            </button>
+          </div>
         </div>
 
         <!-- Formulario -->
@@ -26,6 +34,7 @@
               type="text"
               placeholder="Tu nickname"
               class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
 
@@ -50,14 +59,17 @@
         </form>
       </div>
     </div>
+    <ToastNotification ref="toastRef" />
   </div>
 </template>
 
 <script>
 import { ArchiveBoxArrowDownIcon } from '@heroicons/vue/24/solid'
+import ToastNotification from '@/components/ToastNotification.vue'
 export default {
   components: {
     ArchiveBoxArrowDownIcon,
+    ToastNotification,
   },
   data() {
     return {
@@ -87,8 +99,16 @@ export default {
       }
     },
 
+    eliminarFoto() {
+      this.vistaPrevia = null
+      this.user.photo = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.user.nickname)}&background=random&color=fff`
+    },
+
     guardarCambios() {
-      alert('✅ Cambios guardados correctamente')
+      this.addToast('Cambios guardados correctamente', 'success')
+    },
+    addToast(message, type) {
+      this.$refs.toastRef.addToast(message, type)
     },
   },
 }

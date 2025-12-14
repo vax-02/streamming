@@ -51,12 +51,14 @@
         </div>
       </div>
     </div>
+    <ToastNotification ref="toastRef" />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { BookmarkSquareIcon } from '@heroicons/vue/24/solid'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 const privacidad = ref({
   enLinea: true,
@@ -65,8 +67,10 @@ const privacidad = ref({
   notificaciones: true,
 })
 
+const toastRef = ref(null)
+
 function guardarCambios() {
-  alert(' Cambios de privacidad guardados correctamente')
+  toastRef.value.addToast('Cambios de privacidad guardados correctamente', 'success')
 }
 </script>
 

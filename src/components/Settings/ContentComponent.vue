@@ -114,12 +114,14 @@
         </div>
       </div>
     </div>
+    <ToastNotification ref="toastRef" />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { BookmarkSquareIcon } from '@heroicons/vue/24/solid'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 const config = ref({
   calidadVideo: 'auto',
@@ -132,8 +134,10 @@ const config = ref({
   audioDescriptivo: false,
 })
 
+const toastRef = ref(null)
+
 function guardarCambios() {
-  alert('Configuración de reproducción guardada correctamente')
+  toastRef.value.addToast('Configuración de reproducción guardada correctamente', 'success')
 }
 </script>
 

@@ -317,8 +317,7 @@
         <li
           v-for="contacto in filteredFriends"
           :key="contacto.email"
-          class="flex items-center justify-between p-2 rounded-lg hover:bg-blue-600 cursor-pointer"
-          @click="addToGroup(contacto)"
+          class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-700 transition"
         >
           <div class="flex items-center space-x-3">
             <div
@@ -339,6 +338,12 @@
               <p class="text-xs text-gray-300">{{ contacto.email }}</p>
             </div>
           </div>
+          <button
+            @click="addToGroup(contacto)"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs font-semibold"
+          >
+            Agregar
+          </button>
         </li>
         <li v-if="filteredFriends.length === 0" class="text-gray-400 text-center py-4">
           No hay amigos
@@ -712,11 +717,20 @@ export default {
       try {
         await api.put(`/group/${this.grupoSeleccionado.id}/member/${userId}`)
 
+        let esAdmin = false
         this.grupoSeleccionado.participantes = this.grupoSeleccionado.participantes.map((p) => {
-          return p.id === userId ? { ...p, admin: p.admin == 1 ? 0 : 1 } : p
+          if (p.id === userId) {
+            esAdmin = p.admin !== 1
+            return { ...p, admin: p.admin == 1 ? 0 : 1 }
+          }
+          return p
         })
+        this.addToast(
+          esAdmin ? 'Usuario ahora es administrador' : 'Usuario ya no es administrador',
+          'success',
+        )
       } catch (e) {
-        alert('Error al asignar admin:', e)
+        this.addToast('Error al asignar admin', 'error')
       }
     },
     async expulsar(userId) {
@@ -725,8 +739,16 @@ export default {
         this.grupoSeleccionado.participantes = this.grupoSeleccionado.participantes.filter(
           (p) => p.id !== userId,
         )
+        if (userId === this.userData.id) {
+          this.addToast('Saliste del grupo', 'success')
+          this.grupoSeleccionado = null
+          this.mostrarPerfil = false
+          this.loadGroups()
+        } else {
+          this.addToast('Usuario expulsado', 'success')
+        }
       } catch (e) {
-        alert('Error al asignar sacar:', e)
+        this.addToast('Error al realizar la acción', 'error')
       }
     },
     sendMessage(id) {
@@ -758,8 +780,9 @@ export default {
             admin: 0,
           })
         }
+        this.addToast('Se agregó exitosamente', 'success')
       } catch (e) {
-        alert('Error al agregar al grupo:', e)
+        this.addToast('Error al agregar al grupo', 'error')
       }
     },
     seleccionarChat(chat) {

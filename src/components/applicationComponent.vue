@@ -209,6 +209,7 @@
         <p v-else class="text-gray-400">No se encontro</p>
       </section>
     </main>
+    <ToastNotification ref="toast" />
   </div>
 </template>
 
@@ -216,6 +217,7 @@
 import { ChatBubbleLeftIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 import router from '@/router'
 import api from '@/services/api.js'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 export default {
   name: 'FriendsComponent',
@@ -223,6 +225,7 @@ export default {
   components: {
     UserPlusIcon,
     ChatBubbleLeftIcon,
+    ToastNotification,
   },
 
   data() {
@@ -329,8 +332,9 @@ export default {
         const response = await api.post(`/requests/accept`, { id: request.id })
         this.loadFriends()
         this.friendRequests = this.friendRequests.filter((r) => r.id !== request.id)
+        this.addToast('Solicitud aceptada', 'success')
       } catch (error) {
-        console.error('Error al aceptar la solicitud de amistad:', error)
+        this.addToast('Error al aceptar solicitud', 'error')
       }
     },
 
@@ -338,19 +342,20 @@ export default {
       try {
         const response = await api.post(`/requests/deny`, { id: id })
         this.friendRequests = this.friendRequests.filter((r) => r.id !== id)
+        this.addToast('Solicitud rechazada', 'info')
       } catch (error) {
-        alert('Error al rechazar la solicitud de amistad:', error)
+        this.addToast('Error al rechazar solicitud', 'error')
       }
     },
 
     async sendRequest(id) {
       try {
-        const response = await api.post('send-request/' + id)
+        const response = await api.post('/send-request/' + id)
         this.loadNewFriends()
         this.allMyRequests()
-        alert('solicitud enviada')
+        this.addToast('Se envió la solicitud', 'success')
       } catch (error) {
-        alert('error')
+        this.addToast('Error al enviar solicitud', 'error')
       }
     },
     removeFriend(id) {
@@ -386,6 +391,9 @@ export default {
       } catch (e) {
         alert('Error al iniciar el chat ' + e)
       }
+    },
+    addToast(message, type = 'info', duration = 3000) {
+      this.$refs.toast.addToast(message, type, duration)
     },
   },
 }
