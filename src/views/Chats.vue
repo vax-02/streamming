@@ -216,7 +216,7 @@
     <transition name="slide">
       <div
         v-if="mostrarPerfil"
-        class="w-full sm:w-80 bg-gray-800 border-l border-gray-700 p-4 flex flex-col absolute right-0 top-0 bottom-0 z-40"
+        class="w-full sm:w-80 bg-gray-800 border-l border-gray-700 p-4 flex flex-col absolute right-0 top-0 bottom-0 z-40 md:relative md:inset-auto"
       >
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">Perfil</h3>
@@ -238,6 +238,8 @@
         </div>
       </div>
     </transition>
+    <!-- Notificaciones -->
+    <ToastNotification ref="toastRef" />
   </div>
 </template>
 
@@ -249,9 +251,10 @@ import bannerMessages from '@/layouts/bannerMessages.vue'
 import router from '@/router'
 import { useRoute } from 'vue-router'
 import api from '@/services/api.js'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 export default {
-  components: { PhoneIcon, VideoCameraIcon, bannerMessages },
+  components: { PhoneIcon, VideoCameraIcon, bannerMessages, ToastNotification },
 
   data() {
     return {
@@ -323,6 +326,7 @@ export default {
         }
       } catch (error) {
         console.error('Error al obtener y conectar a las salas:', error)
+        this.addToast('Error al conectar con los chats', 'error')
       }
     },
     async loadChats() {
@@ -340,7 +344,8 @@ export default {
           mensajes: u.messages,
         }))
       } catch (error) {
-        console.log('Error al cargar solicitudes:', error)
+        console.error('Error al cargar los chats:', error)
+        this.addToast('Error al cargar los chats', 'error')
       }
     },
     async loadFriends() {
@@ -353,8 +358,12 @@ export default {
           foto: u.photo,
         }))
       } catch (error) {
-        console.log('Error al cargar friends:', error)
+        console.error('Error al cargar amigos para chatear:', error)
+        this.addToast('Error al cargar amigos para chatear', 'error')
       }
+    },
+    addToast(message, type) {
+      this.$refs.toastRef.addToast(message, type)
     },
     seleccionarChat(chat) {
       this.chatSeleccionado = chat

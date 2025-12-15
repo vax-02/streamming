@@ -124,21 +124,33 @@
           <div class="px-6 py-4 space-y-4">
             <div>
               <label class="block text-gray-300 mb-1">Nueva contraseña</label>
-              <input
-                v-model="newPassword"
-                type="password"
-                class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+              <div class="relative">
+                <input
+                  v-model="newPassword"
+                  :type="showPassword ? 'text' : 'password'"
+                  class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                  required
+                />
+                <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
+                  <EyeIcon v-if="!showPassword" class="h-5 w-5" />
+                  <EyeSlashIcon v-else class="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div>
               <label class="block text-gray-300 mb-1">Confirmar nueva contraseña</label>
-              <input
-                v-model="confirmNewPassword"
-                type="password"
-                class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+              <div class="relative">
+                <input
+                  v-model="confirmNewPassword"
+                  :type="showConfirmPassword ? 'text' : 'password'"
+                  class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                  required
+                />
+                <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
+                  <EyeIcon v-if="!showConfirmPassword" class="h-5 w-5" />
+                  <EyeSlashIcon v-else class="h-5 w-5" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -151,6 +163,8 @@
       </div>
     </form>
   </transition>
+
+  <ToastNotification ref="toastRef" />
 </template>
 
 <script setup>
@@ -163,9 +177,12 @@ import {
   Cog6ToothIcon,
   HomeIcon,
   ArrowRightOnRectangleIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from '@heroicons/vue/24/solid' // o @heroicons/vue/24/outline
 import Logo from '@/assets/logo.png'
 import HomeComponent from '@/components/homeComponent.vue'
+import ToastNotification from '@/components/ToastNotification.vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
@@ -173,6 +190,9 @@ const userData = JSON.parse(localStorage.getItem('user'))
 const firstLoginModal = userData && userData.first_login === 1 ? ref(true) : ref(false)
 const newPassword = ref('')
 const confirmNewPassword = ref('')
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
+const toastRef = ref(null)
 import api from '@/services/api.js'
 
 function logout() {
@@ -182,6 +202,7 @@ function logout() {
 
 async function firstLogin() {
   if (newPassword.value !== confirmNewPassword.value) {
+    toastRef.value.addToast('Las contraseñas no coinciden', 'warning')
     return
   }
   try {
@@ -191,10 +212,18 @@ async function firstLogin() {
     })
     userData.first_login = 0
     localStorage.setItem('user', JSON.stringify(userData))
-    alert('Contraseña actualizada correctamente')
+    toastRef.value.addToast('Contraseña actualizada correctamente', 'success')
     firstLoginModal.value = false
   } catch (error) {
-    alert('error')
+    toastRef.value.addToast('Error al actualizar la contraseña', 'error')
   }
 }
 </script>
+
+<style scoped>
+/* Ocultar el icono de ojo por defecto en navegadores como Edge */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+</style>

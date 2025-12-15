@@ -188,6 +188,7 @@
 
         <div class="flex justify-between gap-2 mb-5">
           <button
+            v-if="isAdmin"
             class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-semibold"
             @click="modalEditarGrupo = true"
           >
@@ -195,6 +196,7 @@
           </button>
 
           <button
+            v-if="isAdmin"
             class="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg text-sm font-semibold"
             @click="modalAgregarParticipante = true"
           >
@@ -202,7 +204,7 @@
           </button>
           <button
             class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg text-sm font-semibold"
-            @click="expulsar(userData.id)"
+            @click="showLeaveConfirm = true"
           >
             Salir
           </button>
@@ -228,7 +230,7 @@
                     {{ p.email }}
                   </span>
                 </p>
-                <p
+                  <p
                   class="text-xs"
                   :class="{
                     'text-blue-400 font-bold': p.admin === 1,
@@ -251,7 +253,7 @@
               </button>
 
               <button
-                @click="expulsar(p.id)"
+                @click="openExpelConfirm(p.id)"
                 v-if="p.id !== userData.id"
                 class="text-red-400 hover:text-red-200 text-xs font-semibold"
               >
@@ -532,6 +534,22 @@
       </div>
     </form>
   </div>
+
+  <ConfirmationComponent
+    :visible="showLeaveConfirm"
+    title="Salir del grupo"
+    message="¿Estás seguro de que deseas salir de este grupo?"
+    @confirm="confirmLeaveGroup"
+    @cancel="showLeaveConfirm = false"
+  />
+
+  <ConfirmationComponent
+    :visible="showExpelConfirm"
+    title="Expulsar miembro"
+    message="¿Estás seguro de que deseas expulsar a este miembro?"
+    @confirm="confirmExpelUser"
+    @cancel="showExpelConfirm = false"
+  />
 </template>
 
 <script>
@@ -540,10 +558,11 @@ import { UserPlusIcon, CalendarDaysIcon, UserMinusIcon } from '@heroicons/vue/24
 import bannerMessages from '@/layouts/bannerMessages.vue'
 import api from '@/services/api.js'
 import ToastNotification from '@/components/ToastNotification.vue'
+import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
 import { createProgram } from 'typescript'
 
 export default {
-  components: { UserPlusIcon, CalendarDaysIcon, UserMinusIcon, bannerMessages, ToastNotification },
+  components: { UserPlusIcon, CalendarDaysIcon, UserMinusIcon, bannerMessages, ToastNotification, ConfirmationComponent },
   data() {
     return {
       form: {
@@ -554,7 +573,6 @@ export default {
         status: false,
       },
       Grupos: [],
-      isAdmin: true,
       grupoSeleccionado: null,
       nuevoMensaje: '',
       mostrarPerfil: false,
@@ -566,6 +584,9 @@ export default {
       modalAgregarParticipante: false,
       modalEditarGrupo: false,
       modalCrearGrupo: false,
+      showLeaveConfirm: false,
+      showExpelConfirm: false,
+      userToExpelId: null,
     }
   },
   watch: {
@@ -580,6 +601,13 @@ export default {
     },
   },
   computed: {
+    isAdmin() {
+      return (
+        this.grupoSeleccionado?.participantes?.some(
+          (p) => p.id === this.userData.id && p.admin === 1,
+        ) ?? false
+      )
+    },
     filteredFriends() {
       if (!this.searchFriend) return this.friends
       const q = this.searchFriend.toLowerCase()
@@ -612,6 +640,7 @@ export default {
         }))
       } catch (error) {
         console.error('Error al cargar amigos:', error)
+        this.addToast('Error al cargar amigos', 'error')
       }
     },
     async connectToUserGroups() {
@@ -649,6 +678,7 @@ export default {
         }
       } catch (error) {
         console.error('Error al obtener y conectar a las salas:', error)
+        this.addToast('Error al conectar con los grupos', 'error')
       }
     },
     addToast(message, type) {
@@ -659,17 +689,32 @@ export default {
       try {
         const response = await api.get('/groups')
         const temp = response.data.data
-        this.Grupos = temp.map((u) => ({
-          id: u.id,
-          nombre: u.name,
-          descripcion: u.description,
-          f_creado: u.date_c,
-          mensaje: '...',
-          nuevos: 1,
-          photo: u.photo,
-          mensajes: u.messages,
-          participantes: u.participants,
-        }))
+
+        // Verificar si hay grupos sin admin y corregirlo en BD y localmente
+        temp.forEach((u) => {
+          if (u.participants && u.participants.length > 0) {
+            const hasAdmin = u.participants.some((p) => p.admin === 1)
+            if (!hasAdmin) {
+              u.participants[0].admin = 1
+              // Llamada a la API para guardar el cambio en la base de datos
+              api.put(`/group/${u.id}/member/${u.participants[0].id}`).catch(() => {})
+            }
+          }
+        })
+
+        this.Grupos = temp.map((u) => {
+          return {
+            id: u.id,
+            nombre: u.name,
+            descripcion: u.description,
+            f_creado: u.date_c,
+            mensaje: '...',
+            nuevos: 1,
+            photo: u.photo,
+            mensajes: u.messages,
+            participantes: u.participants,
+          }
+        })
       } catch (error) {
         this.addToast('Error al cargar grupos', 'error')
       }
@@ -734,6 +779,21 @@ export default {
         this.addToast('Error al asignar admin', 'error')
       }
     },
+  async confirmLeaveGroup() {
+    this.showLeaveConfirm = false
+    await this.expulsar(this.userData.id)
+  },
+  openExpelConfirm(id) {
+    this.userToExpelId = id
+    this.showExpelConfirm = true
+  },
+  async confirmExpelUser() {
+    this.showExpelConfirm = false
+    if (this.userToExpelId) {
+      await this.expulsar(this.userToExpelId)
+      this.userToExpelId = null
+    }
+  },
     async expulsar(userId) {
       try {
         await api.delete(`/group/${this.grupoSeleccionado.id}/member/${userId}`)
