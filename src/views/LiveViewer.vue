@@ -9,8 +9,7 @@
           ref="videoRef"
           autoplay
           playsinline
-          controls
-          class="w-90 h-90 object-cover rounded-xl"
+          class="w-full h-full object-cover rounded-xl"
         ></video>
         <div
           class="absolute top-3 left-3 bg-blue-600 px-3 py-1 rounded-full flex items-center space-x-2 text-sm font-semibold"
@@ -90,6 +89,7 @@
         </button>
 
         <button
+          @click="handleEndStream"
           class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
           title="Salir"
         >
@@ -519,8 +519,8 @@
       class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
     >
       <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm space-y-4">
-        <h3 class="text-lg font-semibold text-center">Finalizar Stream</h3>
-        <p class="text-center text-gray-300">¿Estás seguro de que deseas finalizar el stream?</p>
+        <h3 class="text-lg font-semibold text-center">Salir de la reunión</h3>
+        <p class="text-center text-gray-300">¿Estás seguro de que deseas salir?</p>
         <div class="flex justify-center space-x-4 pt-2">
           <button
             @click="showEndStreamConfirm = false"
@@ -562,6 +562,7 @@ import {
 
 import router from '@/router'
 import socket from '@/services/socket.js'
+import api from '@/services/api.js'
 
 export default {
   name: 'LiveView',
@@ -589,6 +590,7 @@ export default {
       pc: null,
       // ID del Host, necesario para enviar la Answer y los ICE candidates
       hostId: null,
+      candidateBuffer: [],
 
       tiempo: 0, // tiempo en segundos
       tiempoFormateado: '00:00',
@@ -725,11 +727,43 @@ export default {
     socket.on('signal', this.handleSignal)
 
     this.initViewer()
+    this.loadParticipants()
 
-    socket.emit('viewer-ready', { roomId: this.roomId })
+    console.log('LiveViewer: Enviando viewer-ready al backend. RoomID:', this.roomId, 'Datos:', userData)
+    socket.emit('viewer-ready', { roomId: this.roomId, viewerData: userData })
+
+    socket.on('update-participants', ({ participants }) => {
+      this.participantes = participants
+
+      // Si el host refrescó, la lista estará vacía o incompleta.
+      // Si yo (viewer) no estoy en la lista, me re-anuncio para recuperar conexión.
+      const myId = socket.id
+      if (myId && !this.participantes.some((p) => p.idSocket === myId)) {
+        socket.emit('viewer-reconnect', {
+          roomId: this.roomId,
+          viewerData: JSON.parse(localStorage.getItem('user')),
+          idSocket: myId,
+        })
+      }
+    })
   },
 
   methods: {
+    async loadParticipants() {
+      try {
+        const response = await api.get(`/transmissions/${this.roomId}/participants`)
+        const data = response.data.data || response.data
+        if (Array.isArray(data)) {
+          data.forEach((dbUser) => {
+            if (!this.participantes.some((p) => p.id === dbUser.id)) {
+              this.participantes.push({ ...dbUser, estado: 'Activo' })
+            }
+          })
+        }
+      } catch (error) {
+        console.error('Error al cargar participantes:', error)
+      }
+    },
     initViewer() {
       if (this.pc) return
       this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
@@ -737,7 +771,9 @@ export default {
       this.pc.addTransceiver('video', { direction: 'recvonly' })
       this.pc.addTransceiver('audio', { direction: 'recvonly' })
       this.pc.ontrack = (event) => {
-        if (this.$refs.videoRef) this.$refs.videoRef.srcObject = event.streams[0]
+        if (this.$refs.videoRef) {
+          this.$refs.videoRef.srcObject = event.streams[0] || new MediaStream([event.track])
+        }
       }
 
       this.pc.onicecandidate = (e) => {
@@ -764,11 +800,22 @@ export default {
           console.log('Señal Viewer: Offer recibida. Generando Answer.')
           // ... (resto de la lógica de Answer, que ya estaba bien) ...
           await pc.setRemoteDescription(new RTCSessionDescription(data))
+
+          // Procesar candidatos en cola
+          while (this.candidateBuffer.length > 0) {
+            const candidate = this.candidateBuffer.shift()
+            await pc.addIceCandidate(new RTCIceCandidate(candidate))
+          }
+
           const answer = await pc.createAnswer()
           await pc.setLocalDescription(answer)
           socket.emit('signal', { targetId: from, data: answer })
         } else if (data.candidate) {
-          await pc.addIceCandidate(new RTCIceCandidate(data))
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(new RTCIceCandidate(data))
+          } else {
+            this.candidateBuffer.push(data)
+          }
         }
       } catch (e) {
         console.error('Error al manejar señal en Viewer. Estado actual:', pc.signalingState, e)
@@ -779,9 +826,22 @@ export default {
       this.showOptionsMenu = false
       this.showEndStreamConfirm = true
     },
-    confirmEndStream() {
+    async confirmEndStream() {
       this.showEndStreamConfirm = false
-      router.push({ name: 'transmitions' })
+      try {
+        const userData = JSON.parse(localStorage.getItem('user'))
+        if (userData && userData.id) {
+          await api.delete(`/transmissions/${this.roomId}/participants/${userData.id}`)
+        }
+      } catch (error) {
+        console.error('Error al salir de la transmisión:', error)
+      } finally {
+        if (this.pc) {
+          this.pc.close()
+        }
+        socket.disconnect()
+        router.push({ name: 'transmitions' })
+      }
     },
     addSurveyOption() {
       this.surveyOptions.push('')
@@ -969,13 +1029,14 @@ export default {
       tiempo.value = 0
       tiempoFormateado.value = formatTime(tiempo.value)
     },
-    toggleCamara() {
+    async toggleCamara() {
       this.camaraAct = !this.camaraAct
       if (this.camaraAct) {
         try {
-          this.videoStream = navigator.mediaDevices.getUserMedia({ video: true })
-          if (this.modalVideoRef) {
-            this.modalVideoRef.srcObject = this.videoStream
+          this.videoStream = await navigator.mediaDevices.getUserMedia({ video: true })
+          await this.$nextTick()
+          if (this.$refs.modalVideoRef) {
+            this.$refs.modalVideoRef.srcObject = this.videoStream
           }
         } catch (err) {
           alert('Error al acceder a la cámara:', err)
@@ -985,8 +1046,8 @@ export default {
         if (this.videoStream) {
           this.videoStream.getTracks().forEach((track) => track.stop())
         }
-        if (this.modalVideoRef) {
-          this.modalVideoRef.srcObject = null
+        if (this.$refs.modalVideoRef) {
+          this.$refs.modalVideoRef.srcObject = null
         }
       }
     },
@@ -996,16 +1057,14 @@ export default {
       this.chat.push({ usuario: 'Docente', mensaje: this.mensaje })
       this.mensaje = ''
     },
-    admitir(user) {
-      socket.emit('response-request', {
-        roomId: this.roomId,
-        viewerId: user.idSocket,
-        response: true,
-      })
-
-      this.participantes.push({ name: user.name, email: user.email, estado: 'Activo' })
-
-      this.salaEspera = this.salaEspera.filter((u) => u.id !== user.id)
+    async admitir(user) {
+      try {
+        await api.post(`/transmissions/${this.roomId}/participants`, { id_user: user.id })
+        this.participantes.push({ name: user.name, email: user.email, estado: 'Activo' })
+        this.salaEspera = this.salaEspera.filter((u) => u.id !== user.id)
+      } catch (error) {
+        console.error('Error al admitir usuario:', error)
+      }
     },
 
     rechazar(user) {

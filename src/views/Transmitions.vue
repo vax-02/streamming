@@ -337,6 +337,7 @@ export default {
   data() {
     const userData = JSON.parse(localStorage.getItem('user'))
     return {
+      userData,
       currentTab: 'programadas',
       tabs: [
         { id: 'programadas', name: 'Programadas' },

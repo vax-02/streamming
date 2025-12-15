@@ -98,7 +98,9 @@ export default {
       socket.once('connect', sendRequest)
     }
 
-    socket.on('join-accepted', ({ roomId, hostId, viewerId }) => {
+    socket.on('join-accepted', (data) => {
+      console.log('Solicitud aceptada, redirigiendo...', data)
+      const { roomId, hostId, viewerId } = data
       this.$router.push({
         name: 'live-viewer',
         params: { id: roomId, idH: hostId, idV: viewerId },

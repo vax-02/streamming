@@ -89,12 +89,12 @@
         <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
           <div
             v-for="(p, i) in participantes"
-            :key="i"
+            :key="p.idSocket || i"
             class="flex justify-between items-center bg-gray-700 hover:bg-gray-600 transition px-3 py-2 rounded-lg"
           >
             <div class="flex items-center gap-2">
               <UserCircleIcon class="w-5 h-5 text-blue-400" />
-              <span class="text-sm font-medium">{{ p.email }}</span>
+              <span class="text-sm font-medium">{{ p.name || p.email }}</span>
             </div>
 
             <div v-if="isOwner" class="flex items-center gap-2">
@@ -138,7 +138,7 @@
     <div class="flex-1 flex flex-col justify-between p-4">
       <!-- Video principal -->
       <div class="relative bg-gray-700 rounded-xl flex-1 mb-4 flex justify-center items-center">
-        <video ref="videoRef" autoplay muted class="w-90 h-90 object-cover rounded-xl"></video>
+          <video ref="videoRef" autoplay muted class="w-full h-full object-cover rounded-xl"></video>
 
         <div
           class="absolute top-3 left-3 bg-blue-600 px-3 py-1 rounded-full flex items-center space-x-2 text-sm font-semibold"
@@ -212,7 +212,7 @@
 
         <button
           v-if="isOwner"
-          @click="((pantallaAct = !pantallaAct), shareScreen())"
+          @click="toggleScreenShare"
           :class="[
             'p-3 rounded-full transition-all duration-200',
             pantallaAct ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600',
@@ -229,6 +229,7 @@
         </button>
 
         <button
+          @click="handleEndStream"
           class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
           title="Salir"
         >
@@ -701,6 +702,7 @@ import {
 
 import router from '@/router'
 import socket from '@/services/socket.js'
+import api from '@/services/api.js'
 
 export default {
   name: 'LiveView',
@@ -727,6 +729,7 @@ export default {
       peers: {},
       candidateBuffers: {},
       localStream: null,
+      cameraStream: null,
       salaEspera: [],
       roomId: localStorage.getItem('live_id'),
 
@@ -854,15 +857,24 @@ export default {
     },
   },
 
-  mounted() {
+  async mounted() {
     this.isOwner = true
-    this.getLocalMedia()
+    await this.getLocalMedia() // ESPERAR a que la cámara/micrófono estén listos
+    await this.loadParticipants()
     socket.emit('start-stream', { roomId: this.roomId })
 
     // 2. Listeners de Socket.IO para Host
     // Listener de solicitudes de Viewers (para moderación)
-    socket.on('pending-request', ({ viewerData }) => {
-      this.salaEspera.push(viewerData)
+    socket.on('pending-request', (data) => {
+      console.log('Solicitud recibida:', data)
+      // Combinar datos del usuario con el idSocket si vienen separados
+      const idSocket = data.idSocket || (data.viewerData && data.viewerData.idSocket)
+      const viewer = data.viewerData ? { ...data.viewerData, idSocket } : { ...data, idSocket }
+
+      // Usar idSocket para verificar duplicados, es más seguro en sesiones en vivo
+      if (viewer.idSocket && !this.salaEspera.some((u) => u.idSocket === viewer.idSocket)) {
+        this.salaEspera.push(viewer)
+      }
     })
 
     // Listener único de señal (para recibir Answers y Candidates)
@@ -873,19 +885,79 @@ export default {
       // El Host crea la Offer para el Viewer
       this.createOfferForViewer(viewerId)
     })
+
+    // Listener para cuando un viewer se desconecta
+    socket.on('viewer-disconnected', ({ viewerId }) => {
+      console.log(`Viewer ${viewerId} se ha desconectado.`)
+      // Eliminar de la lista de participantes
+      this.participantes = this.participantes.filter((p) => p.idSocket !== viewerId)
+
+      // Limpiar la conexión WebRTC
+      if (this.peers[viewerId]) {
+        this.peers[viewerId].close()
+        delete this.peers[viewerId]
+      }
+      this.syncParticipants()
+    })
+
+    // Listener para reconexión de viewers (cuando el host refresca)
+    socket.on('viewer-reconnect', (data) => {
+      const viewer = data.viewerData ? { ...data.viewerData, idSocket: data.idSocket } : data
+
+      const index = this.participantes.findIndex((p) => (p.id && p.id === viewer.id) || (p.idSocket && p.idSocket === viewer.idSocket))
+
+      if (index !== -1) {
+        const p = this.participantes[index]
+        this.participantes.splice(index, 1, { ...p, ...viewer, estado: 'Activo', idSocket: viewer.idSocket })
+        if (!this.peers[viewer.idSocket]) {
+          this.createOfferForViewer(viewer.idSocket)
+        }
+      } else {
+        this.participantes.push({ ...viewer, estado: 'Activo' })
+        this.createOfferForViewer(viewer.idSocket)
+      }
+      this.syncParticipants()
+    })
+
+    // Sincronizar al montar para que los viewers detecten que el host volvió (lista vacía)
+    this.syncParticipants()
   },
 
   methods: {
+    async loadParticipants() {
+      try {
+        const response = await api.get(`/transmissions/${this.roomId}/participants`)
+        const data = response.data.data || response.data
+        if (Array.isArray(data)) {
+          data.forEach((dbUser) => {
+            if (!this.participantes.some((p) => p.id === dbUser.id)) {
+              this.participantes.push({ ...dbUser, estado: 'Desconectado' })
+            }
+          })
+        }
+      } catch (error) {
+        console.error('Error al cargar participantes:', error)
+      }
+    },
     async getLocalMedia() {
       try {
         this.localStream = await navigator.mediaDevices.getUserMedia({
           video: true, // <-- Debe ser true
           audio: true, // <-- Debe ser true
         })
+        this.cameraStream = this.localStream // Guardar stream original de la cámara
 
         //this.localStream.getTracks().forEach((track) => pc.addTrack(track, this.localStream))
 
         if (this.$refs.videoRef) this.$refs.videoRef.srcObject = this.localStream
+
+        this.camaraAct = true
+        this.micAct = true
+
+        await this.$nextTick()
+        if (this.$refs.modalVideoRef) {
+          this.$refs.modalVideoRef.srcObject = this.localStream
+        }
 
         Object.values(this.peers).forEach((pc) => {
           this.localStream.getTracks().forEach((track) => pc.addTrack(track, this.localStream))
@@ -895,44 +967,57 @@ export default {
       }
     },
 
-    async shareScreen() {
+    async toggleScreenShare() {
+      this.pantallaAct = !this.pantallaAct
+      if (this.pantallaAct) {
+        await this.startScreenShare()
+      } else {
+        await this.stopScreenShare()
+      }
+    },
+
+    async startScreenShare() {
       try {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
           audio: true,
         })
 
-        // El Owner debe reemplazar los tracks existentes en todos los peers.
-        Object.values(this.peers).forEach(async (pc) => {
-          const senders = pc.getSenders()
+        screenStream.getVideoTracks()[0].onended = () => {
+          this.stopScreenShare()
+        }
 
-          // Reemplazar Track de Video
-          const videoSender = senders.find((s) => s.track && s.track.kind === 'video')
-          const newVideoTrack = screenStream.getVideoTracks()[0]
-          if (videoSender && newVideoTrack) {
-            await videoSender.replaceTrack(newVideoTrack)
-          } else if (newVideoTrack) {
-            pc.addTrack(newVideoTrack, screenStream)
-          }
-
-          // Reemplazar Track de Audio
-          const audioSender = senders.find((s) => s.track && s.track.kind === 'audio')
-          const newAudioTrack = screenStream.getAudioTracks()[0]
-          if (audioSender && newAudioTrack) {
-            await audioSender.replaceTrack(newAudioTrack)
-          } else if (newAudioTrack) {
-            pc.addTrack(newAudioTrack, screenStream)
-          }
-        })
-
-        // Actualizar el localStream y la vista del Owner
         this.localStream = screenStream
         this.$refs.videoRef.srcObject = this.localStream
+        await this.replaceStreamForAllPeers(screenStream)
       } catch (err) {
         console.error('Error al compartir pantalla:', err)
+        this.pantallaAct = false // Revertir estado si el usuario cancela
       }
     },
 
+    async stopScreenShare() {
+      if (this.localStream && this.localStream.id !== this.cameraStream.id) {
+        this.localStream.getTracks().forEach((track) => track.stop())
+      }
+      this.localStream = this.cameraStream
+      this.$refs.videoRef.srcObject = this.localStream
+      this.pantallaAct = false
+      await this.replaceStreamForAllPeers(this.cameraStream)
+    },
+
+    async replaceStreamForAllPeers(newStream) {
+      const videoTrack = newStream ? newStream.getVideoTracks()[0] : null
+      const audioTrack = newStream ? newStream.getAudioTracks()[0] : null
+
+      for (const pc of Object.values(this.peers)) {
+        const videoSender = pc.getSenders().find((s) => s.track && s.track.kind === 'video')
+        if (videoSender) await videoSender.replaceTrack(videoTrack)
+
+        const audioSender = pc.getSenders().find((s) => s.track && s.track.kind === 'audio')
+        if (audioSender && audioTrack) await audioSender.replaceTrack(audioTrack)
+      }
+    },
     async createOfferForViewer(viewerId) {
       const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
       this.peers[viewerId] = pc
@@ -1201,24 +1286,19 @@ export default {
       tiempo.value = 0
       tiempoFormateado.value = formatTime(tiempo.value)
     },
-    toggleCamara() {
-      this.camaraAct = !this.camaraAct
-      if (this.camaraAct) {
-        try {
-          this.videoStream = navigator.mediaDevices.getUserMedia({ video: true })
-          if (this.modalVideoRef) {
-            this.modalVideoRef.srcObject = this.videoStream
+    async toggleCamara() {
+      if (this.localStream) {
+        const videoTrack = this.localStream.getVideoTracks()[0]
+        if (videoTrack) {
+          videoTrack.enabled = !videoTrack.enabled
+          this.camaraAct = videoTrack.enabled
+
+          if (this.camaraAct) {
+            await this.$nextTick()
+            if (this.$refs.modalVideoRef) {
+              this.$refs.modalVideoRef.srcObject = this.localStream
+            }
           }
-        } catch (err) {
-          alert('Error al acceder a la cámara:', err)
-          this.camaraAct = false
-        }
-      } else {
-        if (this.videoStream) {
-          this.videoStream.getTracks().forEach((track) => track.stop())
-        }
-        if (this.modalVideoRef) {
-          this.modalVideoRef.srcObject = null
         }
       }
     },
@@ -1228,16 +1308,28 @@ export default {
       this.chat.push({ usuario: 'Docente', mensaje: this.mensaje })
       this.mensaje = ''
     },
-    admitir(user) {
+    async admitir(user) {
+      // Integración Backend: Registrar participante (No bloqueante)
+      if (user.id) {
+        try {
+          await api.post(`/transmissions/${this.roomId}/participants`, { id_user: user.id })
+        } catch (error) {
+          console.error('Error al registrar participante en backend (continuando admisión):', error)
+        }
+      }
+
+      // Lógica de Sockets y UI (Se ejecuta siempre)
       socket.emit('response-request', {
         roomId: this.roomId,
         viewerId: user.idSocket,
         response: true,
+        hostId: socket.id,
       })
 
-      this.participantes.push({ name: user.name, email: user.email, estado: 'Activo' })
+      this.participantes.push({ ...user, estado: 'Activo' })
 
-      this.salaEspera = this.salaEspera.filter((u) => u.id !== user.id)
+      this.salaEspera = this.salaEspera.filter((u) => u.idSocket !== user.idSocket)
+      this.syncParticipants()
     },
 
     rechazar(user) {
@@ -1246,15 +1338,38 @@ export default {
         viewerId: user.idSocket,
         response: false,
       })
-      this.salaEspera = this.salaEspera.filter((u) => u.id !== user.id)
+      this.salaEspera = this.salaEspera.filter((u) => u.idSocket !== user.idSocket)
     },
     silenciar(p) {
       p.estado = false
       this.menuAbierto = null
     },
-    expulsar(p) {
-      this.participantes = this.participantes.filter((part) => part.nombre !== p.nombre)
+    async expulsar(user) {
+      // Integración Backend: Eliminar participante (No bloqueante)
+      if (user.id) {
+        try {
+          await api.delete(`/transmissions/${this.roomId}/participants/${user.id}`)
+        } catch (error) {
+          console.error('Error al eliminar participante del backend (continuando expulsión):', error)
+        }
+      }
+
+      // Notificar al servidor para que desconecte al usuario
+      socket.emit('expel-viewer', { viewerId: user.idSocket, roomId: this.roomId })
+
+      // Eliminarlo de la lista local inmediatamente
+      this.participantes = this.participantes.filter((p) => p.idSocket !== user.idSocket)
+
+      // Limpiar la conexión WebRTC
+      if (this.peers[user.idSocket]) {
+        this.peers[user.idSocket].close()
+        delete this.peers[user.idSocket]
+      }
       this.menuAbierto = null
+      this.syncParticipants()
+    },
+    syncParticipants() {
+      socket.emit('update-participants', { roomId: this.roomId, participants: this.participantes })
     },
   },
 }
