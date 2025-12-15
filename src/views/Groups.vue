@@ -372,7 +372,13 @@
       <!-- Header -->
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold text-white">Editar Grupo</h3>
-        <button type="button" @click="modalEditarGrupo = false" class="text-gray-400 hover:text-white">✖</button>
+        <button
+          type="button"
+          @click="modalEditarGrupo = false"
+          class="text-gray-400 hover:text-white"
+        >
+          ✖
+        </button>
       </div>
 
       <!-- Foto del grupo -->
@@ -437,17 +443,14 @@
         >
           Cancelar
         </button>
-        <button
-          type="submit"
-          class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500"
-        >
+        <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500">
           Guardar
         </button>
       </div>
     </form>
   </div>
 
-   <!--MODAL DE CREAR GRUPO-->
+  <!--MODAL DE CREAR GRUPO-->
   <div
     v-if="modalCrearGrupo"
     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
@@ -457,16 +460,18 @@
       <!-- Header -->
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold text-white">Crear Grupo</h3>
-        <button type="button" @click="modalCrearGrupo = false" class="text-gray-400 hover:text-white">✖</button>
+        <button
+          type="button"
+          @click="modalCrearGrupo = false"
+          class="text-gray-400 hover:text-white"
+        >
+          ✖
+        </button>
       </div>
 
       <!-- Foto del grupo -->
       <div class="flex flex-col items-center mb-4">
-        <img
-          src=""
-          alt="Grupo"
-          class="w-24 h-24 rounded-full object-cover mb-2"
-        />
+        <img src="" alt="Grupo" class="w-24 h-24 rounded-full object-cover mb-2" />
         <input type="file" @change="onFileChange" class="text-sm text-gray-300" />
       </div>
       <!-- Nombre -->
@@ -521,10 +526,7 @@
         >
           Cancelar
         </button>
-        <button
-          type="submit"
-          class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500"
-        >
+        <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500">
           Guardar
         </button>
       </div>
@@ -533,8 +535,7 @@
 </template>
 
 <script>
-import { io } from 'socket.io-client'
-const socket = io('http://localhost:3001') // Conecta al servidor
+import socket from '@/services/socket.js'
 import { UserPlusIcon, CalendarDaysIcon, UserMinusIcon } from '@heroicons/vue/24/solid'
 import bannerMessages from '@/layouts/bannerMessages.vue'
 import api from '@/services/api.js'

@@ -242,8 +242,7 @@
 </template>
 
 <script>
-import { io } from 'socket.io-client'
-const socket = io('http://localhost:3001') // Conecta al servidor
+import socket from '@/services/socket.js'
 
 import { PhoneIcon, VideoCameraIcon, UserIcon } from '@heroicons/vue/24/solid'
 import bannerMessages from '@/layouts/bannerMessages.vue'
@@ -270,7 +269,6 @@ export default {
   },
 
   computed: {
-    
     filteredContacts() {
       if (!this.searchContact) return this.friends
       const q = this.searchContact.toLowerCase()
@@ -284,7 +282,7 @@ export default {
   mounted() {
     const route = useRoute()
     this.handleOpenContactQuery(route.query)
-    
+
     this.connectToUserChats()
     this.loadChats()
     this.loadFriends()

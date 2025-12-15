@@ -53,7 +53,7 @@
                 </button>
 
                 <button
-                  @click="toLive(trans.id, trans.user_id)"
+                  @click="toLive(trans.id, trans.id_user)"
                   class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-sm"
                 >
                   <PlayIcon class="w-6 h-6 icon" />
@@ -133,7 +133,7 @@
               </button>
 
               <button
-                @click="toLive(trans.id, trans.user_id)"
+                @click="requestLive(trans.id, trans.id_user)"
                 class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-sm"
               >
                 <PlayIcon class="w-6 h-6 icon" />
@@ -322,8 +322,8 @@ export default {
   },
 
   data() {
+    const userData = JSON.parse(localStorage.getItem('user'))
     return {
-      userData: JSON.parse(localStorage.getItem('user')),
       currentTab: 'programadas',
       tabs: [
         { id: 'programadas', name: 'Programadas' },
@@ -373,13 +373,22 @@ export default {
   },
   mounted() {
     this.loadTransmissions()
+    console.log(this.transmisiones)
     this.loadPublicTransmissions()
   },
   methods: {
     toLive(id, ownerId) {
       localStorage.setItem('live_owner', ownerId)
       localStorage.setItem('live_id', id)
-      router.push(`/live/${id}`)
+
+      router.push(`/liveHost/${id}`)
+    },
+    //solicitar ingresi a live
+    requestLive(id, ownerId) {
+      router.push({
+        name: 'request-live',
+        params: { id: id },
+      })
     },
     async loadTransmissions() {
       try {
@@ -389,6 +398,7 @@ export default {
 
         this.transmisiones = temp.map((u) => ({
           id: u.id,
+          id_user: u.id_user,
           titulo: u.name,
           descripcion: u.description,
           categoria: u.type == 0 ? 'Privado' : 'Publico',

@@ -2,6 +2,7 @@
   <div class="flex h-screen bg-gray-900 text-white">
     <!-- Panel izquierdo: participantes y sala de espera -->
     <aside
+      v-if="isOwner"
       v-show="expandirBool"
       class="w-[22%] bg-gray-900 text-white p-4 flex flex-col space-y-5 border-l border-gray-800 shadow-xl"
     >
@@ -40,7 +41,7 @@
       </div>
 
       <!-- Sala de espera -->
-      <div v-if="isOwner">
+      <div>
         <h3 class="font-semibold text-sm text-gray-400 mb-2 uppercase tracking-wide">
           Sala de espera
         </h3>
@@ -53,7 +54,7 @@
             :key="i"
             class="flex justify-between items-center bg-gray-800 rounded-lg px-3 py-2"
           >
-            <span class="font-medium text-sm">{{ user }}</span>
+            <span class="font-medium text-sm">{{ user.name }}</span>
             <div class="flex space-x-1">
               <button
                 @click="admitir(user)"
@@ -93,7 +94,7 @@
           >
             <div class="flex items-center gap-2">
               <UserCircleIcon class="w-5 h-5 text-blue-400" />
-              <span class="text-sm font-medium">{{ p.nombre }}</span>
+              <span class="text-sm font-medium">{{ p.email }}</span>
             </div>
 
             <div v-if="isOwner" class="flex items-center gap-2">
@@ -102,7 +103,7 @@
 
               <div class="relative">
                 <button
-                  @click="toggleMenu(i)"
+                  @click="menuAbierto = menuAbierto === i ? null : i"
                   class="p-1 hover:bg-gray-500 rounded-full transition"
                 >
                   <EllipsisHorizontalIcon class="w-4 h-4 text-gray-300" />
@@ -211,7 +212,7 @@
 
         <button
           v-if="isOwner"
-          @click="(togglePantalla(), shareScreen())"
+          @click="((pantallaAct = !pantallaAct), shareScreen())"
           :class="[
             'p-3 rounded-full transition-all duration-200',
             pantallaAct ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600',
@@ -221,17 +222,17 @@
         </button>
 
         <button
-          @click="expandir"
+          @click="expandirBool = !expandirBool"
           class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
         >
           <ArrowsPointingOutIcon class="w-6 h-6 text-white" />
         </button>
 
         <button
-          @click="modalTest = true"
           class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
+          title="Salir"
         >
-          <EllipsisHorizontalIcon class="w-6 h-6 text-white" />
+          <PowerIcon class="w-6 h-6 text-red-500" />
         </button>
       </div>
     </div>
@@ -351,23 +352,6 @@
                         <span class="text-gray-300">{{ response.text }}</span>
                       </div>
                     </div>
-
-                    <!-- Formulario para responder -->
-                    <div class="flex items-center gap-2">
-                      <input
-                        v-model="responseText[`${msg.id}-${blockIdx}`]"
-                        type="text"
-                        placeholder="Escribe tu respuesta..."
-                        class="flex-1 px-3 py-1.5 rounded bg-gray-600 text-white outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        @keyup.enter="submitExerciseResponse(msg.id, blockIdx)"
-                      />
-                      <button
-                        @click="submitExerciseResponse(msg.id, blockIdx)"
-                        class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
-                      >
-                        Enviar
-                      </button>
-                    </div>
                   </div>
                   <img
                     v-if="block.type === 'image'"
@@ -393,13 +377,6 @@
             <ChartBarIcon class="w-5 h-5" />
             <span>Crear Encuesta</span>
           </button>
-          <button
-            @click="showExerciseModal = true"
-            class="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-md hover:bg-blue-600"
-          >
-            <PencilSquareIcon class="w-5 h-5" />
-            <span>Crear Ejercicio</span>
-          </button>
         </div>
 
         <!-- Botón para abrir el menú -->
@@ -423,128 +400,6 @@
         </button>
       </div>
     </aside>
-
-    <!-- Modal: prueba de audio/cámara -->
-
-    <div
-      v-if="modalTest"
-      class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4"
-    >
-      <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-lg space-y-6 relative shadow-lg">
-        <!-- Título -->
-        <h3 class="text-2xl font-bold text-center">Configuración de Audio y Video</h3>
-
-        <!-- Cerrar modal -->
-        <button
-          @click="modalTest = false"
-          class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold"
-        >
-          ✖
-        </button>
-
-        <!-- Video de prueba -->
-        <div class="relative w-full">
-          <video
-            ref="modalVideoRef"
-            autoplay
-            muted
-            class="w-full h-48 bg-black rounded-lg object-cover"
-          ></video>
-          <div
-            v-if="!camaraAct"
-            class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg"
-          >
-            <UserCircleIcon class="w-16 h-16 text-gray-400" />
-            <span class="absolute bottom-2 text-gray-300 text-sm">Cámara apagada</span>
-          </div>
-        </div>
-
-        <!-- Configuración de audio y video -->
-        <div class="space-y-3">
-          <!-- Micrófono -->
-          <div class="flex flex-col">
-            <label class="text-sm text-gray-300 mb-1 flex items-center gap-2">
-              <MicrophoneIcon class="w-5 h-5" /> Micrófono
-            </label>
-            <select v-model="selectedMic" class="w-full p-2 rounded bg-gray-700 text-white">
-              <option v-for="mic in micList" :key="mic.deviceId" :value="mic.deviceId">
-                {{ mic.label }}
-              </option>
-            </select>
-            <input type="range" min="0" max="100" v-model="micVolume" class="mt-1 w-full" />
-          </div>
-
-          <!-- Altavoz -->
-          <div class="flex flex-col">
-            <label class="text-sm text-gray-300 mb-1 flex items-center gap-2">
-              <SpeakerWaveIcon class="w-5 h-5" /> Altavoz
-            </label>
-            <select v-model="selectedSpeaker" class="w-full p-2 rounded bg-gray-700 text-white">
-              <option v-for="spk in speakerList" :key="spk.deviceId" :value="spk.deviceId">
-                {{ spk.label }}
-              </option>
-            </select>
-            <input type="range" min="0" max="100" v-model="speakerVolume" class="mt-1 w-full" />
-            <button
-              @click="testSpeaker"
-              class="mt-1 bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
-            >
-              Probar Altavoz
-            </button>
-          </div>
-
-          <!-- Cámara -->
-          <div class="flex flex-col">
-            <label class="text-sm text-gray-300 mb-1 flex items-center gap-2">
-              <CameraIcon class="w-5 h-5" /> Cámara
-            </label>
-            <select v-model="selectedCam" class="w-full p-2 rounded bg-gray-700 text-white">
-              <option v-for="cam in camList" :key="cam.deviceId" :value="cam.deviceId">
-                {{ cam.label }}
-              </option>
-            </select>
-            <div class="mt-1 flex items-center gap-2">
-              <button
-                @click="toggleCamara"
-                class="px-3 py-1 rounded bg-gray-700 hover:bg-blue-600 text-sm"
-              >
-                {{ camaraAct ? 'Apagar Camara' : 'Encender Camara' }}
-              </button>
-              <select v-model="cameraResolution" class="p-1 rounded bg-gray-700 text-white text-sm">
-                <option value="low">Baja</option>
-                <option value="medium">Media</option>
-                <option value="high">Alta</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Mic On/Off rápido -->
-          <div class="flex justify-around mt-2 space-x-4">
-            <button
-              @click="toggleMic"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-blue-600 transition"
-            >
-              <MicrophoneIcon class="w-5 h-5" />
-              {{ micAct ? 'Mic On' : 'Mic Off' }}
-            </button>
-            <button
-              @click="toggleCamara"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-blue-600 transition"
-            >
-              <CameraIcon class="w-5 h-5" />
-              {{ camaraAct ? 'Cam On' : 'Cam Off' }}
-            </button>
-          </div>
-        </div>
-        <!-- Aceptar -->
-        <button
-          @click="modalTest = false"
-          class="bg-blue-600 hover:bg-blue-700 w-full py-2 rounded-lg font-semibold transition"
-        >
-          Aceptar
-        </button>
-      </div>
-    </div>
 
     <!-- Modal: Compartir -->
     <div
@@ -822,117 +677,9 @@
       </div>
     </div>
   </div>
-
-  <!-- Modal: Crear Ejercicio -->
-  <div
-    v-if="showExerciseModal"
-    class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
-  >
-    <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-xl flex flex-col shadow-lg">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold text-white">Crear Ejercicio</h3>
-        <button @click="showExerciseModal = false" class="text-gray-400 hover:text-white">
-          ✖
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar max-h-[70vh]">
-        <!-- Título del Ejercicio -->
-        <div>
-          <label class="block text-sm text-gray-300 mb-1">Título</label>
-          <input
-            v-model="exerciseTitle"
-            type="text"
-            placeholder="Ej: Repaso de Álgebra"
-            class="w-full px-3 py-2 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <!-- Bloques de Contenido Dinámico -->
-        <div
-          v-for="(block, index) in exerciseContent"
-          :key="index"
-          class="bg-gray-900/50 p-3 rounded-lg relative"
-        >
-          <!-- Botón para eliminar bloque -->
-          <button
-            @click="exerciseContent.splice(index, 1)"
-            class="absolute top-2 right-2 text-gray-500 hover:text-red-400"
-          >
-            <XMarkIcon class="w-4 h-4" />
-          </button>
-
-          <!-- Bloque de Texto/Pregunta -->
-          <div v-if="block.type === 'text'">
-            <label class="block text-xs text-gray-400 mb-1">Pregunta o Texto</label>
-            <textarea
-              v-model="block.question"
-              rows="2"
-              class="w-full px-3 py-2 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Escribe una pregunta o instrucción..."
-            ></textarea>
-          </div>
-
-          <!-- Bloque de Imagen -->
-          <div v-if="block.type === 'image'">
-            <label class="block text-xs text-gray-400 mb-1">Imagen</label>
-            <img :src="block.src" class="max-w-full max-h-60 rounded-md mx-auto" />
-          </div>
-        </div>
-
-        <!-- Input de archivo oculto -->
-        <input
-          type="file"
-          ref="fileInput"
-          @change="handleExerciseFile"
-          accept="image/*"
-          class="hidden"
-        />
-      </div>
-
-      <!-- Acciones para añadir bloques -->
-      <div class="mt-4 pt-4 border-t border-gray-700 flex flex-wrap gap-2">
-        <button
-          @click="addContentBlock('text')"
-          class="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition-colors"
-        >
-          <PencilSquareIcon class="w-5 h-5" />
-          Añadir Pregunta
-        </button>
-        <button
-          @click="addContentBlock('image')"
-          class="flex items-center gap-2 text-sm bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg transition-colors"
-        >
-          <PhotoIcon class="w-5 h-5" />
-          Añadir Imagen
-        </button>
-      </div>
-
-      <!-- Botones de Envío/Cancelación -->
-      <div class="flex justify-end space-x-2 mt-6">
-        <button
-          @click="showExerciseModal = false"
-          class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg"
-        >
-          Cancelar
-        </button>
-        <button
-          @click.prevent="submitExercise"
-          :disabled="isSendingExercise"
-          :class="{
-            'opacity-60 cursor-not-allowed': isSendingExercise,
-            'bg-blue-600 hover:bg-blue-700': !isSendingExercise,
-          }"
-          class="px-4 py-2 rounded-lg font-semibold"
-        >
-          {{ isSendingExercise ? 'Enviando...' : 'Enviar Ejercicio' }}
-        </button>
-      </div>
-    </div>
-  </div>
 </template>
 
-<script setup>
+<script>
 import {
   UserCircleIcon,
   EllipsisHorizontalIcon,
@@ -949,608 +696,567 @@ import {
   EyeIcon,
   UserGroupIcon,
   ShareIcon,
+  PowerIcon,
 } from '@heroicons/vue/24/solid'
 
 import router from '@/router'
-import { ref, onUnmounted, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
-const userData = JSON.parse(localStorage.getItem('user'))
+import socket from '@/services/socket.js'
 
-import { io } from 'socket.io-client'
-
-const salaEspera = ref(['Alumno1', 'Alumno2'])
-const participantes = ref([
-  { nombre: 'Alumno3', estado: 'Inactivo' },
-  { nombre: 'Alumno4', estado: 'Inactivo' },
-])
-
-const chat = ref([])
-const mensaje = ref('')
-const showChatMenu = ref(false)
-const expandirBool = ref(true)
-const showOptionsMenu = ref(false)
-const showEndStreamConfirm = ref(false)
-
-const miniVideoRef = ref(null)
-let socket
-let pc
-let localStream
-const videoRef = ref(null)
-
-let stream = null
-const modalVideoRef = ref(null)
-
-const micAct = ref(false)
-const camaraAct = ref(false)
-const pantallaAct = ref(false)
-const grabando = ref(false)
-const modalTest = ref(false)
-
-const audioLevel = ref(0)
-
-// Dispositivos simulados
-const micList = ref([
-  { deviceId: 'mic1', label: 'Micrófono 1' },
-  { deviceId: 'mic2', label: 'Micrófono 2' },
-])
-const speakerList = ref([
-  { deviceId: 'spk1', label: 'Altavoz 1' },
-  { deviceId: 'spk2', label: 'Altavoz 2' },
-])
-const camList = ref([
-  { deviceId: 'cam1', label: 'Cámara 1' },
-  { deviceId: 'cam2', label: 'Cámara 2' },
-])
-
-const selectedMic = ref('mic1')
-const selectedSpeaker = ref('spk1')
-const selectedCam = ref('cam1')
-const cameraResolution = ref('medium')
-const micVolume = ref(80)
-const speakerVolume = ref(80)
-
-const showSurveyModal = ref(false)
-const surveyQuestion = ref('')
-const surveyOptions = ref(['', ''])
-const surveyMultipleChoice = ref(false)
-const surveyError = ref('')
-
-// Ejercicio
-const exerciseTitle = ref('')
-const exerciseDescription = ref('')
-const exerciseImage = ref('')
-const exerciseImageData = ref('')
-const exerciseQuestions = ref(['']) // Mantenido por si se necesita en otro lugar.
-const exerciseContent = ref([{ type: 'text', question: '', responses: [] }])
-
-// bandera para enviar ejercicio (evita doble click/confusión con encuesta)
-const isSendingExercise = ref(false)
-
-const fileInput = ref(null)
-
-// Message ids and voting
-const nextMessageId = ref(1)
-// votedPolls: map messageId -> array of selected indices (for multi) or single index
-const votedPolls = ref({})
-// Exercise responses
-const showResponse = ref({})
-const responseText = ref({})
-
-// Lógica para compartir
-const showShareModal = ref(false)
-const streamLink = ref('https://edustream.app/live/xyz-123') // Enlace falso
-const shareTab = ref('friends') // 'friends' o 'groups'
-const shareSearch = ref('')
-const selectedShareTargets = ref([])
-
-// Datos simulados de amigos y grupos
-const friendsList = ref([
-  {
-    id: 'friend-1',
-    name: 'Laura García',
-    tipo: 'friend',
-    avatar: 'https://i.pravatar.cc/100?img=6',
+export default {
+  name: 'LiveView',
+  components: {
+    UserCircleIcon,
+    EllipsisHorizontalIcon,
+    MicrophoneIcon,
+    PlusCircleIcon,
+    ChartBarIcon,
+    PencilSquareIcon,
+    VideoCameraIcon,
+    VideoCameraSlashIcon,
+    ComputerDesktopIcon,
+    ArrowsPointingOutIcon,
+    CheckIcon,
+    XMarkIcon,
+    EyeIcon,
+    UserGroupIcon,
+    ShareIcon,
+    PowerIcon,
   },
-  {
-    id: 'friend-2',
-    name: 'José Martínez',
-    tipo: 'friend',
-    avatar: 'https://i.pravatar.cc/100?img=15',
+  data() {
+    return {
+      peers: {},
+      candidateBuffers: {},
+      localStream: null,
+      salaEspera: [],
+      roomId: localStorage.getItem('live_id'),
+
+      tiempo: 0, // tiempo en segundos
+      tiempoFormateado: '00:00',
+      intervalo: null,
+
+      audioContext: null,
+      audioAnalyser: null,
+      audioStream: null,
+      audioSource: null,
+      animationFrameId: null,
+      videoStream: null,
+
+      participantes: [],
+      chat: [],
+      mensaje: '',
+
+      showChatMenu: false,
+      expandirBool: true,
+      showOptionsMenu: false,
+      showEndStreamConfirm: false,
+
+      miniVideoRef: null,
+      modalVideoRef: null,
+
+      pc: null,
+      stream: null,
+
+      micAct: false,
+      camaraAct: false,
+      pantallaAct: false,
+      grabando: false,
+      audioLevel: 0,
+
+      micList: [
+        { deviceId: 'mic1', label: 'Micrófono 1' },
+        { deviceId: 'mic2', label: 'Micrófono 2' },
+      ],
+
+      speakerList: [
+        { deviceId: 'spk1', label: 'Altavoz 1' },
+        { deviceId: 'spk2', label: 'Altavoz 2' },
+      ],
+
+      camList: [
+        { deviceId: 'cam1', label: 'Cámara 1' },
+        { deviceId: 'cam2', label: 'Cámara 2' },
+      ],
+
+      selectedMic: 'mic1',
+      selectedSpeaker: 'spk1',
+      selectedCam: 'cam1',
+      cameraResolution: 'medium',
+      micVolume: 80,
+      speakerVolume: 80,
+
+      showSurveyModal: false,
+      surveyQuestion: '',
+      surveyOptions: ['', ''],
+      surveyMultipleChoice: false,
+      surveyError: '',
+
+      fileInput: null,
+
+      nextMessageId: 1,
+      votedPolls: {},
+      showResponse: {},
+      responseText: {},
+
+      showShareModal: false,
+      streamLink: 'https://edustream.app/live/xyz-123',
+      shareTab: 'friends',
+      shareSearch: '',
+      selectedShareTargets: [],
+
+      friendsList: [
+        {
+          id: 'friend-1',
+          name: 'Laura García',
+          tipo: 'friend',
+          avatar: 'https://i.pravatar.cc/100?img=6',
+        },
+        {
+          id: 'friend-2',
+          name: 'José Martínez',
+          tipo: 'friend',
+          avatar: 'https://i.pravatar.cc/100?img=15',
+        },
+      ],
+
+      groupsList: [
+        {
+          id: 'group-1',
+          nombre: 'LIN - 3',
+          tipo: 'group',
+          foto: 'https://ui-avatars.com/api/?name=LIN',
+        },
+        {
+          id: 'group-2',
+          nombre: 'WEB - 1',
+          tipo: 'group',
+          foto: 'https://ui-avatars.com/api/?name=WEB',
+        },
+      ],
+
+      menuAbierto: null,
+      isOwner: false,
+    }
   },
-])
-const groupsList = ref([
-  { id: 'group-1', nombre: 'LIN - 3', tipo: 'group', foto: 'https://ui-avatars.com/api/?name=LIN' },
-  { id: 'group-2', nombre: 'WEB - 1', tipo: 'group', foto: 'https://ui-avatars.com/api/?name=WEB' },
-])
 
-const filteredFriends = computed(() => {
-  if (!shareSearch.value) return friendsList.value
-  return friendsList.value.filter((f) =>
-    f.name.toLowerCase().includes(shareSearch.value.toLowerCase()),
-  )
-})
+  computed: {
+    filteredFriends() {
+      if (!this.shareSearch) return this.friendsList
+      return this.friendsList.filter((f) =>
+        f.name.toLowerCase().includes(this.shareSearch.toLowerCase()),
+      )
+    },
 
-const filteredGroups = computed(() => {
-  if (!shareSearch.value) return groupsList.value
-  return groupsList.value.filter((g) =>
-    g.nombre.toLowerCase().includes(shareSearch.value.toLowerCase()),
-  )
-})
+    filteredGroups() {
+      if (!this.shareSearch) return this.groupsList
+      return this.groupsList.filter((g) =>
+        g.nombre.toLowerCase().includes(this.shareSearch.toLowerCase()),
+      )
+    },
+  },
 
-const menuAbierto = ref(null)
-const roomId = localStorage.getItem('live_id')
-const isOwner = localStorage.getItem('live_owner') == userData.id ? true : false
-onMounted(() => {
-  alert(isOwner ? 'Eres el docente de esta clase' : 'Eres un alumno en esta clase')
+  mounted() {
+    this.isOwner = true
+    this.getLocalMedia()
+    socket.emit('start-stream', { roomId: this.roomId })
 
-  intervalo = setInterval(() => {
-    tiempo.value++
-    tiempoFormateado.value = formatTime(tiempo.value)
-  }, 1000)
-
-  socket = io('http://localhost:3001')
-  socket.emit('start-stream', { roomId })
-})
-
-async function shareScreen() {
-  try {
-    const localStream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: true,
+    // 2. Listeners de Socket.IO para Host
+    // Listener de solicitudes de Viewers (para moderación)
+    socket.on('pending-request', ({ viewerData }) => {
+      this.salaEspera.push(viewerData)
     })
 
-    const video = document.querySelector('video')
-    video.srcObject = localStream
-    socket.emit('start-stream', { roomId })
+    // Listener único de señal (para recibir Answers y Candidates)
+    socket.on('signal', this.handleSignal)
 
-    socket.on('viewer-joined', async ({ viewerId }) => {
-      pc = new RTCPeerConnection()
+    // Listener para nuevos viewers listos (dispara la Offer inicial)
+    socket.on('viewer-joined', ({ viewerId }) => {
+      // El Host crea la Offer para el Viewer
+      this.createOfferForViewer(viewerId)
+    })
+  },
 
-      // Añadir tracks al peer connection
-      localStream.getTracks().forEach((track) => pc.addTrack(track, localStream))
+  methods: {
+    async getLocalMedia() {
+      try {
+        this.localStream = await navigator.mediaDevices.getUserMedia({
+          video: true, // <-- Debe ser true
+          audio: true, // <-- Debe ser true
+        })
 
-      // ICE candidates
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit('signal', { targetId: viewerId, data: { candidate: event.candidate } })
+        //this.localStream.getTracks().forEach((track) => pc.addTrack(track, this.localStream))
+
+        if (this.$refs.videoRef) this.$refs.videoRef.srcObject = this.localStream
+
+        Object.values(this.peers).forEach((pc) => {
+          this.localStream.getTracks().forEach((track) => pc.addTrack(track, this.localStream))
+        })
+      } catch (err) {
+        console.error('Error al obtener audio/video', err)
+      }
+    },
+
+    async shareScreen() {
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true,
+        })
+
+        // El Owner debe reemplazar los tracks existentes en todos los peers.
+        Object.values(this.peers).forEach(async (pc) => {
+          const senders = pc.getSenders()
+
+          // Reemplazar Track de Video
+          const videoSender = senders.find((s) => s.track && s.track.kind === 'video')
+          const newVideoTrack = screenStream.getVideoTracks()[0]
+          if (videoSender && newVideoTrack) {
+            await videoSender.replaceTrack(newVideoTrack)
+          } else if (newVideoTrack) {
+            pc.addTrack(newVideoTrack, screenStream)
+          }
+
+          // Reemplazar Track de Audio
+          const audioSender = senders.find((s) => s.track && s.track.kind === 'audio')
+          const newAudioTrack = screenStream.getAudioTracks()[0]
+          if (audioSender && newAudioTrack) {
+            await audioSender.replaceTrack(newAudioTrack)
+          } else if (newAudioTrack) {
+            pc.addTrack(newAudioTrack, screenStream)
+          }
+        })
+
+        // Actualizar el localStream y la vista del Owner
+        this.localStream = screenStream
+        this.$refs.videoRef.srcObject = this.localStream
+      } catch (err) {
+        console.error('Error al compartir pantalla:', err)
+      }
+    },
+
+    async createOfferForViewer(viewerId) {
+      const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
+      this.peers[viewerId] = pc
+      this.candidateBuffers[viewerId] = []
+      // 1. Agregar tracks iniciales del owner
+      if (this.localStream) {
+        this.localStream.getTracks().forEach((track) => {
+          pc.addTrack(track, this.localStream)
+        })
+      }
+
+      // 2. Listener de Renegociación (Se dispara si se añaden tracks, ej: si se añadieron al inicio)
+      pc.onnegotiationneeded = async () => {
+        try {
+          console.log(`Negociación necesaria para viewer ${viewerId}`)
+          const offer = await pc.createOffer()
+          await pc.setLocalDescription(offer)
+          socket.emit('signal', { targetId: viewerId, data: offer })
+        } catch (error) {
+          console.error('Error en onnegotiationneeded', error)
         }
       }
 
-      // Crear offer
+      // 3. Configuración de ICE y Tracks
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('signal', { targetId: viewerId, data: event.candidate })
+        }
+      }
+
+      pc.ontrack = (event) => {
+        // Aquí se podría manejar si un viewer comparte su media (si fuera una reunión P2P/P2MP bidireccional)
+        console.log(`Stream recibido de viewer ${viewerId}`, event.streams)
+      }
+
+      // 4. Primera Offer (para establecer la conexión inicial)
       const offer = await pc.createOffer()
       await pc.setLocalDescription(offer)
       socket.emit('signal', { targetId: viewerId, data: offer })
-    })
+    },
 
-    // Recibir señales del viewer
-    socket.on('signal', async ({ from, data }) => {
-      if (data.type === 'answer') {
-        await pc.setRemoteDescription(data)
-      } else if (data.candidate) {
-        await pc.addIceCandidate(data.candidate)
+    async handleSignal({ from, data }) {
+      let pc = this.peers[from] // Obtener el PC específico del viewer
+      let buffer = this.candidateBuffers[from]
+      if (!pc) return
+
+      // El Host solo espera la Answer del Viewer o los candidatos ICE
+      try {
+        if (data.type === 'answer') {
+          if (pc.signalingState !== 'have-local-offer') {
+            console.warn(
+              `Host: Recibida Answer de ${from} en estado no esperado: ${pc.signalingState}. Ignorando.`,
+            )
+            return
+          }
+          await pc.setRemoteDescription(new RTCSessionDescription(data))
+          console.log(`Host: Answer de ${from} establecida. Procesando candidatos.`)
+          buffer.forEach((candidate) => {
+            pc.addIceCandidate(new RTCIceCandidate(candidate))
+          })
+          this.candidateBuffers[from] = [] // Vaciar el buffer
+        } else if (data.candidate) {
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(new RTCIceCandidate(data))
+          } else {
+            // Si la Answer aún NO ha llegado, almacenar en el buffer
+            buffer.push(data)
+            console.log(`Candidato de ${from} bufferizado. Esperando Answer.`)
+          }
+        }
+      } catch (e) {
+        console.error('Error al procesar señal en Host:', e)
       }
-    })
-  } catch (err) {
-    console.error('Error al compartir pantalla:', err)
-  }
-}
-function testSpeaker() {
-  alert('Reproduciendo sonido de prueba en el altavoz seleccionado.')
-}
+    },
+    handleEndStream() {
+      this.showOptionsMenu = false
+      this.showEndStreamConfirm = true
+    },
+    confirmEndStream() {
+      this.showEndStreamConfirm = false
+      router.push({ name: 'transmitions' })
+    },
+    addSurveyOption() {
+      this.surveyOptions.push('')
+    },
+    removeSurveyOption(index) {
+      if (this.surveyOptions.length > 2) this.surveyOptions.splice(index, 1)
+    },
 
-// Simulación de nivel de audio
-setInterval(() => {
-  audioLevel.value = micAct.value ? Math.floor(Math.random() * 100) : 0
-}, 200)
-
-function handleEndStream() {
-  showOptionsMenu.value = false
-  showEndStreamConfirm.value = true
-}
-
-function confirmEndStream() {
-  showEndStreamConfirm.value = false
-  router.push({ name: 'dashboard' })
-}
-
-function addSurveyOption() {
-  surveyOptions.value.push('')
-}
-
-function removeSurveyOption(index) {
-  if (surveyOptions.value.length > 2) surveyOptions.value.splice(index, 1)
-}
-
-function submitSurvey() {
-  // Build structured encuesta so the chat renderer + votePoll can handle voting
-  const q = (surveyQuestion.value || '').toString().trim()
-  if (!q) {
-    surveyError.value = 'Introduce la pregunta de la encuesta'
-    return
-  }
-
-  try {
-    console.log('[submitSurvey] start', { pregunta: q, rawOptions: surveyOptions.value })
-    const optsRaw = Array.isArray(surveyOptions.value) ? surveyOptions.value : ['', '']
-    const opts = optsRaw
-      .map((o) => (o && o.toString().trim() ? o.toString().trim() : null))
-      .filter(Boolean)
-    while (opts.length < 2) opts.push('[vacía]')
-    console.log('[submitSurvey] parsed options', opts)
-
-    const id = nextMessageId.value++
-    const encuesta = {
-      id,
-      tipo: 'encuesta',
-      usuario: 'Docente',
-      pregunta: q,
-      opciones: opts,
-      votos: opts.map(() => 0),
-      multiple: surveyMultipleChoice.value,
-    }
-
-    // close modal first to avoid any UI blocking
-    showSurveyModal.value = false
-    console.log('[submitSurvey] pushing encuesta', encuesta)
-    chat.value.push(encuesta)
-    console.log('[submitSurvey] pushed')
-
-    // limpiar
-    surveyQuestion.value = ''
-    surveyOptions.value = ['', '']
-    surveyMultipleChoice.value = false
-  } catch (err) {
-    console.error('submitSurvey error:', err)
-    try {
-      chat.value.push({ usuario: 'Sistema', mensaje: 'No se pudo enviar la encuesta.' })
-    } catch {}
-    surveyError.value = 'Error al enviar la encuesta'
-  }
-}
-
-function resetSurveyModal() {
-  showSurveyModal.value = false
-  surveyQuestion.value = ''
-  surveyOptions.value = ['', '']
-  surveyError.value = ''
-  surveyMultipleChoice.value = false
-  showSurveyModal.value = false
-}
-
-function addContentBlock(type) {
-  if (type === 'image') {
-    fileInput.value.click()
-  } else {
-    exerciseContent.value.push({ type: 'text', question: '', responses: [] })
-  }
-}
-
-function submitExercise() {
-  if (!exerciseTitle.value.trim()) return alert('Introduce el título del ejercicio')
-  if (isSendingExercise.value) return
-  isSendingExercise.value = true
-  try {
-    const preguntas = exerciseQuestions.value.filter(Boolean)
-    const content = exerciseContent.value.filter((block) => {
-      if (block.type === 'text') {
-        return block.question.trim()
+    submitSurvey() {
+      // Build structured encuesta so the chat renderer + votePoll can handle voting
+      const q = (this.surveyQuestion || '').toString().trim()
+      if (!q) {
+        this.surveyError = 'Introduce la pregunta de la encuesta'
+        return
       }
-      return block.type === 'image'
-    })
 
-    if (content.length === 0) {
-      alert('El ejercicio debe tener al menos una pregunta o imagen.')
-      return
-    }
+      try {
+        console.log('[submitSurvey] start', { pregunta: q, rawOptions: this.surveyOptions })
+        const optsRaw = Array.isArray(this.surveyOptions) ? this.surveyOptions : ['', '']
+        const opts = optsRaw
+          .map((o) => (o && o.toString().trim() ? o.toString().trim() : null))
+          .filter(Boolean)
+        while (opts.length < 2) opts.push('[vacía]')
+        console.log('[submitSurvey] parsed options', opts)
 
-    const id = nextMessageId.value++
-    chat.value.push({
-      id,
-      tipo: 'ejercicio',
-      usuario: 'Docente',
-      title: exerciseTitle.value,
-      content: content, // Usamos la nueva estructura de contenido
-    })
-    // limpiar y cerrar
-    exerciseTitle.value = ''
-    exerciseContent.value = [{ type: 'text', question: '', responses: [] }]
-    showExerciseModal.value = false
-  } finally {
-    isSendingExercise.value = false
-  }
-}
+        const id = this.nextMessageId++
+        const encuesta = {
+          id,
+          tipo: 'encuesta',
+          usuario: 'Docente',
+          pregunta: q,
+          opciones: opts,
+          votos: opts.map(() => 0),
+          multiple: this.surveyMultipleChoice,
+        }
 
-function votePoll(id, idx) {
-  const m = chat.value.find((c) => c.id === id)
-  if (!m || m.tipo !== 'encuesta') return
-  // multiple selection
-  if (m.multiple) {
-    const existing = Array.isArray(votedPolls.value[id]) ? votedPolls.value[id].slice() : []
-    const selected = existing
-    if (selected.includes(idx)) {
-      // unselect
-      const next = selected.filter((s) => s !== idx)
-      votedPolls.value = { ...votedPolls.value, [id]: next }
-      m.votos[idx] = Math.max(0, (m.votos[idx] || 1) - 1)
-    } else {
-      const next = selected.concat(idx)
-      votedPolls.value = { ...votedPolls.value, [id]: next }
-      m.votos[idx] = (m.votos[idx] || 0) + 1
-    }
-  } else {
-    // single selection: ignore if already voted (check !== undefined to allow index 0)
-    if (votedPolls.value[id] !== undefined) return
-    m.votos[idx] = (m.votos[idx] || 0) + 1
-    votedPolls.value = { ...votedPolls.value, [id]: idx }
-  }
-  // force update so template reflects new vote counts immediately
-  chat.value = [...chat.value]
-}
+        // close modal first to avoid any UI blocking
+        this.showSurveyModal = false
+        console.log('[submitSurvey] pushing encuesta', encuesta)
+        this.chat.push(encuesta)
+        console.log('[submitSurvey] pushed')
 
-function toggleResponseInput(id) {
-  showResponse.value[id] = !showResponse.value[id]
-  if (!responseText.value[id]) responseText.value[id] = ''
-}
-
-function submitExerciseResponse(exerciseId, blockIndex) {
-  const responseKey = `${exerciseId}-${blockIndex}`
-  const text = (responseText.value[responseKey] || '').trim()
-  if (!text) return alert('Escribe una respuesta')
-
-  const exercise = chat.value.find((msg) => msg.id === exerciseId)
-  if (!exercise) return
-
-  // Calcular el número de pregunta real, contando solo los bloques de texto.
-  let questionNumber = 0
-  for (let i = 0; i <= blockIndex; i++) {
-    if (exercise.content[i].type === 'text') {
-      questionNumber++
-    }
-  }
-
-  chat.value.push({
-    id: nextMessageId.value++,
-    usuario: 'Alumno',
-    mensaje: `Respuesta a la pregunta #${questionNumber} del ejercicio: ${text}`,
-  })
-  // Limpiar el campo de texto para esa pregunta específica
-  responseText.value[responseKey] = ''
-}
-
-function openShareModal() {
-  showOptionsMenu.value = false
-  showShareModal.value = true
-  // Resetear estado del modal de compartir
-  shareSearch.value = ''
-  selectedShareTargets.value = []
-  shareTab.value = 'friends'
-}
-
-function toggleShareTarget(target) {
-  const index = selectedShareTargets.value.findIndex((t) => t.id === target.id)
-  if (index > -1) {
-    selectedShareTargets.value.splice(index, 1)
-  } else {
-    selectedShareTargets.value.push(target)
-  }
-}
-
-function copyLink() {
-  navigator.clipboard.writeText(streamLink.value).then(() => {
-    alert('Enlace copiado al portapapeles')
-  })
-}
-
-function shareOnWhatsApp() {
-  const message = `¡Únete a mi transmisión en vivo! ${streamLink.value}`
-  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`
-  window.open(whatsappUrl, '_blank')
-}
-
-function sendToSelected() {
-  if (selectedShareTargets.value.length === 0) return
-  const targetNames = selectedShareTargets.value.map((t) => t.name || t.nombre).join(', ')
-  alert(`Enlace enviado a: ${targetNames}`)
-  showShareModal.value = false
-}
-
-// File upload with progress for exercise image
-const exerciseUploadProgress = ref(0)
-
-function handleExerciseFile(e) {
-  const file = e.target.files && e.target.files[0]
-  if (!file) return
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    exerciseContent.value.push({
-      type: 'image',
-      src: ev.target.result,
-    })
-    // Reset file input so the same file can be selected again
-    e.target.value = ''
-  }
-  reader.readAsDataURL(file)
-}
-
-function removeExerciseImage() {
-  exerciseImage.value = ''
-  exerciseImageData.value = ''
-  exerciseUploadProgress.value = 0
-}
-
-let audioContext
-let audioAnalyser
-let audioStream
-let audioSource
-let animationFrameId
-let videoStream = null
-
-function visualize() {
-  if (!audioAnalyser) return
-
-  const bufferLength = audioAnalyser.frequencyBinCount
-  const dataArray = new Uint8Array(bufferLength)
-  audioAnalyser.getByteFrequencyData(dataArray)
-
-  let sum = 0
-  for (let i = 0; i < bufferLength; i++) {
-    sum += dataArray[i]
-  }
-  const average = sum / bufferLength
-
-  const level = Math.min(100, (average / 128) * 100 * 1.5)
-  audioLevel.value = level
-
-  animationFrameId = requestAnimationFrame(visualize)
-}
-
-function stopVisualization() {
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId)
-  }
-  if (audioStream) {
-    audioStream.getTracks().forEach((track) => track.stop())
-  }
-  if (audioContext) {
-    audioContext.close().catch(() => {})
-  }
-  audioLevel.value = 0
-}
-
-async function toggleMic() {
-  micAct.value = !micAct.value
-  if (micAct.value) {
-    try {
-      // Pedimos acceso al micrófono
-      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-
-      // Configuramos el analizador de audio
-      audioContext = new (window.AudioContext || window.webkitAudioContext)()
-      audioSource = audioContext.createMediaStreamSource(audioStream)
-      audioAnalyser = audioContext.createAnalyser()
-      audioAnalyser.fftSize = 256
-      audioSource.connect(audioAnalyser)
-      // Iniciamos la visualización
-      visualize()
-    } catch (err) {
-      console.error('Error al acceder al micrófono:', err)
-      micAct.value = false // Revertimos el estado si hay un error
-    }
-  } else {
-    stopVisualization()
-  }
-}
-
-const tiempo = ref(0) // tiempo en segundos
-const tiempoFormateado = ref('00:00')
-let intervalo = null
-
-function formatTime(segundos) {
-  const min = Math.floor(segundos / 60)
-    .toString()
-    .padStart(2, '0')
-  const sec = (segundos % 60).toString().padStart(2, '0')
-  return `${min}:${sec}`
-}
-
-function terminarReunion() {
-  clearInterval(intervalo)
-  tiempo.value = 0
-  tiempoFormateado.value = formatTime(tiempo.value)
-}
-
-onBeforeUnmount(() => {
-  clearInterval(intervalo)
-})
-async function toggleCamara() {
-  camaraAct.value = !camaraAct.value
-  if (camaraAct.value) {
-    try {
-      videoStream = await navigator.mediaDevices.getUserMedia({ video: true })
-      if (modalVideoRef.value) {
-        modalVideoRef.value.srcObject = videoStream
+        // limpiar
+        this.surveyQuestion = ''
+        this.surveyOptions = ['', '']
+        this.surveyMultipleChoice = false
+      } catch (err) {
+        console.error('submitSurvey error:', err)
+        try {
+          this.chat.push({ usuario: 'Sistema', mensaje: 'No se pudo enviar la encuesta.' })
+        } catch {}
+        this.surveyError = 'Error al enviar la encuesta'
       }
-    } catch (err) {
-      console.error('Error al acceder a la cámara:', err)
-      camaraAct.value = false
-    }
-  } else {
-    if (videoStream) {
-      videoStream.getTracks().forEach((track) => track.stop())
-    }
-    if (modalVideoRef.value) {
-      modalVideoRef.value.srcObject = null
-    }
-  }
-}
+    },
 
-async function startCamera() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    if (miniVideoRef.value) {
-      miniVideoRef.value.srcObject = stream
-    }
-  } catch (error) {
-    console.error('Error al acceder a la cámara:', error)
-    alert('No se pudo acceder a la cámara. Verifica los permisos.')
-  }
-}
+    votePoll(id, idx) {
+      const m = chat.value.find((c) => c.id === id)
+      if (!m || m.tipo !== 'encuesta') return
+      // multiple selection
+      if (m.multiple) {
+        const existing = Array.isArray(votedPolls.value[id]) ? votedPolls.value[id].slice() : []
+        const selected = existing
+        if (selected.includes(idx)) {
+          // unselect
+          const next = selected.filter((s) => s !== idx)
+          votedPolls.value = { ...votedPolls.value, [id]: next }
+          m.votos[idx] = Math.max(0, (m.votos[idx] || 1) - 1)
+        } else {
+          const next = selected.concat(idx)
+          votedPolls.value = { ...votedPolls.value, [id]: next }
+          m.votos[idx] = (m.votos[idx] || 0) + 1
+        }
+      } else {
+        // single selection: ignore if already voted (check !== undefined to allow index 0)
+        if (votedPolls.value[id] !== undefined) return
+        m.votos[idx] = (m.votos[idx] || 0) + 1
+        votedPolls.value = { ...votedPolls.value, [id]: idx }
+      }
+      // force update so template reflects new vote counts immediately
+      chat.value = [...chat.value]
+    },
 
-// Detener cámara
-function stopCamera() {
-  if (stream) {
-    stream.getTracks().forEach((track) => track.stop())
-    stream = null
-  }
-}
+    openShareModal() {
+      this.showOptionsMenu = false
+      this.showShareModal = true
+      // Resetear estado del modal de compartir
+      this.shareSearch = ''
+      this.selectedShareTargets = []
+      this.shareTab = 'friends'
+    },
 
-// Detener cámara al salir del componente
-onBeforeUnmount(() => {
-  stopCamera()
-})
-function togglePantalla() {
-  pantallaAct.value = !pantallaAct.value
-}
-function toggleGrabacion() {
-  grabando.value = !grabando.value
-}
-function expandir() {
-  expandirBool.value = !expandirBool.value
-}
+    toggleShareTarget(target) {
+      const index = selectedShareTargets.value.findIndex((t) => t.id === target.id)
+      if (index > -1) {
+        selectedShareTargets.value.splice(index, 1)
+      } else {
+        selectedShareTargets.value.push(target)
+      }
+    },
 
-function enviarMensaje() {
-  if (!mensaje.value) return
-  chat.value.push({ usuario: 'Docente', mensaje: mensaje.value })
-  mensaje.value = ''
-}
+    copyLink() {
+      navigator.clipboard.writeText(streamLink.value).then(() => {
+        alert('Enlace copiado al portapapeles')
+      })
+    },
 
-// Sala de espera
-function admitir(user) {
-  participantes.value.push({ nombre: user, estado: 'Activo' })
-  salaEspera.value = salaEspera.value.filter((u) => u !== user)
-}
-function rechazar(user) {
-  salaEspera.value = salaEspera.value.filter((u) => u !== user)
-}
+    shareOnWhatsApp() {
+      const message = `¡Únete a mi transmisión en vivo! ${streamLink.value}`
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`
+      window.open(whatsappUrl, '_blank')
+    },
 
-onUnmounted(() => {
-  stopVisualization()
-  if (videoStream) {
-    videoStream.getTracks().forEach((track) => track.stop())
-  }
-})
+    sendToSelected() {
+      if (selectedShareTargets.value.length === 0) return
+      const targetNames = selectedShareTargets.value.map((t) => t.name || t.nombre).join(', ')
+      alert(`Enlace enviado a: ${targetNames}`)
+      showShareModal.value = false
+    },
 
-function toggleMenu(index) {
-  menuAbierto.value = menuAbierto.value === index ? null : index
-}
+    visualize() {
+      if (!this.audioAnalyser) return
 
-function silenciar(p) {
-  p.estado = false
-  menuAbierto.value = null
-}
+      const bufferLength = this.audioAnalyser.frequencyBinCount
+      const dataArray = new Uint8Array(bufferLength)
+      this.audioAnalyser.getByteFrequencyData(dataArray)
 
-function expulsar(p) {
-  participantes.value = participantes.value.filter((part) => part.nombre !== p.nombre)
-  menuAbierto.value = null
+      let sum = 0
+      for (let i = 0; i < bufferLength; i++) {
+        sum += dataArray[i]
+      }
+      const average = sum / bufferLength
+
+      const level = Math.min(100, (average / 128) * 100 * 1.5)
+      this.audioLevel = level
+
+      this.animationFrameId = requestAnimationFrame(this.visualize)
+    },
+    stopVisualization() {
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId)
+      }
+      if (this.audioStream) {
+        this.audioStream.getTracks().forEach((track) => track.stop())
+      }
+      if (this.audioContext) {
+        this.audioContext.close().catch(() => {})
+      }
+      this.audioLevel = 0
+    },
+
+    async toggleMic() {
+      this.micAct = !this.micAct
+      if (this.micAct) {
+        try {
+          // Pedimos acceso al micrófono
+          this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+          // Configuramos el analizador de audio
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)()
+          this.audioSource = this.audioContext.createMediaStreamSource(this.audioStream)
+          this.audioAnalyser = this.audioContext.createAnalyser()
+          this.audioAnalyser.fftSize = 256
+          this.audioSource.connect(this.audioAnalyser)
+          // Iniciamos la visualización
+          this.visualize()
+        } catch (err) {
+          console.error('Error al acceder al micrófono:', err)
+          this.micAct = false // Revertimos el estado si hay un error
+        }
+      } else {
+        this.stopVisualization()
+      }
+    },
+
+    formatTime(segundos) {
+      const min = Math.floor(segundos / 60)
+        .toString()
+        .padStart(2, '0')
+      const sec = (segundos % 60).toString().padStart(2, '0')
+      return `${min}:${sec}`
+    },
+
+    terminarReunion() {
+      clearInterval(intervalo)
+      tiempo.value = 0
+      tiempoFormateado.value = formatTime(tiempo.value)
+    },
+    toggleCamara() {
+      this.camaraAct = !this.camaraAct
+      if (this.camaraAct) {
+        try {
+          this.videoStream = navigator.mediaDevices.getUserMedia({ video: true })
+          if (this.modalVideoRef) {
+            this.modalVideoRef.srcObject = this.videoStream
+          }
+        } catch (err) {
+          alert('Error al acceder a la cámara:', err)
+          this.camaraAct = false
+        }
+      } else {
+        if (this.videoStream) {
+          this.videoStream.getTracks().forEach((track) => track.stop())
+        }
+        if (this.modalVideoRef) {
+          this.modalVideoRef.srcObject = null
+        }
+      }
+    },
+
+    enviarMensaje() {
+      if (!this.mensaje) return
+      this.chat.push({ usuario: 'Docente', mensaje: this.mensaje })
+      this.mensaje = ''
+    },
+    admitir(user) {
+      socket.emit('response-request', {
+        roomId: this.roomId,
+        viewerId: user.idSocket,
+        response: true,
+      })
+
+      this.participantes.push({ name: user.name, email: user.email, estado: 'Activo' })
+
+      this.salaEspera = this.salaEspera.filter((u) => u.id !== user.id)
+    },
+
+    rechazar(user) {
+      socket.emit('response-request', {
+        roomId: this.roomId,
+        viewerId: user.idSocket,
+        response: false,
+      })
+      this.salaEspera = this.salaEspera.filter((u) => u.id !== user.id)
+    },
+    silenciar(p) {
+      p.estado = false
+      this.menuAbierto = null
+    },
+    expulsar(p) {
+      this.participantes = this.participantes.filter((part) => part.nombre !== p.nombre)
+      this.menuAbierto = null
+    },
+  },
 }
 </script>
 

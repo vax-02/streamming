@@ -34,13 +34,6 @@
             >
               Ingresar
             </button>
-
-            <button
-              type="button"
-              class="bg-transparent border border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white px-4 py-2 rounded-lg text-lg font-semibold transition transform hover:scale-105"
-            >
-              Olvidé mi contraseña
-            </button>
           </div>
         </form>
       </div>
