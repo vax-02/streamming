@@ -639,6 +639,7 @@ export default {
         }))
       } catch (error) {
         console.error('Error al cargar amigos:', error)
+        this.addToast('Error al cargar amigos', 'error')
       }
     },
     async connectToUserGroups() {
@@ -676,6 +677,7 @@ export default {
         }
       } catch (error) {
         console.error('Error al obtener y conectar a las salas:', error)
+        this.addToast('Error al conectar con los grupos', 'error')
       }
     },
     addToast(message, type) {
