@@ -21,13 +21,19 @@
               required
             />
 
-            <input
-              type="password"
-              v-model="password"
-              placeholder="Contraseña"
-              class="px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            <div class="relative">
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="password"
+                placeholder="Contraseña"
+                class="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                required
+              />
+              <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700">
+                <EyeIcon v-if="!showPassword" class="h-5 w-5" />
+                <EyeSlashIcon v-else class="h-5 w-5" />
+              </button>
+            </div>
 
             <button
               class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-lg font-semibold transition transform hover:scale-105"
@@ -46,18 +52,24 @@
       </div>
     </main>
   </div>
+
+  <ToastNotification ref="toastRef" />
 </template>
 
 <script>
 import UserImg from '@/assets/login.png'
 import api from '@/services/api'
 import router from '@/router' // <-- FALTABA ESTO
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/solid'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 export default {
+  components: { EyeIcon, EyeSlashIcon, ToastNotification },
   data() {
     return {
       username: '',
       password: '',
+      showPassword: false,
     }
   },
   methods: {
@@ -71,11 +83,15 @@ export default {
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
 
-        router.push('/dashboard')
+        this.$refs.toastRef.addToast('Inicio de sesión exitoso', 'success')
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 1000)
       } catch (error) {
-        username.value = password.value = ''
+        this.username = ''
+        this.password = ''
+        this.$refs.toastRef.addToast('Usuario o contraseña incorrectos', 'error')
         console.log(error)
-        //router.push('/login')
       }
     },
   },
@@ -109,5 +125,11 @@ export default {
   position: relative;
   z-index: 1; /* texto sobre el fondo */
   color: white; /* opcional */
+}
+
+/* Ocultar el icono de ojo por defecto en navegadores como Edge */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
 }
 </style>

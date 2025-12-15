@@ -25,7 +25,7 @@
           <div class="flex justify-between items-center">
             <h2 class="text-3xl font-bold">Transmisiones en vivo</h2>
             <button
-              @click="abrirFormulario = true"
+              @click="abrirNuevoFormulario"
               class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition"
             >
               <PlusIcon class="h-5 w-5 text-white" />
@@ -66,7 +66,7 @@
                   <PencilIcon class="w-6 h-6 icon" />
                 </button>
                 <button
-                  @click="deleteTransmition(trans.id, index)"
+                  @click="openDeleteConfirm(trans.id, index)"
                   class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-sm"
                 >
                   <TrashIcon class="w-6 h-6 icon" />
@@ -146,7 +146,7 @@
                 <PencilIcon class="w-6 h-6 icon" />
               </button>
               <button
-                @click="deleteTransmition(trans.id, index)"
+                @click="openDeleteConfirm(trans.id, index)"
                 class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-sm"
               >
                 <TrashIcon class="w-6 h-6 icon" />
@@ -166,7 +166,7 @@
         <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-md space-y-4 relative">
           <h3 class="text-2xl font-bold text-center">Nueva Transmisión</h3>
           <button
-            @click="abrirFormulario = false"
+            @click="cancelarFormulario"
             class="absolute top-3 right-3 text-gray-400 hover:text-white text-lg font-bold"
           >
             ✖
@@ -201,8 +201,8 @@
                 required
               >
                 <option value="">Seleccione un tipo</option>
-                <option value="Matemáticas">Público</option>
-                <option value="Física">Privado</option>
+                <option value="Publico">Público</option>
+                <option value="Privado">Privado</option>
               </select>
             </div>
             <div>
@@ -217,7 +217,7 @@
             <div class="flex justify-end space-x-2">
               <button
                 type="button"
-                @click="abrirFormulario = false"
+                @click="cancelarFormulario"
                 class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg"
               >
                 Cancelar
@@ -304,13 +304,24 @@
       </div>
     </div>
   </div>
+  <ToastNotification ref="toastRef" />
+
+  <ConfirmationComponent
+    :visible="showDeleteConfirm"
+    title="Eliminar transmisión"
+    message="¿Estás seguro de que deseas eliminar esta transmisión?"
+    @confirm="confirmDelete"
+    @cancel="showDeleteConfirm = false"
+  />
 </template>
 
 <script>
 import { PlusIcon, ShareIcon, PencilIcon, TrashIcon, PlayIcon } from '@heroicons/vue/24/solid'
 import VideoPlayer from '@/components/video/VideoPlayerComponent.vue'
 import router from '@/router'
+import ToastNotification from '@/components/ToastNotification.vue'
 import api from '@/services/api.js'
+import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
 export default {
   components: {
     VideoPlayer,
@@ -319,6 +330,8 @@ export default {
     TrashIcon,
     PlayIcon,
     PlusIcon,
+    ToastNotification,
+    ConfirmationComponent,
   },
 
   data() {
@@ -364,6 +377,8 @@ export default {
 
       shareUrl: `${location.origin}/watch/27`,
       pc: null,
+      showDeleteConfirm: false,
+      transmitionToDelete: null,
     }
   },
   computed: {
@@ -377,9 +392,12 @@ export default {
   },
   methods: {
     toLive(id, ownerId) {
-      localStorage.setItem('live_owner', ownerId)
-      localStorage.setItem('live_id', id)
-      router.push(`/live/${id}`)
+      this.addToast('Iniciando transmisión...', 'success')
+      setTimeout(() => {
+        localStorage.setItem('live_owner', ownerId)
+        localStorage.setItem('live_id', id)
+        router.push(`/live/${id}`)
+      }, 1000)
     },
     async loadTransmissions() {
       try {
@@ -389,6 +407,7 @@ export default {
 
         this.transmisiones = temp.map((u) => ({
           id: u.id,
+          user_id: u.id_user,
           titulo: u.name,
           descripcion: u.description,
           categoria: u.type == 0 ? 'Privado' : 'Publico',
@@ -407,6 +426,7 @@ export default {
         const temp = response.data.data
         this.publicStreams = temp.map((u) => ({
           id: u.id,
+          user_id: u.id_user,
           titulo: u.name,
           descripcion: u.description,
           categoria: u.type == 0 ? 'Privado' : 'Publico',
@@ -420,23 +440,69 @@ export default {
     },
 
     async guardarTransmision() {
+      const isEdit = !!this.nuevaTrans.id
       try {
-        const response = await api.post('/transmissions', {
+        // Obtener datos originales si es edición para no perder status/link
+        const original = isEdit
+          ? this.transmisiones.find((t) => t.id === this.nuevaTrans.id)
+          : null
+
+        // Asegurar que la hora tenga segundos si el backend lo requiere
+        let timePart = ''
+        if (this.nuevaTrans.fechaHora) {
+          const parts = this.nuevaTrans.fechaHora.split('T')
+          if (parts.length > 1) {
+            timePart = parts[1]
+            if (timePart.length === 5) {
+              timePart += ':00'
+            }
+          }
+        }
+        const payload = {
           id_user: this.userData.id,
           name: this.nuevaTrans.titulo,
           description: this.nuevaTrans.descripcion,
           type: this.nuevaTrans.categoria == 'Privado' ? 0 : 1,
-          date_t: this.nuevaTrans.fechaHora.split('T')[0],
-          time_t: this.nuevaTrans.fechaHora.split('T')[1],
-          status: 0,
-          link: '',
-        })
-        this.nuevaTrans.id = response.data.data.insertId
-        this.transmisiones.push({ ...this.nuevaTrans })
-        this.nuevaTrans = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
-        this.abrirFormulario = false
+          date_t: this.nuevaTrans.fechaHora ? this.nuevaTrans.fechaHora.split('T')[0] : '',
+          time_t: timePart,
+          status: original ? original.status : 0,
+          link: original ? original.link : '',
+        }
+
+        if (isEdit) {
+          await api.put(`/transmissions/${this.nuevaTrans.id}`, payload)
+          this.addToast('Transmisión actualizada correctamente', 'success')
+          // Actualizar en la lista local usando splice para reactividad
+          const index = this.transmisiones.findIndex((t) => t.id === this.nuevaTrans.id)
+          if (index !== -1) {
+            this.transmisiones.splice(index, 1, {
+              ...this.transmisiones[index],
+              titulo: this.nuevaTrans.titulo,
+              descripcion: this.nuevaTrans.descripcion,
+              categoria: this.nuevaTrans.categoria,
+              fechaHora: this.nuevaTrans.fechaHora.replace('T', ' '),
+            })
+          }
+        } else {
+          const response = await api.post('/transmissions', payload)
+          this.nuevaTrans.id = response.data.data.insertId
+          this.addToast('Transmisión creada correctamente', 'success')
+          this.transmisiones.push({
+            ...this.nuevaTrans,
+            fechaHora: this.nuevaTrans.fechaHora.replace('T', ' '),
+            status: 0,
+            link: '',
+          })
+        }
+
+        this.cancelarFormulario()
       } catch (e) {
-        console.log('Error al guardar la transmision: ' + e)
+        console.error('Error al guardar la transmision:', e)
+        let errorMsg = e.response?.data?.message || e.response?.data || 'Error al guardar la transmisión'
+        if (typeof errorMsg === 'string' && errorMsg.includes('<!DOCTYPE html>')) {
+          errorMsg = 'Error de conexión o ruta no encontrada'
+        }
+        this.addToast(errorMsg, 'error')
       }
     },
 
@@ -444,17 +510,42 @@ export default {
     editarTransmision(index) {
       const trans = this.transmisiones[index]
       this.nuevaTrans = { ...trans }
+      // Ajustar formato de fecha para el input datetime-local
+      if (this.nuevaTrans.fechaHora) {
+        this.nuevaTrans.fechaHora = this.nuevaTrans.fechaHora.replace(' ', 'T')
+      }
       this.abrirFormulario = true
-      // Eliminamos la antigua para reemplazar al guardar
-      this.transmisiones.splice(index, 1)
     },
 
-    async deleteTransmition(id, index) {
+    abrirNuevoFormulario() {
+      this.nuevaTrans = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
+      this.abrirFormulario = true
+    },
+    cancelarFormulario() {
+      this.nuevaTrans = { titulo: '', descripcion: '', categoria: '', fechaHora: '' }
+      this.abrirFormulario = false
+    },
+
+    openDeleteConfirm(id, index) {
+      this.transmitionToDelete = { id, index }
+      this.showDeleteConfirm = true
+    },
+    async confirmDelete() {
+      if (!this.transmitionToDelete) return
+      const { id, index } = this.transmitionToDelete
       try {
-        await api.delete(`/transmission/${id}`)
-        this.transmisiones.splice(index, 1)
+        await api.delete(`/transmissions/${id}`)
+        if (this.currentTab === 'programadas') {
+          this.transmisiones.splice(index, 1)
+        } else if (this.currentTab === 'publicas') {
+          this.publicStreams.splice(index, 1)
+        }
+        this.addToast('Transmisión eliminada correctamente', 'success')
       } catch (e) {
-        console.log('eerr')
+        this.addToast('Error al eliminar la transmisión', 'error')
+      } finally {
+        this.showDeleteConfirm = false
+        this.transmitionToDelete = null
       }
     },
 
@@ -484,6 +575,9 @@ export default {
       alert(`Iniciando reproducción directa del video: ${video.title}`)
       // Aquí podrías navegar a una ruta de reproducción directa, por ejemplo:
       // router.push({ name: 'player', params: { url: video.url } })
+    },
+    addToast(message, type) {
+      this.$refs.toastRef.addToast(message, type)
     },
   },
 }

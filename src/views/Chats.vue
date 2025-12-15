@@ -216,7 +216,7 @@
     <transition name="slide">
       <div
         v-if="mostrarPerfil"
-        class="w-full sm:w-80 bg-gray-800 border-l border-gray-700 p-4 flex flex-col absolute right-0 top-0 bottom-0 z-40"
+        class="w-full sm:w-80 bg-gray-800 border-l border-gray-700 p-4 flex flex-col absolute right-0 top-0 bottom-0 z-40 md:relative md:inset-auto"
       >
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">Perfil</h3>
@@ -270,7 +270,7 @@ export default {
   },
 
   computed: {
-    
+
     filteredContacts() {
       if (!this.searchContact) return this.friends
       const q = this.searchContact.toLowerCase()
@@ -284,7 +284,7 @@ export default {
   mounted() {
     const route = useRoute()
     this.handleOpenContactQuery(route.query)
-    
+
     this.connectToUserChats()
     this.loadChats()
     this.loadFriends()
