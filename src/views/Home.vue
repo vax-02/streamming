@@ -71,7 +71,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import {
-  ArrowRightOnRectangleIcon,
   VideoCameraIcon,
   ChatBubbleLeftRightIcon,
   UserGroupIcon,

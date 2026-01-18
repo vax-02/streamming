@@ -32,26 +32,50 @@
             class="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-
-        <div v-if="filteredFriends.length" class="space-y-3">
-          <div
-            v-for="friend in filteredFriends"
-            :key="friend.id"
-            class="flex items-center justify-between bg-gray-800 p-3 rounded-lg hover:bg-gray-700 transition"
-          >
+       
+        <div v-if="loading" v-for="n in 5" :key="n" class="flex items-center justify-between bg-gray-800 p-3 rounded-lg m-3 ">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gray-700 animate-pulse"></div>
+        <div class="flex flex-col gap-1">
+          <div class="h-4 w-32 bg-gray-700 rounded animate-pulse"></div> <!-- Nombre -->
+          <div class="h-3 w-48 bg-gray-700 rounded animate-pulse"></div> <!-- Email -->
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <div class="h-6 w-6 bg-gray-700 rounded-full animate-pulse"></div> <!-- Trash -->
+      </div>
+    </div>
+    
+    <div v-if="filteredFriends.length" >
+        <div
+        v-for="friend in filteredFriends"
+        :key="friend.id"
+        class="flex items-center justify-between bg-gray-800 p-2 rounded-lg m-3 hover:bg-gray-700 transition">          
             <div class="flex items-center gap-3">
-              <!-- 🔹 Clic en la foto abre el modal -->
-              <img
-                :src="friend.avatar"
-                alt="avatar"
-                class="w-10 h-10 rounded-full border border-gray-600 cursor-pointer hover:scale-105 transition"
-                @click="openProfile(friend)"
-              />
               <div>
-                <p class="font-medium">{{ friend.name }}</p>
-                <p class="text-xs" :class="friend.online ? 'text-green-400' : 'text-gray-400'">
-                  {{ friend.online ? 'En línea' : 'Desconectado' }}
-                </p>
+
+                <img
+                :src="friend.avatar"
+                alt="X"
+                class="w-10 h-10 rounded-full border border-gray-600 cursor-pointer hover:scale-105 transition"
+                />
+              
+                <div v-if="friend.view_online">
+                  <p class="text-xs" :class="friend.online ? 'text-green-400' : 'text-gray-400'">
+                    {{ friend.online ? 'En línea' : 'Inactivo' }}
+                  </p>
+                </div>
+                <div v-else>
+                  <p class="text-xs text-gray-400 text-center">
+                    ---
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p class="font-medium font-bold">{{ friend.email }}</p>
+                <span class="text-xs text-gray-300">
+                  {{ friend.name }}
+                </span>
               </div>
             </div>
             <div class="flex gap-2">
@@ -75,16 +99,13 @@
         <p v-else class="text-gray-400">No se encontraron amigos</p>
       </section>
 
-      <!-- 📨 Sección: Solicitudes de amistad -->
       <section v-if="currentTab === 'solicitudes'">
         <h2 class="text-2xl font-semibold mb-4">Solicitudes de amistad</h2>
-
         <div v-if="friendRequests.length" class="space-y-3">
           <div
             v-for="request in friendRequests"
-            :key="request.id"
-            class="flex items-center justify-between bg-gray-800 p-3 rounded-lg hover:bg-gray-700 transition"
-          >
+            :key="request.id"class="flex items-center justify-between bg-gray-800 p-3 rounded-lg m-3 hover:bg-gray-700 transition
+hover:bg-gray-700 transition">
             <div class="flex items-center gap-3">
               <img
                 :src="request.avatar"
@@ -133,7 +154,7 @@
           <div
             v-for="newFriends in filteredFriends2"
             :key="newFriends.id"
-            class="flex items-center justify-between bg-gray-800 p-3 rounded-lg hover:bg-gray-700 transition"
+            class="flex items-center justify-between bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition"
           >
             <div class="flex items-center gap-3">
               <!-- 🔹 Clic en la foto abre el modal -->
@@ -144,7 +165,7 @@
               />
               <div>
                 <p class="font-medium">{{ newFriends.name }}</p>
-                <span> correo: {{ newFriends.email || 'No disponible' }} </span>
+                <span> {{ newFriends.email || 'No disponible' }} </span>
               </div>
             </div>
 
@@ -164,12 +185,12 @@
       </section>
 
       <section v-if="currentTab === 'solicitudesEnvadas'">
-        <h2 class="text-2xl font-semibold mb-4">Solicitudes enviadas</h2>
+        <h2 class="text-2xl font-semibold mb-4">Mis solicitudes</h2>
         <div v-if="myRequests.length" class="space-y-3">
           <div
             v-for="friend in myRequests"
             :key="friend.id"
-            class="flex items-center justify-between bg-gray-800 p-3 rounded-lg hover:bg-gray-700 transition"
+            class="flex items-center justify-between bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition"
           >
             <div class="flex items-center gap-3">
               <img
@@ -230,11 +251,12 @@ export default {
 
   data() {
     return {
+      loading :true,
       tabs: [
         { id: 'amigos', name: 'Amigos' },
         { id: 'solicitudes', name: 'Solicitudes' },
         { id: 'nuevos', name: 'Nuevos' },
-        { id: 'solicitudesEnvadas', name: 'Solicitudes enviadas' },
+        { id: 'solicitudesEnvadas', name: 'Mis solicitudes' },
       ],
       currentTab: 'amigos',
       friends: [],
@@ -243,7 +265,6 @@ export default {
       myRequests: [],
       searchQuery: '',
       searchQuery2: '',
-      showProfileModal: false,
       selectedFriend: {},
     }
   },
@@ -272,9 +293,9 @@ export default {
         this.myRequests = temp.map((u) => ({
           id: u.id,
           name: u.name,
-          avatar: u.photo,
+          avatar: (u.visibility != 3) ? u.photo : "https://ui-avatars.com/api/?name=?&background=000&color=fff",
+
           email: u.email,
-          online: u.online,
           status: u.status_r,
         }))
       } catch (error) {
@@ -285,15 +306,19 @@ export default {
       try {
         const response = await api.get('/friends')
         const temp = response.data.data
+        console.log("friends",response.data.data)
         this.friends = temp.map((u) => ({
           id: u.id,
           name: u.name,
-          avatar: u.photo,
+          avatar: (u.visibility != 3) ? u.photo : "https://ui-avatars.com/api/?name=?&background=000&color=fff",
           email: u.email,
           online: u.online,
+          view_online: u.view_online,
+          visibility : u.visibility
         }))
+        this.loading = false
       } catch (error) {
-        console.error('Error al cargar amigos:', error)
+        
       }
     },
     async loadRequests() {
@@ -303,7 +328,7 @@ export default {
         this.friendRequests = temp.map((u) => ({
           id: u.id,
           name: u.name,
-          avatar: u.photo,
+          avatar:(u.visibility == 1) ? u.photo : "https://ui-avatars.com/api/?name=?&background=000&color=fff",
           email: u.email,
         }))
       } catch (error) {
@@ -319,8 +344,9 @@ export default {
         this.newFriends = temp.map((u) => ({
           id: u.id,
           name: u.name,
-          avatar: u.photo,
+          avatar:(u.visibility == 1) ? u.photo : "https://ui-avatars.com/api/?name=?&background=000&color=fff",
           email: u.email,
+          online: u.online,
         }))
       } catch (error) {
         console.error('Error al cargar nuevos de amistad:', error)
@@ -371,25 +397,18 @@ export default {
         alert('Error al eliminar amigo ' + e)
       }
     },
-
-    openProfile(friend) {
-      this.selectedFriend = friend
-      this.showProfileModal = true
-    },
-
     async chatFriend(id) {
       try {
         const response = await api.post(`/chat/${id}`)
         if (response.data) {
-          alert('Chat iniciado exitosamente')
           router.push({
             name: 'chats',
           })
         } else {
-          alert('Error al iniciar el chat')
+          this.addToast('Error al iniciar el chat', 'error')
         }
       } catch (e) {
-        alert('Error al iniciar el chat ' + e)
+        //alert('Error al iniciar el chat ' + e)
       }
     },
     addToast(message, type = 'info', duration = 3000) {

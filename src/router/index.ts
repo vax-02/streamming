@@ -7,8 +7,8 @@ import Login from '@/views/Login.vue'
 import Users from '@/views/Users.vue'
 import Settings from '@/views/Settings.vue'
 import ProfileComponent from '@/components/Settings/ProfileComponent.vue'
-import SecurityPrivacityComponent from '@/components/Settings/SecurityPrivacityComponent.vue'
-import ContentComponent from '@/components/Settings/ContentComponent.vue'
+import SecurityComponent from '@/components/Settings/SecurityComponent.vue'
+import PrivacityComponent from '@/components/Settings/PrivacityComponent.vue'
 import Transmitions from '@/views/Transmitions.vue'
 import Groups from '@/views/Groups.vue'
 import Live from '@/views/LiveHost.vue'
@@ -86,8 +86,9 @@ const routes = [
         component: Settings,
         children: [
           { path: 'profile', name: 'profile', component: ProfileComponent },
-          { path: 'security', name: 'security', component: SecurityPrivacityComponent },
-          { path: 'notifications', name: 'notifications', component: ContentComponent },
+          { path: 'security', name: 'security', component: SecurityComponent },
+          { path: 'privacity', name: 'privacity', component: PrivacityComponent },
+
         ],
       },
     ],

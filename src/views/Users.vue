@@ -7,7 +7,7 @@
       <input
         type="text"
         v-model="search"
-        placeholder="Buscar por nombre, correo o rol..."
+        placeholder="Buscar por nombre o correo"
         class="w-full max-w-md px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <button
@@ -21,6 +21,7 @@
     <table class="min-w-full border border-gray-700 rounded-lg overflow-hidden">
       <thead class="bg-gray-800 text-gray-300 uppercase text-sm">
         <tr>
+          <th class="px-6 py-3 text-center">Perfil</th>
           <th class="px-6 py-3 text-center">Nombre</th>
           <th class="px-6 py-3 text-center">Correo</th>
           <th class="px-6 py-3 text-center">Rol</th>
@@ -29,7 +30,28 @@
       </thead>
 
       <tbody class="bg-gray-900 text-gray-200 divide-y divide-gray-700">
-        <tr v-for="user in paginatedUsers" :key="user.id" class="hover:bg-gray-800 transition">
+        <tr v-if="loading" v-for="n in perPage" :key="n">
+          <td class="px-6 py-3">
+            <div class="w-6 h-6 bg-gray-700 rounded-full animate-pulse"></div>
+          </td>
+          <td class="px-6 py-3">
+            <div class="h-4 bg-gray-700 rounded w-24 animate-pulse"></div>
+          </td>
+          <td class="px-6 py-3">
+            <div class="h-4 bg-gray-700 rounded w-32 animate-pulse"></div>
+          </td>
+          <td class="px-6 py-3">
+            <div class="h-4 bg-gray-700 rounded w-20 animate-pulse"></div>
+          </td>
+          <td class="px-6 py-3">
+            <div class="h-4 bg-gray-700 rounded w-16 animate-pulse"></div>
+          </td>
+        </tr>
+
+        <tr v-else v-for="user in paginatedUsers" :key="user.id" class="hover:bg-gray-800 transition">
+          <td class="px-6 py-3">
+            <img class="w-6 h-6 rounded-full object-cover" :src="user.photo" alt=""> 
+          </td>  
           <td class="px-6 py-3">{{ user.name }}</td>
           <td class="px-6 py-3">{{ user.email }}</td>
           <td class="px-6 py-3">{{ roles[user.rol - 1] }}</td>
@@ -282,6 +304,7 @@ export default {
 
   data() {
     return {
+      loading : true,
       users: [],
       roles: ['Administrador', 'Docente', 'Estudiante'],
       addUserModal: false,
@@ -304,13 +327,16 @@ export default {
 
   computed: {
     filteredUsers() {
-      return this.users.filter(
-        (u) =>
-          u.name.toLowerCase().includes(this.search.toLowerCase()) ||
-          u.email.toLowerCase().includes(this.search.toLowerCase()) ||
-          u.rol.toLowerCase().includes(this.search.toLowerCase()),
-      )
-    },
+  return this.users.filter(u => {
+    const searchLower = this.search.toLowerCase()
+    
+    return (
+      u.name.toLowerCase().includes(searchLower) ||
+      u.email.toLowerCase().includes(searchLower) 
+        )
+  })
+}
+,
     totalPages() {
       return Math.ceil(this.filteredUsers.length / this.perPage)
     },
@@ -325,6 +351,11 @@ export default {
   mounted() {
     this.loadUsers()
   },
+  watch: {
+    search() {
+      this.currentPage = 1
+    },
+  },
   methods: {
     async loadUsers() {
       try {
@@ -335,8 +366,10 @@ export default {
           name: u.name,
           email: u.email,
           rol: u.rol,
+          photo: u.photo,
           status: u.status,
         }))
+        this.loading = false
       } catch (error) {
         this.addToast('Error al cargar los usuarios', 'error')
         const mensaje = error.response?.data || 'Error al cargar los usuarios';

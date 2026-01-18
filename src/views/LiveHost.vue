@@ -8,7 +8,7 @@
     >
       <!-- Encabezado -->
       <div class="relative flex items-center justify-between">
-        <h2 class="text-lg font-bold tracking-wide">Participantes</h2>
+        <h2 class="text-lg font-bold tracking-wide">Participantes, I Owner</h2>
         <div class="relative">
           <button
             @click="showOptionsMenu = !showOptionsMenu"
@@ -678,6 +678,9 @@
       </div>
     </div>
   </div>
+
+  <ToastNotification ref="toastRef" />
+
 </template>
 
 <script>
@@ -703,10 +706,12 @@ import {
 import router from '@/router'
 import socket from '@/services/socket.js'
 import api from '@/services/api.js'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 export default {
   name: 'LiveView',
   components: {
+    ToastNotification,
     UserCircleIcon,
     EllipsisHorizontalIcon,
     MicrophoneIcon,
@@ -838,9 +843,9 @@ export default {
 
       menuAbierto: null,
       isOwner: false,
+      userData: JSON.parse(localStorage.getItem('user')),
     }
   },
-
   computed: {
     filteredFriends() {
       if (!this.shareSearch) return this.friendsList
@@ -857,35 +862,33 @@ export default {
     },
   },
 
+      
   async mounted() {
     this.isOwner = true
+    socket.emit('start-stream', { roomId: this.roomId, hostData: this.userData })
     await this.getLocalMedia() // ESPERAR a que la cámara/micrófono estén listos
-    await this.loadParticipants()
-    socket.emit('start-stream', { roomId: this.roomId })
-
-    // 2. Listeners de Socket.IO para Host
-    // Listener de solicitudes de Viewers (para moderación)
     socket.on('pending-request', (data) => {
-      console.log('Solicitud recibida:', data)
-      // Combinar datos del usuario con el idSocket si vienen separados
-      const idSocket = data.idSocket || (data.viewerData && data.viewerData.idSocket)
-      const viewer = data.viewerData ? { ...data.viewerData, idSocket } : { ...data, idSocket }
-
+      const socketId = data.viewerData.socketId || (data.viewerData && data.viewerData.socketId)
+      const viewer = data.viewerData ? { ...data.viewerData, socketId } : { ...data, socketId }
       // Usar idSocket para verificar duplicados, es más seguro en sesiones en vivo
-      if (viewer.idSocket && !this.salaEspera.some((u) => u.idSocket === viewer.idSocket)) {
+      if (viewer.id && !this.salaEspera.some((u) => u.id === viewer.id)) {
         this.salaEspera.push(viewer)
       }
     })
 
-    // Listener único de señal (para recibir Answers y Candidates)
-    socket.on('signal', this.handleSignal)
-
+    
     // Listener para nuevos viewers listos (dispara la Offer inicial)
-    socket.on('viewer-joined', ({ viewerId }) => {
-      // El Host crea la Offer para el Viewer
-      this.createOfferForViewer(viewerId)
+    socket.on('viewer-joined', ({ viewerData }) => {
+      this.addToast ("Un nuevo espectador se unio a la sala")
+      //El Host crea la Offer para el Viewer
+      this.createOfferForViewer(viewerData)
     })
-
+    
+    this._handleSignalBound = this._handleSignal.bind(this)
+    socket.removeAllListeners('signal')
+    socket.on('signal', this._handleSignalBound)
+    
+    /*
     // Listener para cuando un viewer se desconecta
     socket.on('viewer-disconnected', ({ viewerId }) => {
       console.log(`Viewer ${viewerId} se ha desconectado.`)
@@ -920,25 +923,18 @@ export default {
     })
 
     // Sincronizar al montar para que los viewers detecten que el host volvió (lista vacía)
-    this.syncParticipants()
+    this.syncParticipants()*/
+  },
+  beforeUnmount() {
+    socket.off("host-reconnected")
+    socket.off("pending-request")
+    socket.off("viewer-joined")
+    if (this._handleSignalBound) {
+      socket.off("signal", this._handleSignalBound)
+    }
   },
 
   methods: {
-    async loadParticipants() {
-      try {
-        const response = await api.get(`/transmissions/${this.roomId}/participants`)
-        const data = response.data.data || response.data
-        if (Array.isArray(data)) {
-          data.forEach((dbUser) => {
-            if (!this.participantes.some((p) => p.id === dbUser.id)) {
-              this.participantes.push({ ...dbUser, estado: 'Desconectado' })
-            }
-          })
-        }
-      } catch (error) {
-        console.error('Error al cargar participantes:', error)
-      }
-    },
     async getLocalMedia() {
       try {
         this.localStream = await navigator.mediaDevices.getUserMedia({
@@ -966,6 +962,7 @@ export default {
         console.error('Error al obtener audio/video', err)
       }
     },
+
 
     async toggleScreenShare() {
       this.pantallaAct = !this.pantallaAct
@@ -1018,45 +1015,10 @@ export default {
         if (audioSender && audioTrack) await audioSender.replaceTrack(audioTrack)
       }
     },
-    async createOfferForViewer(viewerId) {
-      const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
-      this.peers[viewerId] = pc
-      this.candidateBuffers[viewerId] = []
-      // 1. Agregar tracks iniciales del owner
-      if (this.localStream) {
-        this.localStream.getTracks().forEach((track) => {
-          pc.addTrack(track, this.localStream)
-        })
-      }
+  
 
-      // 2. Listener de Renegociación (Se dispara si se añaden tracks, ej: si se añadieron al inicio)
-      pc.onnegotiationneeded = async () => {
-        try {
-          console.log(`Negociación necesaria para viewer ${viewerId}`)
-          const offer = await pc.createOffer()
-          await pc.setLocalDescription(offer)
-          socket.emit('signal', { targetId: viewerId, data: offer })
-        } catch (error) {
-          console.error('Error en onnegotiationneeded', error)
-        }
-      }
-
-      // 3. Configuración de ICE y Tracks
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit('signal', { targetId: viewerId, data: event.candidate })
-        }
-      }
-
-      pc.ontrack = (event) => {
-        // Aquí se podría manejar si un viewer comparte su media (si fuera una reunión P2P/P2MP bidireccional)
-        console.log(`Stream recibido de viewer ${viewerId}`, event.streams)
-      }
-
-      // 4. Primera Offer (para establecer la conexión inicial)
-      const offer = await pc.createOffer()
-      await pc.setLocalDescription(offer)
-      socket.emit('signal', { targetId: viewerId, data: offer })
+    _handleSignal(data) {
+      this.handleSignal(data)
     },
 
     async handleSignal({ from, data }) {
@@ -1309,27 +1271,15 @@ export default {
       this.mensaje = ''
     },
     async admitir(user) {
-      // Integración Backend: Registrar participante (No bloqueante)
-      if (user.id) {
-        try {
-          await api.post(`/transmissions/${this.roomId}/participants`, { id_user: user.id })
-        } catch (error) {
-          console.error('Error al registrar participante en backend (continuando admisión):', error)
-        }
-      }
-
-      // Lógica de Sockets y UI (Se ejecuta siempre)
       socket.emit('response-request', {
         roomId: this.roomId,
-        viewerId: user.idSocket,
+        viewerData: user,
         response: true,
-        hostId: socket.id,
       })
 
-      this.participantes.push({ ...user, estado: 'Activo' })
 
+      this.participantes.push({ ...user, estado: 'Activo' })
       this.salaEspera = this.salaEspera.filter((u) => u.idSocket !== user.idSocket)
-      this.syncParticipants()
     },
 
     rechazar(user) {
@@ -1366,10 +1316,83 @@ export default {
         delete this.peers[user.idSocket]
       }
       this.menuAbierto = null
-      this.syncParticipants()
     },
-    syncParticipants() {
-      socket.emit('update-participants', { roomId: this.roomId, participants: this.participantes })
+
+    //SECCION webRTC
+    async createOfferForViewer(viewerData) {
+      const pc = new RTCPeerConnection({ iceServers: [/*
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.ekiga.net' },
+        {
+          urls: 'turn:turnserver.20steps.com',
+          username: 'webrtc',
+          credential: 'webrtc'
+        },
+        {
+          urls: ['turn:numb.viagenie.ca'],
+          username: 'webrtc@example.com',
+          credential: 'webrtc'
+        }*/
+      ] })
+
+      this.peers[viewerData.id] = pc
+      this.candidateBuffers[viewerData.id] = []
+      
+      // 1. Agregar tracks iniciales del owner
+      if (this.localStream) {
+        this.localStream.getTracks().forEach((track) => {
+          pc.addTrack(track, this.localStream)
+        })
+      }
+
+    /*  let firstOfferSent = false
+      // 2 ya no es. Listener de Renegociación (Se dispara si se añaden tracks, ej: si se añadieron al inicio)
+      pc.onnegotiationneeded = async () => {
+        if (firstOfferSent) return
+        try {
+          console.log(`Negociación necesaria para viewer ${viewerData.id} ${viewerData.name}`)
+          const offer = await pc.createOffer()
+          await pc.setLocalDescription(offer)
+          socket.emit('signal', { targetId: viewerData.socketId, data: offer })
+          firstOfferSent = true;
+        } catch (error) {
+          console.error('Error en onnegotiationneeded', error)
+        }
+      }*/
+
+      // 2. Configuración de ICE y Tracks
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('signal', { targetId: viewerData.socketId, data: event.candidate })
+        }
+      }
+
+      // 3. (Opcional) ontrack si el viewer envía media
+      pc.ontrack = (event) => {
+        // Aquí se podría manejar si un viewer comparte su media (si fuera una reunión P2P/P2MP bidireccional)
+        console.log(`Stream recibido de viewer ${viewerId}`, event.streams)
+      }
+
+      // 4. Primera Offer (para establecer la conexión inicial)
+      try {
+        const offer = await pc.createOffer()
+        await pc.setLocalDescription(offer)
+        socket.emit('signal', { targetId: viewerData.socketId, data: offer })
+        console.log(`Offer inicial enviada a viewer ${viewerData.id} ${viewerData.name}`)
+      } catch (error) {
+        console.error('Error creando offer', error)
+      }
+
+      // 5. NO usar onnegotiationneeded a menos que agregues tracks nuevos
+      pc.onnegotiationneeded = null
+    },
+
+
+    addToast(message, type = 'info', duration = 3000) {
+      // Llamamos al método del componente hijo usando la referencia
+      this.$refs.toastRef.addToast(message, type, duration)
     },
   },
 }

@@ -52,7 +52,8 @@
 <script>
 import UserImg from '@/assets/login.png'
 import api from '@/services/api'
-import router from '@/router' // <-- FALTABA ESTO
+import router from '@/router'
+import socket from '@/services/socket'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/solid'
 import ToastNotification from '@/components/ToastNotification.vue'
 
@@ -75,11 +76,11 @@ export default {
         const token = response.data.token
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
-
-        this.$refs.toastRef.addToast('Inicio de sesión exitoso', 'success')
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 1000)
+        socket.auth = {
+          token : response.token
+        }
+        socket.connect()
+        router.push('/dashboard')
       } catch (error) {
         this.username = ''
         this.password = ''

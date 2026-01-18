@@ -586,6 +586,8 @@ export default {
   },
   data() {
     return {
+      userData : JSON.parse(localStorage.getItem('user')),
+
       viewerId: null,
       pc: null,
       // ID del Host, necesario para enviar la Answer y los ICE candidates
@@ -722,54 +724,41 @@ export default {
   },
 
   mounted() {
-    const userData = JSON.parse(localStorage.getItem('user'))
-
-    socket.on('signal', this.handleSignal)
-
+    this._handleSignalBound = this._handleSignal.bind(this)
+    socket.removeAllListeners('signal')
+    socket.on('signal', this._handleSignalBound)
     this.initViewer()
-    this.loadParticipants()
-
-    console.log('LiveViewer: Enviando viewer-ready al backend. RoomID:', this.roomId, 'Datos:', userData)
-    socket.emit('viewer-ready', { roomId: this.roomId, viewerData: userData })
-
-    socket.on('update-participants', ({ participants }) => {
-      this.participantes = participants
-
-      // Si el host refrescó, la lista estará vacía o incompleta.
-      // Si yo (viewer) no estoy en la lista, me re-anuncio para recuperar conexión.
-      const myId = socket.id
-      if (myId && !this.participantes.some((p) => p.idSocket === myId)) {
-        socket.emit('viewer-reconnect', {
-          roomId: this.roomId,
-          viewerData: JSON.parse(localStorage.getItem('user')),
-          idSocket: myId,
-        })
-      }
-    })
   },
 
-  methods: {
-    async loadParticipants() {
-      try {
-        const response = await api.get(`/transmissions/${this.roomId}/participants`)
-        const data = response.data.data || response.data
-        if (Array.isArray(data)) {
-          data.forEach((dbUser) => {
-            if (!this.participantes.some((p) => p.id === dbUser.id)) {
-              this.participantes.push({ ...dbUser, estado: 'Activo' })
-            }
-          })
-        }
-      } catch (error) {
-        console.error('Error al cargar participantes:', error)
-      }
-    },
+  beforeUnmount() {
+    if (this._handleSignalBound) {
+      socket.off('signal', this._handleSignalBound)
+    }
+  },
+
+  methods: {   
     initViewer() {
       if (this.pc) return
-      this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
+      this.pc = new RTCPeerConnection({ iceServers: [/*
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.ekiga.net' },
+        {
+          urls: 'turn:turnserver.20steps.com',
+          username: 'webrtc',
+          credential: 'webrtc'
+        },
+        {
+          urls: ['turn:numb.viagenie.ca'],
+          username: 'webrtc@example.com',
+          credential: 'webrtc'
+        }*/
+      ] })
 
       this.pc.addTransceiver('video', { direction: 'recvonly' })
       this.pc.addTransceiver('audio', { direction: 'recvonly' })
+
       this.pc.ontrack = (event) => {
         if (this.$refs.videoRef) {
           this.$refs.videoRef.srcObject = event.streams[0] || new MediaStream([event.track])
@@ -783,65 +772,42 @@ export default {
       }
     },
 
-    async handleSignal({ from, data }) {
-      this.hostId = from
-
-      // Si PC no está inicializada, ¡INICIALIZARLA AHORA!
-      if (!this.pc) {
-        console.log('PC no inicializada al recibir señal. Inicializando ahora...')
-        this.initViewer() // <--- Mover la inicialización aquí si es null
-      }
-
-      let pc = this.pc
-      if (!pc) return // Si initViewer falló, salimos.
-
-      try {
-        if (data.type === 'offer') {
-          console.log('Señal Viewer: Offer recibida. Generando Answer.')
-          // ... (resto de la lógica de Answer, que ya estaba bien) ...
-          await pc.setRemoteDescription(new RTCSessionDescription(data))
-
-          // Procesar candidatos en cola
-          while (this.candidateBuffer.length > 0) {
-            const candidate = this.candidateBuffer.shift()
-            await pc.addIceCandidate(new RTCIceCandidate(candidate))
-          }
-
-          const answer = await pc.createAnswer()
-          await pc.setLocalDescription(answer)
-          socket.emit('signal', { targetId: from, data: answer })
-        } else if (data.candidate) {
-          if (pc.remoteDescription) {
-            await pc.addIceCandidate(new RTCIceCandidate(data))
-          } else {
-            this.candidateBuffer.push(data)
-          }
-        }
-      } catch (e) {
-        console.error('Error al manejar señal en Viewer. Estado actual:', pc.signalingState, e)
-      }
+    _handleSignal(data) {
+      this.handleSignal(data)
     },
 
+    //SIGAL webRTC
+    async handleSignal({ from, data }) {
+      this.hostId = from
+      //1. Si PC no está inicializada, ¡INICIALIZARLA AHORA!
+      if (!this.pc) {
+        console.log('PC no inicializada al recibir señal. Inicializando ahora...')
+        this.initViewer()
+      }
+
+      // 2️⃣ Revisar tipo de señal
+      if (data.type === 'offer') {
+        console.log('Offer recibida. Generando Answer...')
+        await this.pc.setRemoteDescription(new RTCSessionDescription(data))
+        const answer = await this.pc.createAnswer()
+        await this.pc.setLocalDescription(new RTCSessionDescription(answer))
+        console.log("ANSWER CREADO")
+        socket.emit('signal', { targetId: from, data: answer })
+      } else if (data.candidate) {
+        // 3️⃣ Agregar candidatos ICE
+        try {
+          await this.pc.addIceCandidate(new RTCIceCandidate(data))
+        } catch (err) {
+          console.warn('Error agregando candidato ICE', err)
+        }
+      }
+    },
     handleEndStream() {
       this.showOptionsMenu = false
       this.showEndStreamConfirm = true
     },
     async confirmEndStream() {
-      this.showEndStreamConfirm = false
-      try {
-        const userData = JSON.parse(localStorage.getItem('user'))
-        if (userData && userData.id) {
-          await api.delete(`/transmissions/${this.roomId}/participants/${userData.id}`)
-        }
-      } catch (error) {
-        console.error('Error al salir de la transmisión:', error)
-      } finally {
-        if (this.pc) {
-          this.pc.close()
-        }
-        socket.disconnect()
-        router.push({ name: 'transmitions' })
-      }
+      router.push({ name: 'transmitions' })
     },
     addSurveyOption() {
       this.surveyOptions.push('')

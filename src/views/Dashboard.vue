@@ -3,11 +3,12 @@
     <main class="flex-1 overflow-y-auto p-6 space-y-10">
       <section id="panel" class="space-y-4">
         <h2 class="text-2xl font-semibold">Panel General</h2>
+
         <div class="grid grid-cols-4 gap-4">
           <div class="bg-gray-900 p-4 rounded-xl text-center">
             <UserGroupIcon class="w-6 h-6 text-green-500" />
-            <p>Usuarios Activos</p>
-            <h3 class="text-2xl font-bold">120</h3>
+            <p>Usuarios activos</p>
+            <h3 class="text-2xl font-bold"> {{ usersActive }}</h3>
           </div>
           <div class="bg-gray-900 p-4 rounded-xl text-center">
             <VideoCameraIcon class="w-6 h-6 text-red-500" />
@@ -60,7 +61,9 @@
         <h2 class="text-2xl font-semibold">Biblioteca</h2>
 
         <!-- Grid de 4 columnas -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-900 p-4 rounded-xl">
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-900 p-4 rounded-xl"
+        >
           <!-- Recurso 1 -->
           <div class="bg-gray-800 p-4 rounded-xl flex flex-col items-center space-y-2 text-center">
             <div class="text-4xl">📄</div>
@@ -102,6 +105,8 @@
   </div>
 </template>
 <script>
+import api from '@/services/api.js'
+
 import MainLayout from '@/layouts/MainLayout.vue'
 import {
   VideoCameraIcon,
@@ -117,10 +122,27 @@ export default {
     ChatBubbleLeftIcon,
     ChatBubbleLeftRightIcon,
   },
-  data() {
-    return {}
+
+  mounted() {
+    
+    this.activeUsers()
   },
-  methods: {},
+  data() {
+    return {
+      usersActive: 0,
+    }
+  },
+  methods: {
+    async activeUsers(){
+      try {
+        const response = await api.get("/report/user/active")
+        this.usersActive = response.data.data.active_user_count
+      } catch (error) {
+        console.error('Error fetching active users:', error)
+        return 0
+      }
+    }
+  },
 }
 </script>
 

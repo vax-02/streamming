@@ -85,30 +85,23 @@ export default {
   },
 
   mounted() {
-    const sendRequest = () => {
-      socket.emit('request-join', {
-        roomId: this.roomId,
-        viewerData: this.userData,
-      })
-    }
+    socket.emit('request-join', {
+      roomId: this.roomId,
+      viewerData: this.userData,
+    })
 
-    if (socket.connected) {
-      sendRequest()
-    } else {
-      socket.once('connect', sendRequest)
-    }
-
-    socket.on('join-accepted', (data) => {
-      console.log('Solicitud aceptada, redirigiendo...', data)
-      const { roomId, hostId, viewerId } = data
+    socket.on('join-accepted', () => {
       this.$router.push({
         name: 'live-viewer',
-        params: { id: roomId, idH: hostId, idV: viewerId },
+        params: { id: this.roomId, idH: "dataPrueba", idV: this.userData.id },
       })
     })
 
     socket.on('join-rejected', () => {
       this.msg = 'Tu solicitud para unirte fue rechazada'
+    })
+    socket.on("error-room", ()=>{
+      this.msg = "La sala NO se encuentra activa"
     })
   },
 
