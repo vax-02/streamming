@@ -738,7 +738,8 @@ export default {
       salaEspera: [],
       roomId: localStorage.getItem('live_id'),
 
-      tiempo: 0, // tiempo en segundos
+      tiempo: 0,
+      startTime: null,
       tiempoFormateado: '00:00',
       intervalo: null,
 
@@ -865,6 +866,12 @@ export default {
       
   async mounted() {
     this.isOwner = true
+    try {
+      await api.put(`/transmissions/${this.roomId}/status`, { status: 1 });
+      socket.emit('in-transmision');
+    } catch (e) {
+      console.error("Error starting stream status:", e);
+    }
     socket.emit('start-stream', { roomId: this.roomId, hostData: this.userData })
     await this.getLocalMedia() // ESPERAR a que la cámara/micrófono estén listos
     socket.on('pending-request', (data) => {
@@ -879,10 +886,32 @@ export default {
     
     // Listener para nuevos viewers listos (dispara la Offer inicial)
     socket.on('viewer-joined', ({ viewerData }) => {
-      this.addToast ("Un nuevo espectador se unio a la sala")
-      //El Host crea la Offer para el Viewer
-      this.createOfferForViewer(viewerData)
-    })
+      this.addToast(`Participante ${viewerData.name} se unió`);
+      this.createOfferForViewer(viewerData);
+    });
+
+    socket.on('viewer-left', ({ viewerId }) => {
+      // viewerId es el socketId
+      const pIndex = this.participantes.findIndex(p => p.socketId === viewerId);
+      if (pIndex !== -1) {
+        this.addToast(`${this.participantes[pIndex].name} salió`);
+        this.participantes.splice(pIndex, 1);
+      }
+      
+      // Limpiar conexión WebRTC
+      if (this.peers[viewerId]) {
+        this.peers[viewerId].close();
+        delete this.peers[viewerId];
+      }
+      if (this.candidateBuffers[viewerId]) {
+        delete this.candidateBuffers[viewerId];
+      }
+    });
+
+    socket.on('start-timer', (startTime) => {
+      this.startTime = startTime;
+      this.iniciarContador();
+    });
     
     this._handleSignalBound = this._handleSignal.bind(this)
     socket.removeAllListeners('signal')
@@ -984,12 +1013,24 @@ export default {
           this.stopScreenShare()
         }
 
+        // Al compartir pantalla:
+        // 1. El video principal muestra la pantalla
         this.localStream = screenStream
         this.$refs.videoRef.srcObject = this.localStream
+        
+        // 2. Si la cámara está activa, nos aseguramos que se vea en el modal (PiP)
+        if (this.cameraStream && this.camaraAct) {
+          this.$nextTick(() => {
+            if (this.$refs.modalVideoRef) {
+              this.$refs.modalVideoRef.srcObject = this.cameraStream;
+            }
+          });
+        }
+        
         await this.replaceStreamForAllPeers(screenStream)
       } catch (err) {
         console.error('Error al compartir pantalla:', err)
-        this.pantallaAct = false // Revertir estado si el usuario cancela
+        this.pantallaAct = false
       }
     },
 
@@ -999,20 +1040,39 @@ export default {
       }
       this.localStream = this.cameraStream
       this.$refs.videoRef.srcObject = this.localStream
+      
+      // Restaurar cámara en el video principal
+      if (this.camaraAct) {
+        this.$nextTick(() => {
+          if (this.$refs.modalVideoRef) {
+            this.$refs.modalVideoRef.srcObject = this.cameraStream;
+          }
+        });
+      }
+      
       this.pantallaAct = false
       await this.replaceStreamForAllPeers(this.cameraStream)
     },
 
     async replaceStreamForAllPeers(newStream) {
-      const videoTrack = newStream ? newStream.getVideoTracks()[0] : null
-      const audioTrack = newStream ? newStream.getAudioTracks()[0] : null
+      const videoTrack = newStream ? newStream.getVideoTracks()[0] : null;
+      const audioTrack = newStream ? newStream.getAudioTracks()[0] : null;
 
       for (const pc of Object.values(this.peers)) {
-        const videoSender = pc.getSenders().find((s) => s.track && s.track.kind === 'video')
-        if (videoSender) await videoSender.replaceTrack(videoTrack)
+        // Encontrar senders para reemplazo
+        const videoSender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
+        if (videoSender && videoTrack) {
+          await videoSender.replaceTrack(videoTrack);
+        } else if (videoTrack) {
+          pc.addTrack(videoTrack, newStream);
+        }
 
-        const audioSender = pc.getSenders().find((s) => s.track && s.track.kind === 'audio')
-        if (audioSender && audioTrack) await audioSender.replaceTrack(audioTrack)
+        const audioSender = pc.getSenders().find((s) => s.track && s.track.kind === 'audio');
+        if (audioSender && audioTrack) {
+          await audioSender.replaceTrack(audioTrack);
+        } else if (audioTrack) {
+          pc.addTrack(audioTrack, newStream);
+        }
       }
     },
   
@@ -1058,9 +1118,29 @@ export default {
       this.showOptionsMenu = false
       this.showEndStreamConfirm = true
     },
-    confirmEndStream() {
-      this.showEndStreamConfirm = false
-      router.push({ name: 'transmitions' })
+    async confirmEndStream() {
+      this.showEndStreamConfirm = false;
+      socket.emit('stop-stream', { roomId: this.roomId });
+      socket.emit('in-transmision');
+      try {
+        await api.put(`/transmissions/${this.roomId}/status`, { status: 2 });
+      } catch (e) {
+        console.error("Error closing stream status:", e);
+      }
+      
+      // Detener tracks locales
+      if (this.localStream) {
+        this.localStream.getTracks().forEach(t => t.stop());
+      }
+      if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(t => t.stop());
+      }
+      
+      // Cerrar WebRTC
+      Object.values(this.peers).forEach(pc => pc.close());
+      this.peers = {};
+      
+      router.push({ name: 'transmitions' });
     },
     addSurveyOption() {
       this.surveyOptions.push('')
@@ -1277,18 +1357,17 @@ export default {
         response: true,
       })
 
-
       this.participantes.push({ ...user, estado: 'Activo' })
-      this.salaEspera = this.salaEspera.filter((u) => u.idSocket !== user.idSocket)
+      this.salaEspera = this.salaEspera.filter((u) => u.socketId !== user.socketId)
     },
 
     rechazar(user) {
       socket.emit('response-request', {
         roomId: this.roomId,
-        viewerId: user.idSocket,
+        viewerData: user,
         response: false,
       })
-      this.salaEspera = this.salaEspera.filter((u) => u.idSocket !== user.idSocket)
+      this.salaEspera = this.salaEspera.filter((u) => u.socketId !== user.socketId)
     },
     silenciar(p) {
       p.estado = false
@@ -1320,73 +1399,71 @@ export default {
 
     //SECCION webRTC
     async createOfferForViewer(viewerData) {
-      const pc = new RTCPeerConnection({ iceServers: [/*
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-        { urls: 'stun:stun.ekiga.net' },
-        {
-          urls: 'turn:turnserver.20steps.com',
-          username: 'webrtc',
-          credential: 'webrtc'
-        },
-        {
-          urls: ['turn:numb.viagenie.ca'],
-          username: 'webrtc@example.com',
-          credential: 'webrtc'
-        }*/
-      ] })
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
 
-      this.peers[viewerData.id] = pc
-      this.candidateBuffers[viewerData.id] = []
+      const viewerSocketId = viewerData.socketId;
+      this.peers[viewerSocketId] = pc;
+      this.candidateBuffers[viewerSocketId] = [];
       
-      // 1. Agregar tracks iniciales del owner
+      // 1. Agregar tracks del owner
+      // Intentamos agregar el video actual (cámara o pantalla)
       if (this.localStream) {
-        this.localStream.getTracks().forEach((track) => {
-          pc.addTrack(track, this.localStream)
-        })
+        this.localStream.getVideoTracks().forEach((track) => {
+          pc.addTrack(track, this.localStream);
+        });
       }
 
-    /*  let firstOfferSent = false
-      // 2 ya no es. Listener de Renegociación (Se dispara si se añaden tracks, ej: si se añadieron al inicio)
-      pc.onnegotiationneeded = async () => {
-        if (firstOfferSent) return
-        try {
-          console.log(`Negociación necesaria para viewer ${viewerData.id} ${viewerData.name}`)
-          const offer = await pc.createOffer()
-          await pc.setLocalDescription(offer)
-          socket.emit('signal', { targetId: viewerData.socketId, data: offer })
-          firstOfferSent = true;
-        } catch (error) {
-          console.error('Error en onnegotiationneeded', error)
-        }
-      }*/
+      // Siempre intentamos agregar el audio de la cámara (micrófono) si existe
+      // Esto asegura que el viewer escuche al host incluso si está compartiendo pantalla
+      if (this.cameraStream) {
+        this.cameraStream.getAudioTracks().forEach((track) => {
+          pc.addTrack(track, this.cameraStream);
+        });
+      }
 
-      // 2. Configuración de ICE y Tracks
+      // 2. Manejo de ICE candidates
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          socket.emit('signal', { targetId: viewerData.socketId, data: event.candidate })
+          socket.emit('signal', { targetId: viewerSocketId, data: event.candidate });
         }
-      }
+      };
 
-      // 3. (Opcional) ontrack si el viewer envía media
+      // 3. RECIBIR audio del viewer
       pc.ontrack = (event) => {
-        // Aquí se podría manejar si un viewer comparte su media (si fuera una reunión P2P/P2MP bidireccional)
-        console.log(`Stream recibido de viewer ${viewerId}`, event.streams)
-      }
+        console.log(`Track recibido de: ${viewerData.name}`, event.track.kind);
+        if (event.track.kind === 'audio') {
+          const remoteAudio = document.createElement('audio');
+          remoteAudio.srcObject = new MediaStream([event.track]);
+          remoteAudio.autoplay = true;
+          pc._remoteAudio = remoteAudio;
+          
+          // Debug: attach to body if hidden
+          remoteAudio.style.display = 'none';
+          document.body.appendChild(remoteAudio);
+        }
+      };
 
-      // 4. Primera Offer (para establecer la conexión inicial)
+      // 4. Crear Offer
       try {
-        const offer = await pc.createOffer()
-        await pc.setLocalDescription(offer)
-        socket.emit('signal', { targetId: viewerData.socketId, data: offer })
-        console.log(`Offer inicial enviada a viewer ${viewerData.id} ${viewerData.name}`)
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('signal', { targetId: viewerSocketId, data: offer });
+        console.log(`Offer enviada a ${viewerData.name}`);
       } catch (error) {
-        console.error('Error creando offer', error)
+        console.error('Error al crear offer:', error);
       }
+    },
 
-      // 5. NO usar onnegotiationneeded a menos que agregues tracks nuevos
-      pc.onnegotiationneeded = null
+    iniciarContador() {
+      if (this.intervalo) clearInterval(this.intervalo);
+      this.intervalo = setInterval(() => {
+        const ahora = Date.now();
+        const diff = Math.floor((ahora - this.startTime) / 1000);
+        this.tiempo = diff > 0 ? diff : 0;
+        this.tiempoFormateado = this.formatTime(this.tiempo);
+      }, 1000);
     },
 
 

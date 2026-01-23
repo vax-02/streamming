@@ -55,31 +55,27 @@ const routes = [
       {
         path: 'chats',
         name: 'chats',
-        component: Chats,
-        children: [
-          {
-            path: 'calling',
-            name: 'calling',
-            component: CallingComponent,
-          },
-          {
-            path: 'call',
-            name: 'call',
-            component: CallComponente,
-          },
+        component: Chats
+      },
+      {
+        path: 'calling/:id',
+        name: 'calling',
+        component: CallingComponent,
+      },
+      {
+        path: 'call/:id',
+        name: 'call',
+        component: CallComponente,
+      },
 
-          {
-            path: 'miniCall',
-            name: 'mini-call',
-            component: MiniCallComponent,
-          },
-        ],
+      {
+        path: 'miniCall',
+        name: 'mini-call',
+        component: MiniCallComponent,
       },
       { path: 'application', name: 'application', component: ApplicationComponent },
       { path: 'groups', name: 'groups', component: Groups },
-
       { path: 'transmitions', name: 'transmitions', component: Transmitions },
-
       {
         path: 'settings',
         name: 'settings',
@@ -88,7 +84,6 @@ const routes = [
           { path: 'profile', name: 'profile', component: ProfileComponent },
           { path: 'security', name: 'security', component: SecurityComponent },
           { path: 'privacity', name: 'privacity', component: PrivacityComponent },
-
         ],
       },
     ],
@@ -103,7 +98,6 @@ const routes = [
     name: 'live-viewer',
     component: LiveViewer,
   },
-
   { path: '/video', name: 'video', component: VideoPlayerComponent, props: true },
 ]
 

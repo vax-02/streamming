@@ -90,10 +90,15 @@ export default {
       viewerData: this.userData,
     })
 
-    socket.on('join-accepted', () => {
+    socket.on('join-accepted', (data) => {
       this.$router.push({
         name: 'live-viewer',
-        params: { id: this.roomId, idH: "dataPrueba", idV: this.userData.id },
+        params: { 
+          id: this.roomId, 
+          idH: data.hostId, 
+          idV: this.userData.id 
+        },
+        query: { startTime: data.startTime }
       })
     })
 

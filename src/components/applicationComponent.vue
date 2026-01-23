@@ -1,241 +1,245 @@
 <template>
-  <div class="flex h-screen bg-gray-900 text-white">
-    <!-- Sidebar -->
-    <aside class="w-48 bg-gray-800 border-r border-gray-800 flex flex-col">
-      <h2 class="text-lg font-bold p-4 border-b border-gray-800">Amigos</h2>
-      <nav class="flex flex-col">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          @click="currentTab = tab.id"
-          :class="[
-            'text-left px-4 py-2 transition-all duration-200 border-l-4',
-            currentTab === tab.id
-              ? 'bg-gray-700 text-white border-blue-500'
-              : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent',
-          ]"
-        >
-          {{ tab.name }}
-        </button>
-      </nav>
-    </aside>
 
-    <main class="flex-1 p-6 overflow-y-auto">
-      <section v-if="currentTab === 'amigos'">
-        <h2 class="text-2xl font-semibold mb-4">Tus amigos</h2>
-
-        <div class="mb-4">
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Buscar amigo..."
-            class="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-       
-        <div v-if="loading" v-for="n in 5" :key="n" class="flex items-center justify-between bg-gray-800 p-3 rounded-lg m-3 ">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-gray-700 animate-pulse"></div>
-        <div class="flex flex-col gap-1">
-          <div class="h-4 w-32 bg-gray-700 rounded animate-pulse"></div> <!-- Nombre -->
-          <div class="h-3 w-48 bg-gray-700 rounded animate-pulse"></div> <!-- Email -->
+<div class="flex flex-col h-screen bg-gray-900 text-white font-sans">
+    <!-- Header superior con Pestañas -->
+    <header class="bg-gray-800 border-b border-gray-700 shadow-xl z-10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between py-4 gap-6">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-yellow-500/10 rounded-lg">
+                <ClipboardDocumentCheckIcon class="h-6 w-6 text-yellow-500" />
+            </div>
+            <span class="text-xl font-bold tracking-wide">Solicitudes</span>
+          </div>
+          
+          <nav class="flex items-center bg-gray-900/50 p-1 rounded-2xl border border-gray-700 overflow-x-auto custom-scrollbar no-scrollbar">
+            <button
+              v-for="tab in tabs"
+              :key="tab.id"
+              @click="currentTab = tab.id"
+              :class="[
+                'flex items-center space-x-2 px-6 py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold whitespace-nowrap',
+                currentTab === tab.id
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800',
+              ]"
+            >
+              <component :is="tab.icon" class="h-4 w-4" />
+              <span>{{ tab.name }}</span>
+            </button>
+          </nav>
         </div>
       </div>
-      <div class="flex gap-2">
-        <div class="h-6 w-6 bg-gray-700 rounded-full animate-pulse"></div> <!-- Trash -->
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          
+        <header class="mb-8 pb-4 border-b border-gray-800 flex justify-between items-end">
+            <div>
+              <h1 class="text-2xl font-bold text-white">{{ getTabTitle(currentTab) }}</h1>
+            </div>
+        </header>
+
+        <!-- Section: Amigos -->
+        <section v-if="currentTab === 'amigos'" class="space-y-6">
+            <div class="flex justify-between items-center bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <input
+                    type="text"
+                    v-model="searchQuery"
+                    placeholder="Buscar en mis amigos..."
+                    class="w-full max-w-md bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-500"
+                />
+            </div>
+            
+             <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                 <div v-for="n in 4" :key="n" class="bg-gray-800 p-4 rounded-xl border border-gray-700 animate-pulse flex items-center space-x-4">
+                     <div class="w-12 h-12 bg-gray-700 rounded-full"></div>
+                     <div class="flex-1 space-y-2">
+                         <div class="h-4 bg-gray-700 rounded w-1/3"></div>
+                         <div class="h-3 bg-gray-700 rounded w-1/2"></div>
+                     </div>
+                 </div>
+             </div>
+
+            <div v-else-if="filteredFriends.length" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div
+                    v-for="friend in filteredFriends"
+                    :key="friend.id"
+                    class="bg-gray-800 border border-gray-700 p-4 rounded-xl flex items-center justify-between hover:bg-gray-750 transition-colors shadow-sm"
+                >
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div class="relative">
+                            <img :src="friend.avatar" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600" />
+                            <div v-if="friend.view_online" class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-800" :class="friend.online ? 'bg-green-500' : 'bg-gray-500'"></div>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-white truncate">{{ friend.name }}</h3>
+                            <p class="text-xs text-gray-400 truncate">{{ friend.email }}</p>
+                            <p class="text-[10px] mt-0.5" :class="friend.online ? 'text-green-400' : 'text-gray-500'">{{ friend.online ? 'En línea' : 'Desconectado' }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                        <button
+                            @click="chatFriend(friend.id)"
+                            class="p-2 rounded-lg bg-gray-700 text-green-400 hover:bg-green-600 hover:text-white transition-colors"
+                            title="Chat"
+                        >
+                            <ChatBubbleLeftIcon class="w-5 h-5" />
+                        </button>
+                        <button
+                             @click="removeFriend(friend.id)"
+                            class="p-2 rounded-lg bg-gray-700 text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+                            title="Eliminar amigo"
+                        >
+                            <TrashIcon class="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div v-else class="text-center py-12 bg-gray-800/50 rounded-xl border border-dashed border-gray-700">
+                <UsersIcon class="w-12 h-12 mx-auto text-gray-600 mb-3" />
+                <p class="text-gray-400">No se encontraron amigos conexos con tu búsqueda.</p>
+            </div>
+        </section>
+
+        <!-- Section: Solicitudes (Recibidas) -->
+        <section v-if="currentTab === 'solicitudes'" class="space-y-4">
+             <div v-if="friendRequests.length" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                    v-for="request in friendRequests"
+                    :key="request.id"
+                    class="bg-gray-800 border border-gray-700 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4"
+                >
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <img :src="request.avatar" class="w-12 h-12 rounded-full object-cover border border-gray-600" />
+                        <div>
+                             <h3 class="font-bold text-white">{{ request.name }}</h3>
+                             <p class="text-xs text-gray-400">{{ request.email || 'Usuario' }}</p>
+                             <span class="text-xs text-blue-400 mt-1 block">Quiere conectar contigo</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2 w-full sm:w-auto">
+                         <button
+                            @click="acceptRequest(request)"
+                            class="flex-1 sm:flex-none flex items-center justify-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                          >
+                            <CheckIcon class="w-4 h-4" />
+                            <span>Aceptar</span>
+                          </button>
+                           <button
+                             @click="declineRequest(request.id)"
+                            class="flex-1 sm:flex-none flex items-center justify-center space-x-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                          >
+                            <XMarkIcon class="w-4 h-4" />
+                            <span>Rechazar</span>
+                          </button>
+                    </div>
+                </div>
+             </div>
+              <div v-else class="text-center py-12 bg-gray-800/50 rounded-xl border border-dashed border-gray-700">
+                <InboxIcon class="w-12 h-12 mx-auto text-gray-600 mb-3" />
+                <p class="text-gray-400">No tienes solicitudes de amistad pendientes.</p>
+            </div>
+        </section>
+
+         <!-- Section: Nuevos (Explorar) -->
+        <section v-if="currentTab === 'nuevos'" class="space-y-6">
+             <div class="flex justify-between items-center bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <input
+                    type="text"
+                    v-model="searchQuery2"
+                    placeholder="Buscar personas..."
+                    class="w-full max-w-md bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-500"
+                />
+            </div>
+            
+            <div v-if="filteredFriends2.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div
+                    v-for="user in filteredFriends2"
+                    :key="user.id"
+                    class="bg-gray-800 border border-gray-700 p-4 rounded-xl flex items-center justify-between hover:bg-gray-750 transition-colors"
+                >
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <img :src="user.avatar" class="w-10 h-10 rounded-full object-cover border border-gray-600" />
+                         <div class="min-w-0">
+                             <h3 class="font-bold text-white text-sm truncate">{{ user.name }}</h3>
+                             <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    
+                    <button
+                        @click="sendRequest(user.id)"
+                        class="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex-shrink-0"
+                    >
+                        <UserPlusIcon class="w-4 h-4" />
+                        <span>Añadir</span>
+                    </button>
+                </div>
+            </div>
+            <div v-else class="text-center py-8 text-gray-500">
+                <p>No se encontraron resultados para tu búsqueda.</p>
+            </div>
+        </section>
+        
+        <!-- Section: Mis Solicitudes (Enviadas) -->
+        <section v-if="currentTab === 'solicitudesEnvadas'" class="space-y-4">
+            <div v-if="myRequests.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div
+                    v-for="req in myRequests"
+                    :key="req.id"
+                    class="bg-gray-800 border border-gray-700 p-4 rounded-xl flex items-center justify-between"
+                >
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <img :src="req.avatar" class="w-10 h-10 rounded-full object-cover border border-gray-600 opacity-75" />
+                        <div class="min-w-0">
+                             <h3 class="font-bold text-gray-300 text-sm truncate">{{ req.name }}</h3>
+                             <p class="text-xs text-gray-500 truncate">{{ req.email }}</p>
+                        </div>
+                    </div>
+                    
+                    <span 
+                        class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide border"
+                        :class="{
+                            'bg-blue-900/50 text-blue-300 border-blue-800': req.status === 1,
+                            'bg-green-900/50 text-green-300 border-green-800': req.status === 2,
+                            'bg-red-900/50 text-red-300 border-red-800': req.status !== 1 && req.status !== 2
+                        }"
+                    >
+                         {{ req.status === 1 ? 'Enviada' : (req.status === 2 ? 'Aceptada' : 'Rechazada') }}
+                    </span>
+                 </div>
+            </div>
+             <div v-else class="text-center py-12 bg-gray-800/50 rounded-xl border border-dashed border-gray-700">
+                <PaperAirplaneIcon class="w-12 h-12 mx-auto text-gray-600 mb-3 transform rotate-[-45deg]" />
+                <p class="text-gray-400">No has enviado ninguna solicitud recientemente.</p>
+            </div>
+        </section>
+        
       </div>
     </div>
     
-    <div v-if="filteredFriends.length" >
-        <div
-        v-for="friend in filteredFriends"
-        :key="friend.id"
-        class="flex items-center justify-between bg-gray-800 p-2 rounded-lg m-3 hover:bg-gray-700 transition">          
-            <div class="flex items-center gap-3">
-              <div>
-
-                <img
-                :src="friend.avatar"
-                alt="X"
-                class="w-10 h-10 rounded-full border border-gray-600 cursor-pointer hover:scale-105 transition"
-                />
-              
-                <div v-if="friend.view_online">
-                  <p class="text-xs" :class="friend.online ? 'text-green-400' : 'text-gray-400'">
-                    {{ friend.online ? 'En línea' : 'Inactivo' }}
-                  </p>
-                </div>
-                <div v-else>
-                  <p class="text-xs text-gray-400 text-center">
-                    ---
-                  </p>
-                </div>
-              </div>
-              <div>
-                <p class="font-medium font-bold">{{ friend.email }}</p>
-                <span class="text-xs text-gray-300">
-                  {{ friend.name }}
-                </span>
-              </div>
-            </div>
-            <div class="flex gap-2">
-              <button
-                class="text-green-400 hover:text-green-500 text-sm"
-                @click="chatFriend(friend.id)"
-              >
-                <ChatBubbleLeftIcon class="h-6 w-6 text-green-700" />
-              </button>
-
-              <button
-                class="text-red-400 hover:text-red-500 text-sm"
-                @click="removeFriend(friend.id)"
-              >
-                <TrashIcon class="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p v-else class="text-gray-400">No se encontraron amigos</p>
-      </section>
-
-      <section v-if="currentTab === 'solicitudes'">
-        <h2 class="text-2xl font-semibold mb-4">Solicitudes de amistad</h2>
-        <div v-if="friendRequests.length" class="space-y-3">
-          <div
-            v-for="request in friendRequests"
-            :key="request.id"class="flex items-center justify-between bg-gray-800 p-3 rounded-lg m-3 hover:bg-gray-700 transition
-hover:bg-gray-700 transition">
-            <div class="flex items-center gap-3">
-              <img
-                :src="request.avatar"
-                alt="avatar"
-                class="w-10 h-10 rounded-full border border-gray-600"
-              />
-              <div>
-                <p class="font-medium">{{ request.name }}</p>
-                <span> correo: {{ request.email || 'No disponible' }} </span>
-              </div>
-            </div>
-
-            <div class="flex gap-2">
-              <button
-                @click="acceptRequest(request)"
-                class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-sm"
-              >
-                Aceptar
-              </button>
-              <button
-                @click="declineRequest(request.id)"
-                class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-sm"
-              >
-                Rechazar
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p v-else class="text-gray-400">No tienes solicitudes pendientes 💤</p>
-      </section>
-
-      <section v-if="currentTab === 'nuevos'">
-        <h2 class="text-2xl font-semibold mb-4">Nuevos amigos</h2>
-
-        <div class="mb-4">
-          <input
-            type="text"
-            v-model="searchQuery2"
-            placeholder="Buscar amigo..."
-            class="w-full p-2 rounded-md bg-gray-800 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div v-if="filteredFriends2.length" class="space-y-3">
-          <div
-            v-for="newFriends in filteredFriends2"
-            :key="newFriends.id"
-            class="flex items-center justify-between bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition"
-          >
-            <div class="flex items-center gap-3">
-              <!-- 🔹 Clic en la foto abre el modal -->
-              <img
-                :src="newFriends.avatar"
-                alt="avatar"
-                class="w-10 h-10 rounded-full border border-gray-600 cursor-pointer hover:scale-105 transition"
-              />
-              <div>
-                <p class="font-medium">{{ newFriends.name }}</p>
-                <span> {{ newFriends.email || 'No disponible' }} </span>
-              </div>
-            </div>
-
-            <div class="flex gap-2 text-center">
-              <button
-                class="text-blue-400 hover:text-blue-500 text-sm flex items-center justify-center gap-1"
-                @click="sendRequest(newFriends.id)"
-              >
-                <UserPlusIcon class="w-5 h-5" />
-                <span>Enviar solicitud</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p v-else class="text-gray-400">No se encontro</p>
-      </section>
-
-      <section v-if="currentTab === 'solicitudesEnvadas'">
-        <h2 class="text-2xl font-semibold mb-4">Mis solicitudes</h2>
-        <div v-if="myRequests.length" class="space-y-3">
-          <div
-            v-for="friend in myRequests"
-            :key="friend.id"
-            class="flex items-center justify-between bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition"
-          >
-            <div class="flex items-center gap-3">
-              <img
-                :src="friend.avatar"
-                alt="avatar"
-                class="w-10 h-10 rounded-full border border-gray-600 cursor-pointer hover:scale-105 transition"
-              />
-              <div>
-                <p class="font-medium">{{ friend.name }}</p>
-                <span> correo: {{ friend.email || 'No disponible' }} </span>
-              </div>
-            </div>
-
-            <div class="flex gap-2 text-center">
-              <button
-                class="text-blue-400 hover:text-blue-500 text-sm flex items-center justify-center gap-1"
-              >
-                <div class="flex items-center justify-center gap-2">
-                  <UserPlusIcon
-                    class="w-5 h-5"
-                    :class="{
-                      'text-blue-500': friend.status === 1, // Solicitud enviada
-                      'text-green-500': friend.status === 2, // Aceptada
-                      'text-red-500': friend.status !== 1 && friend.status !== 2, // Rechazada u otro estado
-                    }"
-                  />
-
-                  <p v-if="friend.status === 1" class="text-blue-500">S. Enviada</p>
-                  <p v-else-if="friend.status === 2" class="text-green-500">S. Aceptada</p>
-                  <p v-else class="text-red-500">Rechazada</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p v-else class="text-gray-400">No se encontro</p>
-      </section>
-    </main>
     <ToastNotification ref="toast" />
   </div>
 </template>
 
 <script>
-import { ChatBubbleLeftIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
+import { 
+  ChatBubbleLeftIcon, 
+  UserPlusIcon, 
+  TrashIcon, 
+  ClipboardDocumentCheckIcon, 
+  UsersIcon, 
+  InboxArrowDownIcon,
+  PaperAirplaneIcon,
+  CheckIcon,
+  XMarkIcon,
+  InboxIcon
+} from '@heroicons/vue/24/solid'
 import router from '@/router'
 import api from '@/services/api.js'
 import ToastNotification from '@/components/ToastNotification.vue'
@@ -246,6 +250,14 @@ export default {
   components: {
     UserPlusIcon,
     ChatBubbleLeftIcon,
+    TrashIcon,
+    ClipboardDocumentCheckIcon,
+    UsersIcon,
+    InboxArrowDownIcon,
+    PaperAirplaneIcon,
+    CheckIcon,
+    XMarkIcon,
+    InboxIcon,
     ToastNotification,
   },
 
@@ -253,10 +265,10 @@ export default {
     return {
       loading :true,
       tabs: [
-        { id: 'amigos', name: 'Amigos' },
-        { id: 'solicitudes', name: 'Solicitudes' },
-        { id: 'nuevos', name: 'Nuevos' },
-        { id: 'solicitudesEnvadas', name: 'Mis solicitudes' },
+        { id: 'amigos', name: 'Amigos', icon: 'UsersIcon' },
+        { id: 'solicitudes', name: 'Solicitudes', icon: 'InboxArrowDownIcon' },
+        { id: 'nuevos', name: 'Nuevos', icon: 'UserPlusIcon' },
+        { id: 'solicitudesEnvadas', name: 'Enviadas', icon: 'PaperAirplaneIcon' },
       ],
       currentTab: 'amigos',
       friends: [],
@@ -286,6 +298,15 @@ export default {
     this.allMyRequests()
   },
   methods: {
+    getTabTitle(id) {
+        const titles = {
+            'amigos': 'Mis Amigos',
+            'solicitudes': 'Solicitudes Recibidas',
+            'nuevos': 'Descubrir Personas',
+            'solicitudesEnvadas': 'Solicitudes Enviadas'
+        }
+        return titles[id] || 'Gestor de Amistades';
+    },
     async allMyRequests() {
       try {
         const response = await api.get('/myRequests')

@@ -594,7 +594,8 @@ export default {
       hostId: null,
       candidateBuffer: [],
 
-      tiempo: 0, // tiempo en segundos
+      startTime: null,
+      tiempo: 0,
       tiempoFormateado: '00:00',
       intervalo: null,
 
@@ -621,6 +622,8 @@ export default {
       pc: null,
       localStream: null,
       stream: null,
+      remoteStream: null,
+      candidateBuffer: [],
 
       micAct: false,
       camaraAct: false,
@@ -727,7 +730,31 @@ export default {
     this._handleSignalBound = this._handleSignal.bind(this)
     socket.removeAllListeners('signal')
     socket.on('signal', this._handleSignalBound)
-    this.initViewer()
+
+    socket.on('join-accepted', (data) => {
+      console.log("JOIN ACCEPTED (Direct)", data);
+      if (data) {
+        this.startTime = data.startTime;
+        this.hostId = data.hostId;
+        this.iniciarContador();
+      }
+      this.initViewer();
+    });
+
+    socket.on('stream-ended', () => {
+      alert('La transmisión ha finalizado');
+      setTimeout(() => this.confirmEndStream(), 2000);
+    });
+
+    // Si venimos de RoomWait, ya tenemos startTime en el query y hostId en params
+    if (this.$route.query.startTime) {
+      this.startTime = parseInt(this.$route.query.startTime);
+      this.iniciarContador();
+      this.initViewer();
+    } else {
+      // Si entramos directo, solicitamos unirse
+      socket.emit('request-join', { roomId: this.roomId, viewerData: this.userData });
+    }
   },
 
   beforeUnmount() {
@@ -739,30 +766,20 @@ export default {
   methods: {   
     initViewer() {
       if (this.pc) return
-      this.pc = new RTCPeerConnection({ iceServers: [/*
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-        { urls: 'stun:stun.ekiga.net' },
-        {
-          urls: 'turn:turnserver.20steps.com',
-          username: 'webrtc',
-          credential: 'webrtc'
-        },
-        {
-          urls: ['turn:numb.viagenie.ca'],
-          username: 'webrtc@example.com',
-          credential: 'webrtc'
-        }*/
-      ] })
+      this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
 
       this.pc.addTransceiver('video', { direction: 'recvonly' })
       this.pc.addTransceiver('audio', { direction: 'recvonly' })
 
       this.pc.ontrack = (event) => {
-        if (this.$refs.videoRef) {
-          this.$refs.videoRef.srcObject = event.streams[0] || new MediaStream([event.track])
+        if (!this.remoteStream) {
+          this.remoteStream = new MediaStream()
+          if (this.$refs.videoRef) {
+            this.$refs.videoRef.srcObject = this.remoteStream
+          }
         }
+        this.remoteStream.addTrack(event.track)
+        console.log('Track recibido en Viewer:', event.track.kind)
       }
 
       this.pc.onicecandidate = (e) => {
@@ -789,16 +806,27 @@ export default {
       if (data.type === 'offer') {
         console.log('Offer recibida. Generando Answer...')
         await this.pc.setRemoteDescription(new RTCSessionDescription(data))
+        
+        // Procesar candidatos acumulados
+        this.candidateBuffer.forEach(candidate => {
+          this.pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error(e));
+        });
+        this.candidateBuffer = [];
+
         const answer = await this.pc.createAnswer()
         await this.pc.setLocalDescription(new RTCSessionDescription(answer))
         console.log("ANSWER CREADO")
         socket.emit('signal', { targetId: from, data: answer })
       } else if (data.candidate) {
         // 3️⃣ Agregar candidatos ICE
-        try {
-          await this.pc.addIceCandidate(new RTCIceCandidate(data))
-        } catch (err) {
-          console.warn('Error agregando candidato ICE', err)
+        if (this.pc.remoteDescription) {
+          try {
+            await this.pc.addIceCandidate(new RTCIceCandidate(data))
+          } catch (err) {
+            console.warn('Error agregando candidato ICE', err)
+          }
+        } else {
+          this.candidateBuffer.push(data);
         }
       }
     },
@@ -962,22 +990,47 @@ export default {
       this.micAct = !this.micAct
       if (this.micAct) {
         try {
-          // Pedimos acceso al micrófono
-          this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          
+          // Enviar audio al host
+          const audioTrack = this.localStream.getAudioTracks()[0];
+          if (this.pc) {
+            const sender = this.pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+            if (sender) {
+              await sender.replaceTrack(audioTrack);
+            } else {
+              this.pc.addTrack(audioTrack, this.localStream);
+            }
+            // Cambiar dirección del transceiver si existe
+            const transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'audio' || t.sender.track?.kind === 'audio');
+            if (transceiver) {
+              transceiver.direction = 'sendrecv';
+            }
+          }
 
-          // Configuramos el analizador de audio
           this.audioContext = new (window.AudioContext || window.webkitAudioContext)()
-          this.audioSource = this.audioContext.createMediaStreamSource(this.audioStream)
+          this.audioSource = this.audioContext.createMediaStreamSource(this.localStream)
           this.audioAnalyser = this.audioContext.createAnalyser()
           this.audioAnalyser.fftSize = 256
           this.audioSource.connect(this.audioAnalyser)
-          // Iniciamos la visualización
           this.visualize()
         } catch (err) {
           console.error('Error al acceder al micrófono:', err)
-          this.micAct = false // Revertimos el estado si hay un error
+          this.micAct = false
         }
       } else {
+        if (this.localStream) {
+          this.localStream.getTracks().forEach(t => t.stop());
+        }
+        if (this.pc) {
+          const sender = this.pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+          if (sender) await sender.replaceTrack(null);
+          
+          const transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'audio' || t.sender.track?.kind === 'audio');
+          if (transceiver) {
+            transceiver.direction = 'recvonly';
+          }
+        }
         this.stopVisualization()
       }
     },
@@ -990,10 +1043,20 @@ export default {
       return `${min}:${sec}`
     },
 
+    iniciarContador() {
+      if (this.intervalo) clearInterval(this.intervalo);
+      this.intervalo = setInterval(() => {
+        const ahora = Date.now();
+        const diff = Math.floor((ahora - this.startTime) / 1000);
+        this.tiempo = diff > 0 ? diff : 0;
+        this.tiempoFormateado = this.formatTime(this.tiempo);
+      }, 1000);
+    },
+
     terminarReunion() {
-      clearInterval(intervalo)
-      tiempo.value = 0
-      tiempoFormateado.value = formatTime(tiempo.value)
+      if (this.intervalo) clearInterval(this.intervalo);
+      this.tiempo = 0;
+      this.tiempoFormateado = this.formatTime(this.tiempo);
     },
     async toggleCamara() {
       this.camaraAct = !this.camaraAct

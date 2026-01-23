@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen">
     <div class="w-30 bg-gray-900 flex flex-col items-center py-6 space-y-4 px-3">
-      <router-link :to="{ name: 'dashboard' }">
+      <router-link :to="{ name: 'dashboard' }" title="Inicio">
         <div class="bg-blue-600 w-20 h-16 rounded-2xl flex items-center justify-center">
           <img :src="Logo" alt="Logo" class="w-12 h-12 object-contain" />
         </div>
@@ -9,21 +9,21 @@
 
       <router-link
         :to="{ name: 'statistics' }"
+        title="Estadísticas"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
-          <HomeIcon class="w-6 h-6 text-blue-500" />
+          <ChartBarIcon class="w-6 h-6 text-blue-500" />
         </span>
       </router-link>
 
       <router-link
         :to="{ name: 'users' }"
+        title="Usuarios"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
@@ -33,17 +33,19 @@
 
       <router-link
         :to="{ name: 'application' }"
+        title="Solicitudes"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
-          <UserPlusIcon class="w-6 h-6 text-yellow-400" />
+          <ClipboardDocumentCheckIcon class="w-6 h-6 text-yellow-400" />
         </span>
       </router-link>
 
       <router-link
         :to="{ name: 'chats' }"
+        title="Chats"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
@@ -55,17 +57,19 @@
 
       <router-link
         :to="{ name: 'groups' }"
+        title="Grupos"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
       >
         <span class="text-xs">
-          <UsersIcon class="w-6 h-6 text-blue-400" />
+          <RectangleGroupIcon class="w-6 h-6 text-green-400" />
         </span>
       </router-link>
 
       <router-link
         :to="{ name: 'transmitions' }"
+        title="Transmisiones"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
@@ -77,6 +81,7 @@
 
       <router-link
         :to="{ name: 'settings' }"
+        title="Configuración"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
@@ -88,6 +93,7 @@
 
       <button
         @click="logout"
+        title="Cerrar sesión"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
         exact-active-class="bg-blue-500 text-white"
@@ -165,17 +171,45 @@
   </transition>
 
   <ToastNotification ref="toastRef" />
+  <ConfirmationComponent
+    :visible="showLogoutConfirm"
+    title="Cerrar sesión"
+    message="¿Estás seguro de que deseas cerrar sesión?"
+    @confirm="confirmLogout"
+    @cancel="showLogoutConfirm = false"
+  />
+
+  <!-- Componente global para recibir llamadas -->
+  <ReceivingCallComponent 
+    :visible="incomingCallModal"
+    :callerName="incomingCaller.name"
+    :callerAvatar="incomingCaller.avatar"
+    @accept="acceptIncomingCall"
+    @reject="rejectIncomingCall"
+  />
+
+  <!-- Mini Call Component (when call is minimized) -->
+  <MiniCallComponent
+    v-if="callStore.isInCall && callStore.isMinimized"
+    :contactName="callStore.callData.targetName"
+    :contactPhoto="callStore.callData.targetPhoto"
+    :duration="callStore.callData.callDuration"
+    :isMuted="!callStore.callData.isAudioEnabled"
+    @maximize="maximizeCall"
+    @endCall="endCallFromMini"
+    @toggleMute="toggleMuteFromMini"
+  />
 </template>
 
 <script setup>
 import {
   UserGroupIcon,
-  UsersIcon,
-  UserPlusIcon,
+  RectangleGroupIcon,
+  ClipboardDocumentCheckIcon,
   ChatBubbleLeftRightIcon,
   VideoCameraIcon,
   Cog6ToothIcon,
-  HomeIcon,
+  ChartBarIcon,
   ArrowRightOnRectangleIcon,
   EyeIcon,
   EyeSlashIcon,
@@ -183,6 +217,7 @@ import {
 import Logo from '@/assets/logo.png'
 import HomeComponent from '@/components/homeComponent.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
+import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
@@ -193,11 +228,112 @@ const confirmNewPassword = ref('')
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const toastRef = ref(null)
+const showLogoutConfirm = ref(false)
 import api from '@/services/api.js'
 
+// --- Signaling & Calls ---
+import ReceivingCallComponent from '@/components/calls/ReceivingCallComponent.vue'
+import MiniCallComponent from '@/components/calls/MiniCallComponent.vue'
+import socket from '@/services/socket.js'
+import { onMounted } from 'vue'
+import { callStore } from '@/stores/callStore.js'
+
+const incomingCallModal = ref(false)
+const incomingCaller = ref({ id: null, name: '', avatar: '', signal: null })
+
+onMounted(() => {
+  console.log(userData)
+  if (userData && userData.id) {
+    if (!socket.connected) {
+      socket.connect()
+    }
+    
+    socket.emit('join-video-room', userData.id)
+
+    socket.on('call-made', (data) => {
+      incomingCaller.value = {
+        id: data.from,
+        name: data.name,
+        avatar: data.avatar,
+        signal: data.signal
+      }
+      incomingCallModal.value = true
+    })
+
+    socket.on('call-ended', () => {
+       incomingCallModal.value = false
+    })
+  }
+})
+
+function acceptIncomingCall() {
+  incomingCallModal.value = false
+  // Navigate to call view with signal
+  router.push({
+    name: 'call',
+    params: { id: incomingCaller.value.id },
+    query: {
+      name: incomingCaller.value.name,
+      photo: incomingCaller.value.avatar,
+      incoming: 'true',
+      signal: btoa(JSON.stringify(incomingCaller.value.signal))
+    }
+  })
+}
+
+function rejectIncomingCall() {
+  socket.emit('reject-call', { to: incomingCaller.value.id })
+  incomingCallModal.value = false
+}
+
+function maximizeCall() {
+  callStore.maximizeCall()
+  // Navigate back to call view - the component will restore the existing call
+  router.push({
+    name: 'call',
+    params: { id: callStore.callData.targetId },
+    query: {
+      name: callStore.callData.targetName,
+      photo: callStore.callData.targetPhoto,
+      restore: 'true' // Flag to indicate we're restoring, not starting new
+    }
+  })
+}
+
+function endCallFromMini() {
+  if (socket) {
+    socket.emit('end-call', { to: callStore.callData.targetId })
+  }
+  callStore.endCall()
+}
+
+function toggleMuteFromMini() {
+  callStore.toggleAudio()
+  if (callStore.callData.localStream) {
+    callStore.callData.localStream.getAudioTracks().forEach(track => {
+      track.enabled = callStore.callData.isAudioEnabled
+    })
+  }
+}
+
 function logout() {
-  localStorage.removeItem('token')
-  router.push('/login')
+  showLogoutConfirm.value = true
+}
+
+async function confirmLogout() {
+  try {
+    await api.put('/logout');
+    socket.emit("online-offline");
+    await new Promise(resolve => setTimeout(resolve, 500));
+    if (socket) socket.disconnect();
+  } catch (e) {
+    console.error("Logout error:", e);
+  } finally {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    router.push('/login');
+    showLogoutConfirm.value = false;
+  }
 }
 
 async function firstLogin() {

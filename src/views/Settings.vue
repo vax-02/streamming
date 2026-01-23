@@ -1,41 +1,46 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white">
-    <aside class="w-[15%] bg-gray-800 flex flex-col space-y-4">
-      <h2 class="text-lg font-bold p-4 border-b border-gray-800">Opciones</h2>
-      <nav class="flex flex-col">
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col shadow-lg">
+      <div class="p-6 border-b border-gray-700">
+        <h2 class="text-xl font-bold tracking-wide flex items-center space-x-2">
+           <Cog6ToothIcon class="h-6 w-6 text-blue-500" />
+           <span>Opciones</span>
+        </h2>
+      </div>
+      
+      <nav class="flex-1 px-3 py-6 space-y-2">
         <router-link
           :to="{ name: 'profile' }"
-          class="flex items-center gap-2 text-left px-4 py-2 transition-all duration-200 border-l-4 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent"
-          active-class="bg-gray-700 text-white border-blue-500"
+          class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium border-l-4 border-transparent"
+          active-class="bg-gray-700 text-white border-blue-500 shadow-md"
           exact-active-class="bg-blue-500 text-white"
         >
-          <UserCircleIcon class="h-6 w-6" />
+          <UserCircleIcon class="h-5 w-5" />
           <span>Perfil</span>
         </router-link>
 
         <router-link
           :to="{ name: 'privacity' }"
-          class="flex items-center gap-2 text-left px-4 py-2 transition-all duration-200 border-l-4 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent"
-          active-class="bg-gray-700 text-white border-blue-500"
+          class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium border-l-4 border-transparent"
+          active-class="bg-gray-700 text-white border-blue-500 shadow-md"
           exact-active-class="bg-blue-500 text-white"
         >
-          <LockClosedIcon class="h-6 w-6" />
-          <span> Privacidad </span>
+          <LockClosedIcon class="h-5 w-5" />
+          <span>Privacidad</span>
         </router-link>
 
-   <router-link
+        <router-link
           :to="{ name: 'security' }"
-          class="flex items-center gap-2 text-left px-4 py-2 transition-all duration-200 border-l-4 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 border-transparent"
-          active-class="bg-gray-700 text-white border-blue-500"
+          class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium border-l-4 border-transparent"
+          active-class="bg-gray-700 text-white border-blue-500 shadow-md"
           exact-active-class="bg-blue-500 text-white"
         >
-          <ShieldCheckIcon class="h-6 w-6" />
-          <span> Seguridad </span>
+          <ShieldCheckIcon class="h-5 w-5" />
+          <span>Seguridad</span>
         </router-link>
-
       </nav>
     </aside>
-    <div class="flex-1 bg-gray-900 overflow-y-auto">
+    <div class="flex-1 bg-gray-900 overflow-y-auto flex flex-col min-w-0">
       <router-view />
       <div v-if="$route.name === 'settings'">
         <div
@@ -64,7 +69,7 @@
 
 <script setup>
 import Logo from '@/assets/logo.png'
-import { PlayCircleIcon,LockClosedIcon, ShieldCheckIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import { PlayCircleIcon,LockClosedIcon, ShieldCheckIcon, UserCircleIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import { UserIcon } from '@heroicons/vue/24/solid';
 </script>
 

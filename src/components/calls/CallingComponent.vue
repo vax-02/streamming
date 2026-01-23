@@ -13,7 +13,7 @@
         class="w-40 h-40 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg animate-fade-in"
       >
         <img
-          src="https://randomuser.me/api/portraits/women/44.jpg"
+          :src="contactPhoto || 'https://ui-avatars.com/api/?name=User&background=random'"
           alt="Contacto"
           class="w-full h-full object-cover"
         />
@@ -22,7 +22,7 @@
 
     <!-- NOMBRE -->
     <h2 class="mt-6 text-2xl font-semibold tracking-wide animate-fade-in">
-      Llamando a <span class="text-blue-400">María Gómez</span>
+      Llamando a <span class="text-blue-400">{{ contactName }}</span>
     </h2>
 
     <!-- TEXTO LLAMANDO... -->
@@ -32,21 +32,28 @@
     </p>
 
     <!-- BOTÓN COLGAR -->
-    <router-link
-    :to="{name : 'chats'}"
+    <button
+      @click="$emit('hangup')"
       class="mt-10 p-4 bg-red-600 hover:bg-red-700 rounded-full shadow-lg transition transform hover:scale-105 z-10"
     >
-      <PhoneXMarkIcon class="w-6 h-6 text-red-500" />
-    </router-link>
-    <span>Colgar llamada</span>
+      <PhoneXMarkIcon class="w-6 h-6 text-white" />
+    </button>
+    <span class="mt-2 text-sm text-gray-400">Colgar llamada</span>
   </div>
 </template>
 
 <script setup>
 import { PhoneXMarkIcon } from '@heroicons/vue/24/solid'
+
+defineProps({
+  contactName: String,
+  contactPhoto: String
+})
+
+defineEmits(['hangup'])
 </script>
 
-<style>
+<style scoped>
 /* --- Animaciones personalizadas --- */
 
 @keyframes fade-in {

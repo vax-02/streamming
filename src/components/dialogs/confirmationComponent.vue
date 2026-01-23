@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="visible"
-    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50"
+    class="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md z-[100]"
   >
     <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm text-center p-6 animate-fadeIn">
       <h3 class="text-2xl font-bold text-white mb-3">{{ title }}</h3>
@@ -12,7 +12,7 @@
           @click="$emit('confirm')"
           class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold transition"
         >
-          Sí, eliminar
+          Sí
         </button>
         <button
           @click="$emit('cancel')"

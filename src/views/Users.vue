@@ -14,7 +14,7 @@
         class="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded-lg font-semibold"
         @click="addUserModal = true"
       >
-        Nuevo Usuario
+        <PlusIcon class="h-5 w-5" />
       </button>
     </div>
 
@@ -110,16 +110,16 @@
 
   <div>
     <!-- Modal -->
-    <transition name="fade">
+    <transition name="modal">
       <form @submit.prevent="guardarUsuario">
         <div
           v-if="addUserModal"
-          class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+          class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4"
         >
           <div class="bg-gray-800 text-white rounded-xl shadow-lg w-full max-w-md">
             <!-- Header -->
             <div class="flex justify-between items-center border-b border-gray-700 px-6 py-4">
-              <h2 class="text-lg font-semibold">Agregar Nuevo Usuario</h2>
+              <h2 class="text-lg font-semibold">Agregar rio</h2>
               <button
                 @click="addUserModal = false"
                 class="text-gray-400 hover:text-white text-xl font-bold"
@@ -199,11 +199,11 @@
       </form>
     </transition>
 
-    <transition name="fade">
+    <transition name="modal">
       <form @submit.prevent="modificarUsuario">
         <div
           v-if="editUserModal"
-          class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+          class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4"
         >
           <div class="bg-gray-800 text-white rounded-xl shadow-lg w-full max-w-md">
             <!-- Header -->
@@ -288,13 +288,14 @@
 </template>
 
 <script>
-import { PencilIcon, TrashIcon, LockClosedIcon } from '@heroicons/vue/24/outline'
+import { PlusIcon, PencilIcon, TrashIcon, LockClosedIcon } from '@heroicons/vue/24/outline'
 import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
 import api from '@/services/api.js'
 
 export default {
   components: {
+    PlusIcon,
     ConfirmationComponent,
     PencilIcon,
     TrashIcon,
@@ -484,3 +485,23 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .bg-gray-800 {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-enter-from .bg-gray-800 {
+  transform: scale(0.9) translateY(20px);
+}
+</style>
