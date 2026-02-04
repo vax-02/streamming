@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-gray-900 text-white">
+  <div class="flex h-screen bg-gray-900 text-white overflow-hidden">
     <!-- Panel central: video principal y controles -->
 
     <div class="flex-1 flex flex-col justify-between p-4">
@@ -98,420 +98,53 @@
       </div>
     </div>
 
-    <!-- Panel derecho: chat -->
-    <aside
+    <!-- Cuadrícula de Participantes (Abajo del video principal) -->
+    <div v-if="participantes.length > 0" class="mt-4 pb-4 px-4 overflow-hidden">
+      <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+        <UserGroupIcon class="w-4 h-4 text-blue-400" />
+        Participantes Activos
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-x-auto custom-scrollbar max-h-60 p-1">
+        <div v-for="p in participantes" :key="p.socketId || p.idSocket" class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video">
+          <!-- Video del participante -->
+          <video
+            :id="'remote-video-' + (p.socketId || p.idSocket)"
+            autoplay
+            playsinline
+            class="w-full h-full object-cover bg-black"
+          ></video>
+          
+          <!-- Overlay con nombre y estado -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white text-left">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium truncate">{{ p.name || p.email }}</span>
+              
+              <!-- Indicador de Audio (Visual Simplificado) -->
+              <div class="flex items-end gap-0.5 h-3">
+                <div class="w-1 bg-blue-400 rounded-full h-1"></div>
+                <div class="w-1 bg-blue-400 rounded-full h-2"></div>
+                <div class="w-1 bg-blue-400 rounded-full h-1.5"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Avatar si no hay video -->
+          <div v-if="!p.hasVideo" class="absolute inset-0 flex items-center justify-center bg-gray-700">
+             <UserCircleIcon class="w-12 h-12 text-gray-500" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel derecho: chat (Componente extraído) -->
+    <ChatStreamComponent
       v-show="expandirBool"
-      class="w-[25%] bg-gray-800 p-4 flex flex-col space-y-2 border-l-2 border-black"
-    >
-      <h2 class="text-lg font-bold text-center">Chat en vivo</h2>
-      <div class="flex-1 overflow-y-auto bg-gray-700 p-2 rounded-lg space-y-1">
-        <div v-for="(msg, i) in chat" :key="msg.id || i" class="text-sm">
-          <!-- Mensaje simple -->
-          <template v-if="!msg.tipo">
-            <strong>{{ msg.usuario }}:</strong> {{ msg.mensaje }}
-          </template>
-
-          <!-- Encuesta (renderizada como texto simple) -->
-          <template v-else-if="msg.tipo === 'encuesta' && Array.isArray(msg.opciones)">
-            <div class="bg-gray-800 p-3 rounded-lg my-2">
-              <div class="font-semibold mb-3">
-                <ChartBarIcon class="w-5 h-5 inline-block mr-2 text-blue-400" />
-                {{ msg.pregunta }}
-              </div>
-              <div class="space-y-2">
-                <div v-for="(opcion, idx) in msg.opciones" :key="idx">
-                  <button
-                    @click="votePoll(msg.id, idx)"
-                    :class="[
-                      'w-full text-left p-2 rounded-md border transition-all flex items-center gap-3',
-                      msg.multiple
-                        ? (votedPolls[msg.id] || []).includes(idx)
-                          ? 'bg-blue-700 border-blue-500'
-                          : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
-                        : votedPolls[msg.id] === idx
-                          ? 'bg-blue-700 border-blue-500'
-                          : 'bg-gray-700 border-gray-600 hover:bg-gray-600',
-                      !msg.multiple && votedPolls[msg.id] !== undefined
-                        ? 'cursor-not-allowed'
-                        : 'cursor-pointer',
-                    ]"
-                    :disabled="!msg.multiple && votedPolls[msg.id] !== undefined"
-                  >
-                    <!-- Checkbox/Radio visual -->
-                    <div
-                      class="w-4 h-4 rounded-full border-2 flex-shrink-0"
-                      :class="[
-                        msg.multiple ? 'rounded-sm' : 'rounded-full',
-                        (
-                          msg.multiple
-                            ? (votedPolls[msg.id] || []).includes(idx)
-                            : votedPolls[msg.id] === idx
-                        )
-                          ? 'bg-blue-500 border-blue-400'
-                          : 'border-gray-500',
-                      ]"
-                    ></div>
-
-                    <div class="flex justify-between items-center">
-                      <span>{{ opcion }}</span>
-                      <span
-                        v-if="
-                          msg.multiple
-                            ? (votedPolls[msg.id] || []).includes(idx)
-                            : votedPolls[msg.id] === idx
-                        "
-                        class="text-green-400"
-                      >
-                        <CheckIcon class="w-4 h-4" />
-                      </span>
-                    </div>
-                  </button>
-                  <div v-if="votedPolls[msg.id] !== undefined" class="mt-1 flex items-center gap-2">
-                    <div class="w-full bg-gray-600 rounded-full h-1.5">
-                      <div
-                        class="bg-blue-500 h-1.5 rounded-full"
-                        :style="{
-                          width: `${(msg.votos[idx] / (msg.votos.reduce((a, b) => a + b, 0) || 1)) * 100}%`,
-                        }"
-                      ></div>
-                    </div>
-                    <span class="text-xs text-gray-400"
-                      >{{
-                        Math.round(
-                          (msg.votos[idx] / (msg.votos.reduce((a, b) => a + b, 0) || 1)) * 100,
-                        )
-                      }}%</span
-                    >
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <!-- Ejercicio -->
-          <template v-else-if="msg.tipo === 'ejercicio'">
-            <div class="bg-gray-800 rounded-lg my-2 overflow-hidden">
-              <div class="bg-gray-900/50 p-3 border-b border-gray-700">
-                <div class="font-semibold text-base">
-                  <PencilSquareIcon class="w-5 h-5 inline-block mr-2 text-yellow-400" />
-                  Ejercicio: {{ msg.title }}
-                </div>
-              </div>
-              <div class="p-3 space-y-3">
-                <!-- Renderizado dinámico de contenido -->
-                <div v-for="(block, blockIdx) in msg.content" :key="blockIdx">
-                  <div v-if="block.type === 'text'" class="bg-gray-700/50 p-3 rounded-md space-y-3">
-                    <p class="text-gray-200 whitespace-pre-wrap">{{ block.question }}</p>
-
-                    <!-- Lista de respuestas -->
-                    <div
-                      v-if="block.responses && block.responses.length > 0"
-                      class="border-t border-gray-600/50 pt-2 space-y-2"
-                    >
-                      <div v-for="(response, rIdx) in block.responses" :key="rIdx" class="text-xs">
-                        <strong class="text-blue-300">{{ response.user }}:</strong>
-                        <span class="text-gray-300">{{ response.text }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <img
-                    v-if="block.type === 'image'"
-                    :src="block.src"
-                    class="max-w-full rounded-md mt-2"
-                  />
-                </div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-      <div class="relative flex items-center space-x-2 mt-2">
-        <!-- Menú de opciones de chat -->
-        <div
-          v-if="showChatMenu"
-          class="absolute bottom-full mb-2 w-48 bg-gray-700 rounded-lg shadow-lg p-2 space-y-1 border border-black"
-        >
-          <button
-            @click="((showSurveyModal = true), (showChatMenu = false))"
-            class="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-md hover:bg-blue-600"
-          >
-            <ChartBarIcon class="w-5 h-5" />
-            <span>Crear Encuesta</span>
-          </button>
-        </div>
-
-        <!-- Botón para abrir el menú -->
-        <button
-          @click="showChatMenu = !showChatMenu"
-          class="text-gray-400 hover:text-blue-400 p-1 rounded-full"
-        >
-          <PlusCircleIcon class="w-6 h-6" />
-        </button>
-
-        <!-- Input de mensaje -->
-        <input
-          v-model="mensaje"
-          type="text"
-          placeholder="Escribe un mensaje..."
-          class="flex-1 bg-gray-600 rounded-lg px-2 py-1 outline-none text-white"
-          @focus="showChatMenu = false"
-        />
-        <button @click="enviarMensaje" class="bg-blue-600 px-3 py-1 rounded-lg text-sm">
-          Enviar
-        </button>
-      </div>
-    </aside>
-
-    <!-- Modal: Compartir -->
-    <div
-      v-if="showShareModal"
-      class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
-    >
-      <div
-        class="bg-gray-800 text-white rounded-xl w-full max-w-lg p-6 relative shadow-lg flex flex-col max-h-[90vh]"
-      >
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-semibold">Compartir transmisión</h2>
-          <button @click="showShareModal = false" class="text-gray-400 hover:text-white">✖</button>
-        </div>
-
-        <!-- Link de transmisión y botones de redes -->
-        <div class="mb-4">
-          <label class="block mb-2 text-sm font-medium">Enlace de la transmisión</label>
-          <div class="flex gap-2">
-            <input
-              type="text"
-              :value="streamLink"
-              readonly
-              class="flex-1 px-3 py-2 rounded-lg bg-gray-700 text-white cursor-not-allowed"
-            />
-            <button @click="copyLink" class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500">
-              Copiar
-            </button>
-          </div>
-        </div>
-
-        <div class="flex justify-center mb-4">
-          <button
-            @click="shareOnWhatsApp"
-            class="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path
-                d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.487 5.235 3.487 8.413.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.731 6.086l.001.004 1.559 2.563-1.56 1.559-3.808 1.001 1.002-3.807z"
-              />
-            </svg>
-            WhatsApp
-          </button>
-        </div>
-
-        <div class="border-t border-gray-700 pt-4 flex-1 flex flex-col min-h-0">
-          <h3 class="text-md font-semibold mb-2">Compartir en la aplicación</h3>
-
-          <!-- Pestañas -->
-          <div class="flex border-b border-gray-700 mb-2">
-            <button
-              @click="shareTab = 'friends'"
-              :class="[
-                'px-4 py-2 text-sm',
-                shareTab === 'friends' ? 'border-b-2 border-blue-500 text-white' : 'text-gray-400',
-              ]"
-            >
-              Amigos
-            </button>
-            <button
-              @click="shareTab = 'groups'"
-              :class="[
-                'px-4 py-2 text-sm',
-                shareTab === 'groups' ? 'border-b-2 border-blue-500 text-white' : 'text-gray-400',
-              ]"
-            >
-              Grupos
-            </button>
-          </div>
-
-          <!-- Contenido de Pestañas -->
-          <div class="flex-1 flex flex-col min-h-0">
-            <!-- Input búsqueda -->
-            <div class="mb-2">
-              <input
-                type="text"
-                :placeholder="`Buscar ${shareTab === 'friends' ? 'amigo' : 'grupo'}...`"
-                v-model="shareSearch"
-                class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <!-- Lista de amigos/grupos filtrados -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-              <div v-if="shareTab === 'friends'">
-                <div
-                  v-for="item in filteredFriends"
-                  :key="item.id"
-                  class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-700 cursor-pointer"
-                  @click="toggleShareTarget(item)"
-                >
-                  <div class="flex items-center gap-3">
-                    <img :src="item.avatar" class="w-8 h-8 rounded-full object-cover" />
-                    <span>{{ item.name }}</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    :checked="selectedShareTargets.some((t) => t.id === item.id)"
-                    class="pointer-events-none rounded"
-                  />
-                </div>
-                <div
-                  v-if="filteredFriends.length === 0"
-                  class="text-gray-400 text-sm text-center py-4"
-                >
-                  No se encontraron amigos
-                </div>
-              </div>
-
-              <div v-if="shareTab === 'groups'">
-                <div
-                  v-for="item in filteredGroups"
-                  :key="item.id"
-                  class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-700 cursor-pointer"
-                  @click="toggleShareTarget(item)"
-                >
-                  <div class="flex items-center gap-3">
-                    <img :src="item.foto" class="w-8 h-8 rounded-full object-cover" />
-                    <span>{{ item.nombre }}</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    :checked="selectedShareTargets.some((t) => t.id === item.id)"
-                    class="pointer-events-none rounded"
-                  />
-                </div>
-                <div
-                  v-if="filteredGroups.length === 0"
-                  class="text-gray-400 text-sm text-center py-4"
-                >
-                  No se encontraron grupos
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Botones -->
-        <div class="flex justify-end space-x-2 mt-4 pt-4 border-t border-gray-700">
-          <button
-            @click="showShareModal = false"
-            class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500"
-          >
-            Cancelar
-          </button>
-          <button
-            @click="sendToSelected"
-            :disabled="selectedShareTargets.length === 0"
-            class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50"
-          >
-            Enviar
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal: Crear Encuesta -->
-    <div
-      v-if="showSurveyModal"
-      class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4"
-    >
-      <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-md space-y-4 relative shadow-lg">
-        <h3 class="text-xl font-bold text-center">Crear Encuesta</h3>
-
-        <!-- Cerrar modal -->
-        <button
-          @click="showSurveyModal = false"
-          class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold"
-        >
-          ✖
-        </button>
-
-        <!-- Formulario de encuesta -->
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm text-gray-300 mb-1">Pregunta</label>
-            <input
-              ref="surveyQuestionInput"
-              v-model="surveyQuestion"
-              type="text"
-              placeholder="Haz una pregunta..."
-              class="w-full px-3 py-2 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p v-if="surveyError" class="text-red-400 text-xs mt-1">{{ surveyError }}</p>
-          </div>
-
-          <div>
-            <label class="block text-sm text-gray-300 mb-1">Opciones</label>
-            <div
-              v-for="(opcion, index) in surveyOptions"
-              :key="index"
-              class="flex items-center space-x-2 mb-2"
-            >
-              <input
-                v-model="surveyOptions[index]"
-                type="text"
-                :placeholder="'Opción ' + (index + 1)"
-                class="flex-1 px-3 py-2 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                v-if="surveyOptions.length > 2"
-                @click="removeSurveyOption(index)"
-                class="text-gray-400 hover:text-red-400"
-              >
-                <XMarkIcon class="w-5 h-5" />
-              </button>
-            </div>
-            <button
-              @click="addSurveyOption"
-              class="mt-2 text-sm text-blue-400 hover:text-blue-300 font-semibold"
-            >
-              + Añadir opción
-            </button>
-          </div>
-        </div>
-
-        <!-- Selección Múltiple -->
-        <div class="flex items-center space-x-2 pt-2">
-          <input
-            type="checkbox"
-            v-model="surveyMultipleChoice"
-            id="multiple-choice-checkbox"
-            class="w-4 h-4 rounded text-blue-500 focus:ring-blue-500 bg-gray-700 border-gray-600"
-          />
-          <label for="multiple-choice-checkbox" class="text-sm text-gray-300"
-            >Permitir selección múltiple</label
-          >
-        </div>
-
-        <!-- Botones de acción -->
-        <div class="flex justify-end space-x-2 pt-2">
-          <button
-            @click="showSurveyModal = false"
-            class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg"
-          >
-            Cancelar
-          </button>
-          <button
-            @click="submitSurvey"
-            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold"
-          >
-            Enviar
-          </button>
-        </div>
-      </div>
-    </div>
+      :room-id="roomId"
+      :user-data="userData"
+      :is-host="false"
+      :is-expanded="expandirBool"
+      class="w-[25%]"
+    />
 
     <!-- Modal de confirmación para finalizar stream -->
     <div
@@ -563,10 +196,12 @@ import {
 import router from '@/router'
 import socket from '@/services/socket.js'
 import api from '@/services/api.js'
+import ChatStreamComponent from '@/components/ChatStreamComponent.vue'
 
 export default {
   name: 'LiveView',
   components: {
+    ChatStreamComponent,
     UserCircleIcon,
     EllipsisHorizontalIcon,
     MicrophoneIcon,
@@ -608,10 +243,6 @@ export default {
 
       salaEspera: [],
       participantes: [],
-      chat: [],
-      mensaje: '',
-
-      showChatMenu: false,
       expandirBool: true,
       showOptionsMenu: false,
       showEndStreamConfirm: false,
@@ -635,12 +266,10 @@ export default {
         { deviceId: 'mic1', label: 'Micrófono 1' },
         { deviceId: 'mic2', label: 'Micrófono 2' },
       ],
-
       speakerList: [
         { deviceId: 'spk1', label: 'Altavoz 1' },
         { deviceId: 'spk2', label: 'Altavoz 2' },
       ],
-
       camList: [
         { deviceId: 'cam1', label: 'Cámara 1' },
         { deviceId: 'cam2', label: 'Cámara 2' },
@@ -652,80 +281,16 @@ export default {
       cameraResolution: 'medium',
       micVolume: 80,
       speakerVolume: 80,
-
-      showSurveyModal: false,
-      surveyQuestion: '',
-      surveyOptions: ['', ''],
-      surveyMultipleChoice: false,
-      surveyError: '',
-
       fileInput: null,
-
-      nextMessageId: 1,
-      votedPolls: {},
-      showResponse: {},
-      responseText: {},
-
-      showShareModal: false,
-      streamLink: 'https://edustream.app/live/xyz-123',
-      shareTab: 'friends',
-      shareSearch: '',
-      selectedShareTargets: [],
-
-      friendsList: [
-        {
-          id: 'friend-1',
-          name: 'Laura García',
-          tipo: 'friend',
-          avatar: 'https://i.pravatar.cc/100?img=6',
-        },
-        {
-          id: 'friend-2',
-          name: 'José Martínez',
-          tipo: 'friend',
-          avatar: 'https://i.pravatar.cc/100?img=15',
-        },
-      ],
-
-      groupsList: [
-        {
-          id: 'group-1',
-          nombre: 'LIN - 3',
-          tipo: 'group',
-          foto: 'https://ui-avatars.com/api/?name=LIN',
-        },
-        {
-          id: 'group-2',
-          nombre: 'WEB - 1',
-          tipo: 'group',
-          foto: 'https://ui-avatars.com/api/?name=WEB',
-        },
-      ],
 
       menuAbierto: null,
       roomId: this.$route.params.id,
       hostId: this.$route.params.idH,
 
       viewerId: this.$route.params.idV,
+      analyzers: {},
     }
   },
-
-  computed: {
-    filteredFriends() {
-      if (!this.shareSearch) return this.friendsList
-      return this.friendsList.filter((f) =>
-        f.name.toLowerCase().includes(this.shareSearch.toLowerCase()),
-      )
-    },
-
-    filteredGroups() {
-      if (!this.shareSearch) return this.groupsList
-      return this.groupsList.filter((g) =>
-        g.nombre.toLowerCase().includes(this.shareSearch.toLowerCase()),
-      )
-    },
-  },
-
   mounted() {
     this._handleSignalBound = this._handleSignal.bind(this)
     socket.removeAllListeners('signal')
@@ -739,6 +304,12 @@ export default {
         this.iniciarContador();
       }
       this.initViewer();
+    });
+
+    socket.on('meeting-time', ({ startTime }) => {
+      console.log("Sincronización de tiempo recibida:", startTime);
+      this.startTime = startTime;
+      this.iniciarContador();
     });
 
     socket.on('stream-ended', () => {
@@ -755,6 +326,9 @@ export default {
       // Si entramos directo, solicitamos unirse
       socket.emit('request-join', { roomId: this.roomId, viewerData: this.userData });
     }
+
+    // Siempre solicitar el tiempo actual para asegurar sincronización
+    socket.emit('get-meeting-time', { roomId: this.roomId });
   },
 
   beforeUnmount() {
@@ -772,13 +346,27 @@ export default {
       this.pc.addTransceiver('audio', { direction: 'recvonly' })
 
       this.pc.ontrack = (event) => {
-        if (!this.remoteStream) {
-          this.remoteStream = new MediaStream()
-          if (this.$refs.videoRef) {
-            this.$refs.videoRef.srcObject = this.remoteStream
+        // Si el track viene del host (principal)
+        if (!event.streams[0] || event.streams[0].id === 'host-stream' || !this.participantes.some(p => p.socketId === event.streams[0]?.id)) {
+          if (!this.remoteStream) {
+            this.remoteStream = new MediaStream()
+            if (this.$refs.videoRef) {
+              this.$refs.videoRef.srcObject = this.remoteStream
+            }
+          }
+          this.remoteStream.addTrack(event.track)
+        } else {
+          // Track de otro participante (Cuadrícula)
+          const participantSocketId = event.streams[0].id;
+          if (event.track.kind === 'audio') {
+            this.setupParticipantAnalyzer(participantSocketId, event.track);
+          } else if (event.track.kind === 'video') {
+            const remoteVideo = document.getElementById(`remote-video-${participantSocketId}`);
+            if (remoteVideo) remoteVideo.srcObject = new MediaStream([event.track]);
+            const p = this.participantes.find(part => part.socketId === participantSocketId);
+            if (p) p.hasVideo = true;
           }
         }
-        this.remoteStream.addTrack(event.track)
         console.log('Track recibido en Viewer:', event.track.kind)
       }
 
@@ -833,126 +421,6 @@ export default {
     handleEndStream() {
       this.showOptionsMenu = false
       this.showEndStreamConfirm = true
-    },
-    async confirmEndStream() {
-      router.push({ name: 'transmitions' })
-    },
-    addSurveyOption() {
-      this.surveyOptions.push('')
-    },
-    removeSurveyOption(index) {
-      if (this.surveyOptions.length > 2) this.surveyOptions.splice(index, 1)
-    },
-
-    submitSurvey() {
-      // Build structured encuesta so the chat renderer + votePoll can handle voting
-      const q = (this.surveyQuestion || '').toString().trim()
-      if (!q) {
-        this.surveyError = 'Introduce la pregunta de la encuesta'
-        return
-      }
-
-      try {
-        console.log('[submitSurvey] start', { pregunta: q, rawOptions: this.surveyOptions })
-        const optsRaw = Array.isArray(this.surveyOptions) ? this.surveyOptions : ['', '']
-        const opts = optsRaw
-          .map((o) => (o && o.toString().trim() ? o.toString().trim() : null))
-          .filter(Boolean)
-        while (opts.length < 2) opts.push('[vacía]')
-        console.log('[submitSurvey] parsed options', opts)
-
-        const id = this.nextMessageId++
-        const encuesta = {
-          id,
-          tipo: 'encuesta',
-          usuario: 'Docente',
-          pregunta: q,
-          opciones: opts,
-          votos: opts.map(() => 0),
-          multiple: this.surveyMultipleChoice,
-        }
-
-        // close modal first to avoid any UI blocking
-        this.showSurveyModal = false
-        console.log('[submitSurvey] pushing encuesta', encuesta)
-        this.chat.push(encuesta)
-        console.log('[submitSurvey] pushed')
-
-        // limpiar
-        this.surveyQuestion = ''
-        this.surveyOptions = ['', '']
-        this.surveyMultipleChoice = false
-      } catch (err) {
-        console.error('submitSurvey error:', err)
-        try {
-          this.chat.push({ usuario: 'Sistema', mensaje: 'No se pudo enviar la encuesta.' })
-        } catch {}
-        this.surveyError = 'Error al enviar la encuesta'
-      }
-    },
-
-    votePoll(id, idx) {
-      const m = chat.value.find((c) => c.id === id)
-      if (!m || m.tipo !== 'encuesta') return
-      // multiple selection
-      if (m.multiple) {
-        const existing = Array.isArray(votedPolls.value[id]) ? votedPolls.value[id].slice() : []
-        const selected = existing
-        if (selected.includes(idx)) {
-          // unselect
-          const next = selected.filter((s) => s !== idx)
-          votedPolls.value = { ...votedPolls.value, [id]: next }
-          m.votos[idx] = Math.max(0, (m.votos[idx] || 1) - 1)
-        } else {
-          const next = selected.concat(idx)
-          votedPolls.value = { ...votedPolls.value, [id]: next }
-          m.votos[idx] = (m.votos[idx] || 0) + 1
-        }
-      } else {
-        // single selection: ignore if already voted (check !== undefined to allow index 0)
-        if (votedPolls.value[id] !== undefined) return
-        m.votos[idx] = (m.votos[idx] || 0) + 1
-        votedPolls.value = { ...votedPolls.value, [id]: idx }
-      }
-      // force update so template reflects new vote counts immediately
-      chat.value = [...chat.value]
-    },
-
-    openShareModal() {
-      this.showOptionsMenu = false
-      this.showShareModal = true
-      // Resetear estado del modal de compartir
-      this.shareSearch = ''
-      this.selectedShareTargets = []
-      this.shareTab = 'friends'
-    },
-
-    toggleShareTarget(target) {
-      const index = selectedShareTargets.value.findIndex((t) => t.id === target.id)
-      if (index > -1) {
-        selectedShareTargets.value.splice(index, 1)
-      } else {
-        selectedShareTargets.value.push(target)
-      }
-    },
-
-    copyLink() {
-      navigator.clipboard.writeText(streamLink.value).then(() => {
-        alert('Enlace copiado al portapapeles')
-      })
-    },
-
-    shareOnWhatsApp() {
-      const message = `¡Únete a mi transmisión en vivo! ${streamLink.value}`
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`
-      window.open(whatsappUrl, '_blank')
-    },
-
-    sendToSelected() {
-      if (selectedShareTargets.value.length === 0) return
-      const targetNames = selectedShareTargets.value.map((t) => t.name || t.nombre).join(', ')
-      alert(`Enlace enviado a: ${targetNames}`)
-      showShareModal.value = false
     },
 
     visualize() {
@@ -1044,6 +512,7 @@ export default {
     },
 
     iniciarContador() {
+      if (!this.startTime) return;
       if (this.intervalo) clearInterval(this.intervalo);
       this.intervalo = setInterval(() => {
         const ahora = Date.now();
@@ -1081,10 +550,8 @@ export default {
       }
     },
 
-    enviarMensaje() {
-      if (!this.mensaje) return
-      this.chat.push({ usuario: 'Docente', mensaje: this.mensaje })
-      this.mensaje = ''
+    async confirmEndStream() {
+      router.push({ name: 'transmitions' })
     },
     async admitir(user) {
       try {
@@ -1111,6 +578,24 @@ export default {
     expulsar(p) {
       this.participantes = this.participantes.filter((part) => part.nombre !== p.nombre)
       this.menuAbierto = null
+    },
+    formatTime(segundos) {
+      const min = Math.floor(segundos / 60)
+        .toString()
+        .padStart(2, '0')
+      const seg = (segundos % 60).toString().padStart(2, '0')
+      return `${min}:${seg}`
+    },
+
+    setupParticipantAnalyzer(socketId, track) {
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const source = this.audioContext.createMediaStreamSource(new MediaStream([track]));
+      const analyzer = this.audioContext.createAnalyser();
+      analyzer.fftSize = 32;
+      source.connect(analyzer);
+      this.analyzers[socketId] = analyzer;
     },
   },
 }

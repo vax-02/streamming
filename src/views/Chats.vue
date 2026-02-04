@@ -285,10 +285,6 @@
                  </div>
             </div>
             
-             <button class="w-full py-3 rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white font-semibold transition-colors flex items-center justify-center space-x-2">
-                 <NoSymbolIcon class="w-5 h-5" />
-                 <span>Bloquear Contacto</span>
-             </button>
         </div>
       </div>
     </transition>

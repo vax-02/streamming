@@ -37,8 +37,11 @@
            </div>
           
           <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-baseline">
-                <span class="font-semibold text-sm truncate">{{ group.nombre }}</span>
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <span class="font-semibold text-sm truncate">{{ group.nombre }}</span>
+                  
+                </div>
             </div>
             <p class="text-xs text-gray-400 truncate group-hover:text-gray-300 transition-colors">{{ group.mensaje }}</p>
           </div>
@@ -144,20 +147,16 @@
              class="flex items-center space-x-2 bg-gray-900 p-1.5 rounded-xl border border-gray-600 focus-within:border-blue-500 transition-colors"
              :class="{'opacity-50 cursor-not-allowed': grupoSeleccionado.status == 1 && !isAdmin}"
            >
-               <button class="p-2 text-gray-400 hover:text-white rounded-lg transition" :disabled="grupoSeleccionado.status == 1 && !isAdmin">
-                   <PaperClipIcon class="w-5 h-5" />
-               </button>
-               
               <input
                 v-model="nuevoMensaje"
                 type="text"
-                :placeholder="grupoSeleccionado.status == 1 && !isAdmin ? 'Mensajería restringida' : 'Escribe un mensaje al grupo...'"
+                :placeholder="grupoSeleccionado.status == 1 && !isAdmin ? 'Solo administradores pueden enviar mensajes' : 'Escribe un mensaje al grupo...'"
                 class="flex-1 bg-transparent text-white px-2 py-1 outline-none placeholder-gray-500 text-sm"
                 :disabled="grupoSeleccionado.status == 1 && !isAdmin"
                 @keyup.enter="sendMessage(grupoSeleccionado.id)"
               />
               
-              <button 
+              <button disabled="grupoSeleccionado.status == 1 && !isAdmin"
                 @click="sendMessage(grupoSeleccionado.id)" 
                 class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-md transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="!nuevoMensaje.trim() || (grupoSeleccionado.status == 1 && !isAdmin)"
@@ -234,6 +233,10 @@
 
         <!-- === LISTA DE PARTICIPANTES === -->
         <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Participantes ({{ grupoSeleccionado.participantes.length }})</h3>
+        <div v-if="grupoSeleccionado.status == 1" class="mb-3 px-4 py-2 bg-blue-900/20 border border-blue-500/20 rounded-xl flex items-center gap-3">
+             <ShieldCheckIcon class="w-5 h-5 text-blue-400" />
+             <p class="text-xs text-blue-300 font-medium italic">Solo los administradores pueden enviar mensajes en este grupo.</p>
+           </div>
         <div class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
           <div
             v-for="p in grupoSeleccionado.participantes"
@@ -820,6 +823,7 @@ export default {
         const response = await api.get('/groups')
         const temp = response.data.data
 
+        console.log(temp);
         // Verificar si hay grupos sin admin y corregirlo en BD y localmente
         temp.forEach((u) => {
           if (u.participants && u.participants.length > 0) {

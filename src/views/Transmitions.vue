@@ -83,7 +83,7 @@
 
               <div class="flex items-center space-x-2 w-full md:w-auto mt-2 md:mt-0">
                 <button
-                  @click="toLive(trans.id, trans.id_user)"
+                  @click="toLive(trans.id)"
                   class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                   title="Iniciar Live"
                 >
@@ -186,7 +186,7 @@
 
                <div class="flex items-center space-x-2 w-full md:w-auto mt-2 md:mt-0">
                  <button
-                  @click="requestLive(trans.id, trans.user_id)"
+                  @click="requestLive(trans.id)"
                   class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                 >
                   <EyeIcon class="w-4 h-4" />
@@ -372,78 +372,17 @@
               <XMarkIcon class="w-6 h-6" />
            </button>
 
-           <!-- Video Section -->
+           <!-- Video Section (Premium Player) -->
            <div class="flex-1 bg-black flex flex-col justify-center relative">
-              <div class="aspect-video w-full bg-black">
-                 <!-- Use simple video tag as per requester's previous component, or integrate standard player logic here -->
-                 <video 
-                    v-if="activeVideo.url"
-                    :src="activeVideo.url" 
-                    controls 
-                    autoplay 
-                    class="w-full h-full object-contain"
-                 >
-                    Tu navegador no soporta el elemento de video.
-                 </video>
-                 <div v-else class="w-full h-full flex items-center justify-center text-gray-500">
-                    <p>Video no disponible (Demo)</p>
-                 </div>
-              </div>
-              <div class="p-6">
-                <h2 class="text-2xl font-bold text-white mb-2">{{ activeVideo.title }}</h2>
-                <div class="flex items-center text-gray-400 text-sm">
-                   <CalendarIcon class="w-4 h-4 mr-2" />
-                   <span>{{ activeVideo.date }}</span>
-                </div>
-              </div>
+              <PremiumPlayer 
+                v-if="activeVideo"
+                :src="activeVideo.url"
+                :title="activeVideo.title"
+                :date="activeVideo.date"
+                @close="closeVideo"
+              />
            </div>
 
-           <!-- Comments Section (Side Panel) -->
-           <div class="w-full md:w-96 bg-gray-800 border-l border-gray-700 flex flex-col h-[500px] md:h-auto">
-              <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                 <h3 class="font-bold text-white">Comentarios</h3>
-                 <button @click="closeVideo" class="text-gray-400 hover:text-white hidden md:block">
-                    <XMarkIcon class="w-6 h-6" />
-                 </button>
-              </div>
-              
-              <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                 <div v-for="comment in activeVideoComments" :key="comment.id" class="flex space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white uppercase flex-shrink-0">
-                       {{ comment.user.charAt(0) }}
-                    </div>
-                    <div>
-                       <div class="bg-gray-700/50 p-3 rounded-lg rounded-tl-none">
-                          <p class="text-sm font-bold text-blue-400 mb-0.5">{{ comment.user }}</p>
-                          <p class="text-sm text-gray-200">{{ comment.text }}</p>
-                       </div>
-                       <span class="text-xs text-gray-500 mt-1 ml-1">Hace un momento</span>
-                    </div>
-                 </div>
-                 <div v-if="activeVideoComments.length === 0" class="text-center text-gray-500 py-10">
-                    <p>Sé el primero en comentar.</p>
-                 </div>
-              </div>
-
-              <div class="p-4 border-t border-gray-700 bg-gray-800">
-                 <div class="flex space-x-2">
-                    <input 
-                       v-model="newComment" 
-                       @keyup.enter="addComment"
-                       type="text" 
-                       placeholder="Escribir comentario..." 
-                       class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:ring-1 focus:ring-blue-500 outline-none"
-                    />
-                    <button 
-                       @click="addComment"
-                       :disabled="!newComment.trim()"
-                       class="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                       <PaperAirplaneIcon class="w-5 h-5 transform rotate-0" />
-                    </button>
-                 </div>
-              </div>
-           </div>
         </div>
       </div>
     </div>
@@ -486,12 +425,14 @@ import ToastNotification from '@/components/ToastNotification.vue'
 import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
 import api from '@/services/api.js'
 import router from '@/router'
+import PremiumPlayer from '@/components/video/PremiumPlayer.vue'
 
 export default {
   components: {
     VideoPlayer,
     ToastNotification,
     ConfirmationComponent,
+    PremiumPlayer,
     // Icons
     VideoCameraIcon, CalendarIcon, ClockIcon, ShareIcon, PencilIcon, TrashIcon, PlayIcon, PlusIcon, ChevronRightIcon, ChevronDownIcon, XMarkIcon, VideoCameraSlashIcon, FilmIcon, GlobeAltIcon, EyeIcon, ClipboardDocumentIcon, CheckIcon, PaperAirplaneIcon
   },
@@ -517,28 +458,7 @@ export default {
         categoria: '',
         fechaHora: '',
       },
-      pastStreams: [
-         // Demo data matching logic
-        {
-          id: 1,
-          title: 'Clase de Matemáticas - Álgebra',
-          url: '/videos/matematicas-algebra.mp4',
-          date: '10 de Noviembre, 2025',
-          thumbnail: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=600',
-          comments: [
-              { id: 1, user: 'Ana', text: 'Muy buena explicación, gracias profe!' },
-              { id: 2, user: 'Carlos', text: '¿Cuándo es el próximo examen?' }
-          ]
-        },
-        {
-          id: 2,
-          title: 'Seminario de Física Cuántica',
-          url: '/videos/fisica.mp4',
-          date: '12 de Noviembre, 2025',
-          thumbnail: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&q=80&w=600',
-          comments: []
-        },
-      ],
+      pastStreams: [],
       grupos: [],
       selectedGrupos: [],
       search: '',
@@ -549,8 +469,6 @@ export default {
       
       // Video Player Logic
       activeVideo: null,
-      activeVideoComments: [],
-      newComment: ''
     }
   },
   computed: {
@@ -561,6 +479,7 @@ export default {
   mounted() {
     this.loadTransmissions()
     this.loadPublicTransmissions()
+    this.loadPastTransmissions()
     this.loadGroups()
   },
   methods: {
@@ -572,12 +491,11 @@ export default {
         }
         return icons[id] || 'CalendarIcon';
     },
-    toLive(id, ownerId) {
-      localStorage.setItem('live_owner', ownerId)
+    toLive(id) {
       localStorage.setItem('live_id', id)
       router.push(`/liveHost/${id}`)
     },
-    requestLive(id, ownerId) {
+    requestLive(id) {
       router.push({
         name: 'request-live',
         params: { id: id },
@@ -618,6 +536,39 @@ export default {
         }))
       } catch (error) {
         console.error('Error al cargar transmisiones públicas:', error)
+      }
+    },
+    async loadPastTransmissions() {
+      try {
+        const response = await api.get('/pastTransmissions')
+        const temp = response.data.data || []
+        this.pastStreams = [
+          ...temp.map((u) => ({
+            id: u.id,
+            user_id: u.id_user,
+            title: u.name,
+            descripcion: u.description,
+            categoria: u.type == 0 ? 'Privado' : 'Publico',
+            date: u.date_t + ' ' + u.time_t,
+            status: u.status,
+            url: u.link,
+            thumbnail: '' 
+          })),
+          // Video de prueba solicitado por el usuario
+          {
+            id: 'test-99',
+            user_id: 1,
+            title: '🎥 Video de Prueba Premium',
+            descripcion: 'Esta es una transmisión de prueba para verificar el reproductor.',
+            categoria: 'Publico',
+            date: '24 de Enero, 2026',
+            status: 2,
+            url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=600'
+          }
+        ]
+      } catch (error) {
+        console.error('Error al cargar transmisiones pasadas:', error)
       }
     },
     async guardarTransmision() {
@@ -804,30 +755,13 @@ export default {
     // Video Player Logic
     playVideo(video) {
       this.activeVideo = video
-      this.activeVideoComments = video.comments || []
-      this.newComment = ''
+      
     },
     closeVideo() {
         this.activeVideo = null
-        this.activeVideoComments = []
+        
     },
-    addComment() {
-        if (!this.newComment.trim()) return
-        
-        const comment = {
-            id: Date.now(),
-            user: this.userData.name || 'Usuario',
-            text: this.newComment
-        }
-        
-        this.activeVideoComments.push(comment)
-        // Optionally update the original video object's comments
-        if(this.activeVideo && this.activeVideo.comments) {
-            this.activeVideo.comments.push(comment)
-        }
-        
-        this.newComment = ''
-    },
+   
     
     addToast(message, type) {
       this.$refs.toastRef.addToast(message, type)

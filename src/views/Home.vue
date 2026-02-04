@@ -134,13 +134,9 @@
     <footer class="bg-slate-950 py-12 border-t border-white/5">
       <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between opacity-60 hover:opacity-100 transition-opacity">
         <p class="text-sm text-slate-400 mb-4 md:mb-0">
-          &copy; 2025 EduStream. Creado con pasión para la educación.
+          &copy; 2026 EduStream. Creado con pasión para la educación.
         </p>
-        <div class="flex space-x-6">
-          <a href="#" class="text-slate-400 hover:text-white transition-colors">Términos</a>
-          <a href="#" class="text-slate-400 hover:text-white transition-colors">Privacidad</a>
-          <a href="#" class="text-slate-400 hover:text-white transition-colors">Ayuda</a>
-        </div>
+        
       </div>
     </footer>
   </div>
