@@ -493,7 +493,16 @@ export default {
     },
     toLive(id) {
       localStorage.setItem('live_id', id)
-      router.push(`/liveHost/${id}`)
+      // Determinar si el usuario actual es el propietario de esta transmisión
+      const transmission = this.transmisiones.find(t => t.id === id)
+      
+      if (transmission && transmission.id_user === this.userData.id) {
+        // El usuario es el propietario -> enviar a LiveHost
+        router.push(`/liveHost/${id}`)
+      } else {
+        // El usuario es un viewer -> enviar a LiveViewer
+        router.push(`/liveViewer/${id}`)
+      }
     },
     requestLive(id) {
       router.push({

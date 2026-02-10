@@ -168,12 +168,12 @@
       </div>
     </div>
 
-    <!-- Cuadrícula de Participantes -->
-    <div v-if="participantes.length > 0" class="mt-4 pb-4 px-4 overflow-hidden">
-      <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+    <div v-if="participantes.length > 0" class="mt-4 pb-4 px-4 overflow-hidden w-64 border-l border-gray-800">
+      <h3 class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
         <UserGroupIcon class="w-4 h-4 text-blue-400" />
-        Participantes Activos
+        Activos
       </h3>
+<<<<<<< HEAD
 
       <div class="grid grid-cols-1 gap-2 overflow-y-auto custom-scrollbar max-h-30 p-1">
         <div v-for="p in participantes" :key="p.socketId || p.idSocket"
@@ -183,6 +183,17 @@
 
           <div
             class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white text-left">
+=======
+      <div class="flex flex-col gap-4 overflow-y-auto custom-scrollbar max-h-[calc(100vh-250px)] p-1">
+        <div v-for="p in participantes" :key="p.socketId" class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video w-full shrink-0">
+          <video
+            :id="'remote-video-' + p.socketId"
+            autoplay
+            playsinline
+            class="w-full h-full object-cover bg-black"
+          ></video>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white text-left">
+>>>>>>> ef7995eb42b9a384f32a04fbf92dff996bc184c9
             <div class="flex items-center justify-between gap-2">
               <span class="text-xs font-medium truncate">
                 {{ p.name || p.email }}
@@ -196,7 +207,11 @@
           </div>
 
           <div v-if="!p.hasVideo" class="absolute inset-0 flex items-center justify-center bg-gray-700">
+<<<<<<< HEAD
             <UserCircleIcon class="w-12 h-12 text-gray-500" />
+=======
+             <UserCircleIcon class="w-10 h-10 text-gray-500" />
+>>>>>>> ef7995eb42b9a384f32a04fbf92dff996bc184c9
           </div>
         </div>
       </div>
@@ -336,6 +351,36 @@ export default {
     } catch (e) {
       console.log("Error starting stream status:", e);
     }
+    
+    // Inicializar captura de audio y video automáticamente
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+      })
+      this.localStream = stream
+      this.cameraStream = stream
+      this.camaraAct = true
+      this.micAct = true
+      
+      // Mostrar el stream local en el video principal
+      if (this.$refs.videoRef) {
+        this.$nextTick(() => {
+          this.$refs.videoRef.srcObject = this.localStream
+        })
+      }
+      
+      // Mostrar también en el modal (picture-in-picture)
+      if (this.$refs.modalVideoRef) {
+        this.$nextTick(() => {
+          this.$refs.modalVideoRef.srcObject = this.localStream
+        })
+      }
+    } catch (err) {
+      console.warn('Advertencia: No se pudo acceder a cámara/micrófono automáticamente', err)
+      // Continuar incluso si no se pueden capturar los dispositivos
+    }
+    
     socket.emit('start-stream', { roomId: this.roomId, hostData: this.userData })
 
     socket.on('stream-started', ({ startTime }) => {
@@ -385,9 +430,16 @@ export default {
       }
     });
 
+<<<<<<< HEAD
 
     this._handleSignalBound = this._handleSignal.bind(this)
     socket.removeAllListeners('signal')
+=======
+    
+    // this.iniciarContador(); - Se inicia vía socket events ahora
+        
+    this._handleSignalBound = this.handleSignal.bind(this)
+>>>>>>> ef7995eb42b9a384f32a04fbf92dff996bc184c9
     socket.on('signal', this._handleSignalBound)
   },
 
@@ -650,25 +702,24 @@ export default {
       this.menuAbierto = null
     },
     async expulsar(user) {
-      // Integración Backend: Eliminar participante (No bloqueante)
       if (user.id) {
         try {
           await api.delete(`/transmissions/${this.roomId}/participants/${user.id}`)
         } catch (error) {
-          console.error('Error al eliminar participante del backend (continuando expulsión):', error)
+          console.error('Error al eliminar participante del backend:', error)
         }
       }
 
       // Notificar al servidor para que desconecte al usuario
-      socket.emit('expel-viewer', { viewerId: user.idSocket, roomId: this.roomId })
+      socket.emit('expel-viewer', { viewerId: user.socketId, roomId: this.roomId })
 
       // Eliminarlo de la lista local inmediatamente
-      this.participantes = this.participantes.filter((p) => p.idSocket !== user.idSocket)
+      this.participantes = this.participantes.filter((p) => p.socketId !== user.socketId)
 
       // Limpiar la conexión WebRTC
-      if (this.peers[user.idSocket]) {
-        this.peers[user.idSocket].close()
-        delete this.peers[user.idSocket]
+      if (this.peers[user.socketId]) {
+        this.peers[user.socketId].close()
+        delete this.peers[user.socketId]
       }
       this.menuAbierto = null
     },
@@ -683,20 +734,32 @@ export default {
 
       this.peers[viewerSocketId] = pc;
       this.candidateBuffers[viewerSocketId] = [];
+<<<<<<< HEAD
 
       // VIDEO (cámara o pantalla)
+=======
+      
+      // 1. Agregar tracks actuales del owner si existen
+      // Es mejor usar addTrack con el stream para asegurar la asociación en el viewer
+>>>>>>> ef7995eb42b9a384f32a04fbf92dff996bc184c9
       if (this.localStream) {
         this.localStream.getTracks().forEach(track => {
           pc.addTrack(track, this.localStream);
         });
+<<<<<<< HEAD
       }
       // AUDIO siempre desde mic
       if (this.cameraStream) {
         this.cameraStream.getAudioTracks().forEach(track => {
+=======
+      } else if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(track => {
+>>>>>>> ef7995eb42b9a384f32a04fbf92dff996bc184c9
           pc.addTrack(track, this.cameraStream);
         });
       }
 
+<<<<<<< HEAD
       pc.onicecandidate = e => {
         if (e.candidate) {
           socket.emit('signal', {
@@ -721,6 +784,40 @@ export default {
         if (e.track.kind === 'video') {
           const video = document.getElementById(`remote-video-${viewerSocketId}`);
           if (video) video.srcObject = e.streams[0];
+=======
+      // 2. Preparar transceivers para recibir del Viewer
+      // Usamos addTransceiver para asegurar que el host esté listo para recibir video/audio
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+
+      // 2. Manejo de ICE candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('signal', { targetId: viewerSocketId, data: event.candidate });
+        }
+      };
+
+      // 3. RECIBIR audio del viewer
+      pc.ontrack = (event) => {
+        console.log(`Track recibido de: ${viewerData.name}`, event.track.kind);
+        if (event.track.kind === 'audio') {
+          const remoteAudio = document.createElement('audio');
+          remoteAudio.srcObject = new MediaStream([event.track]);
+          remoteAudio.autoplay = true;
+          pc._remoteAudio = remoteAudio;
+          
+          // Audio Spectrum for Participant
+          this.setupParticipantAnalyzer(viewerSocketId, event.track);
+          
+          // Debug: attach to body if hidden
+          remoteAudio.style.display = 'none';
+          document.body.appendChild(remoteAudio);
+        } else if (event.track.kind === 'video') {
+           const remoteVideo = document.getElementById(`remote-video-${viewerSocketId}`);
+           if (remoteVideo) remoteVideo.srcObject = new MediaStream([event.track]);
+           const p = this.participantes.find(part => part.socketId === viewerSocketId);
+           if (p) p.hasVideo = true;
+>>>>>>> ef7995eb42b9a384f32a04fbf92dff996bc184c9
         }
       };
 

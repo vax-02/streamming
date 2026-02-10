@@ -21,7 +21,13 @@ import ApplicationComponent from '@/components/ApplicationComponent.vue'
 import VideoPlayerComponent from '@/components/video/VideoPlayerComponent.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import RoomWait from '@/views/RoomWait.vue'
+import Generate from '@/components/Generate.vue'
 const routes = [
+  {
+    path: '/test',
+    name: 'request-A',
+    component: Generate,
+  },
   {
     path: '/request-live/:id',
     name: 'request-live',
