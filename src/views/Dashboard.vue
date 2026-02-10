@@ -184,7 +184,7 @@
                     <div class="flex items-center gap-1.5 overflow-hidden">
                       <span class="text-sm font-medium text-gray-300 truncate">{{ member.name }}</span>
                       <span v-if="member.admin" class="px-1.5 py-0.5 rounded-md bg-yellow-500/10 text-yellow-500 text-[9px] font-bold uppercase border border-yellow-500/20 whitespace-nowrap">
-                        👑 Admin
+                        Admin
                       </span>
                     </div>
                     <p v-if="member.admin" class="text-[10px] text-gray-500 truncate lowercase">{{ member.email }}</p>

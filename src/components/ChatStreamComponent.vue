@@ -1,10 +1,7 @@
 <template>
   <div class="flex flex-col h-full overflow-hidden">
     <!-- Panel de chat -->
-    <aside
-      v-show="isExpanded"
-      class="w-full h-full bg-gray-800 p-4 flex flex-col space-y-2 border-l-2 border-black"
-    >
+    <aside v-show="isExpanded" class="w-full h-full bg-gray-800 p-4 flex flex-col space-y-2 border-l-2 border-black">
       <div class="flex justify-between items-center mb-2">
         <h2 class="text-lg font-bold text-center flex-1">Chat en vivo</h2>
       </div>
@@ -13,7 +10,8 @@
         <div v-for="(msg, i) in chat" :key="msg.id || i" class="text-sm">
           <!-- Mensaje simple -->
           <template v-if="!msg.tipo">
-            <strong :class="msg.usuario === 'Tú' ? 'text-blue-400' : 'text-gray-300'">{{ msg.usuario }}:</strong> {{ msg.mensaje }}
+            <strong :class="msg.usuario === 'Tú' ? 'text-blue-400' : 'text-gray-300'">{{ msg.usuario }}:</strong> {{
+              msg.mensaje }}
           </template>
 
           <!-- Encuesta -->
@@ -25,67 +23,52 @@
               </div>
               <div class="space-y-2">
                 <div v-for="(opcion, idx) in msg.opciones" :key="idx">
-                  <button
-                    @click="votePoll(msg.id, idx)"
-                    :class="[
-                      'w-full text-left p-2 rounded-md border transition-all flex items-center gap-3',
-                      msg.multiple
-                        ? (votedPolls[msg.id] || []).includes(idx)
-                          ? 'bg-blue-700 border-blue-500'
-                          : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
-                        : votedPolls[msg.id] === idx
-                          ? 'bg-blue-700 border-blue-500'
-                          : 'bg-gray-700 border-gray-600 hover:bg-gray-600',
-                      !msg.multiple && votedPolls[msg.id] !== undefined
-                        ? 'cursor-not-allowed'
-                        : 'cursor-pointer',
-                    ]"
-                    :disabled="!msg.multiple && votedPolls[msg.id] !== undefined"
-                  >
-                    <div
-                      class="w-4 h-4 border-2 flex-shrink-0"
-                      :class="[
-                        msg.multiple ? 'rounded-sm' : 'rounded-full',
-                        (
-                          msg.multiple
-                            ? (votedPolls[msg.id] || []).includes(idx)
-                            : votedPolls[msg.id] === idx
-                        )
-                          ? 'bg-blue-500 border-blue-400'
-                          : 'border-gray-500',
-                      ]"
-                    ></div>
+                  <button @click="votePoll(msg.id, idx)" :class="[
+                    'w-full text-left p-2 rounded-md border transition-all flex items-center gap-3',
+                    msg.multiple
+                      ? (votedPolls[msg.id] || []).includes(idx)
+                        ? 'bg-blue-700 border-blue-500'
+                        : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+                      : votedPolls[msg.id] === idx
+                        ? 'bg-blue-700 border-blue-500'
+                        : 'bg-gray-700 border-gray-600 hover:bg-gray-600',
+                    !msg.multiple && votedPolls[msg.id] !== undefined
+                      ? 'cursor-not-allowed'
+                      : 'cursor-pointer',
+                  ]" :disabled="!msg.multiple && votedPolls[msg.id] !== undefined">
+                    <div class="w-4 h-4 border-2 flex-shrink-0" :class="[
+                      msg.multiple ? 'rounded-sm' : 'rounded-full',
+                      (
+                        msg.multiple
+                          ? (votedPolls[msg.id] || []).includes(idx)
+                          : votedPolls[msg.id] === idx
+                      )
+                        ? 'bg-blue-500 border-blue-400'
+                        : 'border-gray-500',
+                    ]"></div>
 
                     <div class="flex justify-between items-center w-full">
                       <span>{{ opcion }}</span>
-                      <span
-                        v-if="
-                          msg.multiple
-                            ? (votedPolls[msg.id] || []).includes(idx)
-                            : votedPolls[msg.id] === idx
-                        "
-                        class="text-green-400"
-                      >
+                      <span v-if="
+                        msg.multiple
+                          ? (votedPolls[msg.id] || []).includes(idx)
+                          : votedPolls[msg.id] === idx
+                      " class="text-green-400">
                         <CheckIcon class="w-4 h-4" />
                       </span>
                     </div>
                   </button>
                   <div v-if="votedPolls[msg.id] !== undefined || isHost" class="mt-1 flex items-center gap-2">
                     <div class="w-full bg-gray-600 rounded-full h-1.5">
-                      <div
-                        class="bg-blue-500 h-1.5 rounded-full"
-                        :style="{
-                          width: `${(msg.votos[idx] / (msg.votos.reduce((a, b) => a + b, 0) || 1)) * 100}%`,
-                        }"
-                      ></div>
+                      <div class="bg-blue-500 h-1.5 rounded-full" :style="{
+                        width: `${(msg.votos[idx] / (msg.votos.reduce((a, b) => a + b, 0) || 1)) * 100}%`,
+                      }"></div>
                     </div>
-                    <span class="text-xs text-gray-400"
-                      >{{
-                        Math.round(
-                          (msg.votos[idx] / (msg.votos.reduce((a, b) => a + b, 0) || 1)) * 100,
-                        )
-                      }}%</span
-                    >
+                    <span class="text-xs text-gray-400">{{
+                      Math.round(
+                        (msg.votos[idx] / (msg.votos.reduce((a, b) => a + b, 0) || 1)) * 100,
+                      )
+                    }}%</span>
                   </div>
                 </div>
               </div>
@@ -105,21 +88,15 @@
                 <div v-for="(block, blockIdx) in msg.content" :key="blockIdx">
                   <div v-if="block.type === 'text'" class="bg-gray-700/50 p-3 rounded-md space-y-3">
                     <p class="text-gray-200 whitespace-pre-wrap">{{ block.question }}</p>
-                    <div
-                      v-if="block.responses && block.responses.length > 0"
-                      class="border-t border-gray-600/50 pt-2 space-y-2"
-                    >
+                    <div v-if="block.responses && block.responses.length > 0"
+                      class="border-t border-gray-600/50 pt-2 space-y-2">
                       <div v-for="(response, rIdx) in block.responses" :key="rIdx" class="text-xs">
                         <strong class="text-blue-300">{{ response.user }}:</strong>
                         <span class="text-gray-300">{{ response.text }}</span>
                       </div>
                     </div>
                   </div>
-                  <img
-                    v-if="block.type === 'image'"
-                    :src="block.src"
-                    class="max-w-full rounded-md mt-2 mx-auto"
-                  />
+                  <img v-if="block.type === 'image'" :src="block.src" class="max-w-full rounded-md mt-2 mx-auto" />
                 </div>
               </div>
             </div>
@@ -128,17 +105,11 @@
       </div>
 
       <div class="relative flex items-center space-x-2 mt-2">
-        <input
-          v-model="mensaje"
-          type="text"
-          placeholder="Escribe un mensaje..."
+        <input v-model="mensaje" type="text" placeholder="Escribe un mensaje..."
           class="flex-1 bg-gray-600 rounded-lg px-2 py-1 outline-none text-white focus:ring-1 focus:ring-blue-500"
-          @keyup.enter="enviarMensaje"
-        />
-        <button
-          @click="enviarMensaje"
-          class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded-lg text-sm transition-colors"
-        >
+          @keyup.enter="enviarMensaje" />
+        <button @click="enviarMensaje"
+          class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded-lg text-sm transition-colors">
           Enviar
         </button>
       </div>
@@ -146,7 +117,7 @@
 
 
     <!-- Modal: Compartir -->
-    <Teleport to="body">
+    <!--Teleport to="body">
       <div v-if="showShareModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4">
         <div class="bg-gray-800 text-white rounded-xl w-full max-w-lg p-6 relative shadow-lg flex flex-col max-h-[90vh]">
           <div class="flex justify-between items-center mb-4">
@@ -264,7 +235,7 @@
           </div>
         </div>
       </div>
-    </Teleport>
+    </Teleport-->
   </div>
 </template>
 
@@ -353,7 +324,7 @@ export default {
       socket.on('chat-message', (data) => {
         this.chat.push(data)
       })
-      
+
       socket.on('new-poll', (encuesta) => {
         this.chat.push(encuesta)
       })
@@ -366,7 +337,7 @@ export default {
         }
       })
     },
-    
+
     scrollToBottom() {
       const container = this.$refs.chatContainer
       if (container) {
@@ -381,7 +352,7 @@ export default {
         roomId: this.roomId,
         id: Date.now()
       }
-      
+
       socket.emit('chat-message', msgData)
       this.chat.push({ ...msgData, usuario: 'Tú' })
       this.mensaje = ''
@@ -433,13 +404,16 @@ export default {
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #1f2937;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #4b5563;
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }

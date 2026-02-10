@@ -5,22 +5,14 @@
     <div class="flex-1 flex flex-col justify-between p-4">
       <!-- Video principal -->
       <div class="relative bg-gray-700 rounded-xl flex-1 mb-4 flex justify-center items-center">
-        <video
-          ref="videoRef"
-          autoplay
-          playsinline
-          class="w-full h-full object-cover rounded-xl"
-        ></video>
+        <video ref="videoRef" autoplay playsinline class="w-full h-full object-cover rounded-xl"></video>
         <div
-          class="absolute top-3 left-3 bg-blue-600 px-3 py-1 rounded-full flex items-center space-x-2 text-sm font-semibold"
-        >
+          class="absolute top-3 left-3 bg-blue-600 px-3 py-1 rounded-full flex items-center space-x-2 text-sm font-semibold">
           <span>{{ tiempoFormateado }}</span>
         </div>
 
         <!-- Contador de participantes -->
-        <div
-          class="absolute top-3 right-3 bg-blue-600 px-3 py-1 rounded-full flex space-x-2 text-sm font-semibold"
-        >
+        <div class="absolute top-3 right-3 bg-blue-600 px-3 py-1 rounded-full flex space-x-2 text-sm font-semibold">
           <span class="flex items-center space-x-1">
             <EyeIcon class="w-5 h-5" /><span>{{ participantes.length }}</span>
           </span>
@@ -28,21 +20,13 @@
 
         <!--  Tarjeta del perfil actual (mini video o imagen) -->
         <div
-          class="absolute bottom-3 right-3 bg-gray-800 rounded-xl shadow-lg p-2 flex flex-col items-center w-40 h-28 border border-gray-600"
-        >
+          class="absolute bottom-3 right-3 bg-gray-800 rounded-xl shadow-lg p-2 flex flex-col items-center w-40 h-28 border border-gray-600">
           <!-- Imagen o video del usuario -->
           <div class="relative w-full h-full rounded-lg overflow-hidden">
-            <video
-              v-if="camaraAct"
-              ref="modalVideoRef"
-              autoplay
-              muted
-              class="w-full h-full bg-black rounded-lg"
-            ></video>
-            <div
-              v-else
-              class="w-full h-full flex items-center justify-center bg-gray-700 text-gray-300 text-sm font-semibold rounded-lg"
-            >
+            <video v-if="camaraAct" ref="modalVideoRef" autoplay muted
+              class="w-full h-full bg-black rounded-lg"></video>
+            <div v-else
+              class="w-full h-full flex items-center justify-center bg-gray-700 text-gray-300 text-sm font-semibold rounded-lg">
               <UserCircleIcon class="w-14 h-14 text-white-400" />
             </div>
           </div>
@@ -56,23 +40,17 @@
 
       <!-- Controles -->
       <div class="flex justify-center items-center space-x-3 mb-2">
-        <button
-          @click="toggleMic"
-          :class="[
-            'p-3 rounded-full transition-all duration-200',
-            micAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
-          ]"
-        >
+        <button @click="toggleMic" :class="[
+          'p-3 rounded-full transition-all duration-200',
+          micAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
+        ]">
           <MicrophoneIcon class="w-6 h-6 text-white" />
         </button>
 
-        <button
-          @click="toggleCamara"
-          :class="[
-            'p-3 rounded-full transition-all duration-200',
-            camaraAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
-          ]"
-        >
+        <button @click="toggleCamara" :class="[
+          'p-3 rounded-full transition-all duration-200',
+          camaraAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
+        ]">
           <template v-if="camaraAct">
             <VideoCameraIcon class="w-6 h-6 text-white" />
           </template>
@@ -81,18 +59,13 @@
           </template>
         </button>
 
-        <button
-          @click="expandirBool = !expandirBool"
-          class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
-        >
+        <button @click="expandirBool = !expandirBool"
+          class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200">
           <ArrowsPointingOutIcon class="w-6 h-6 text-white" />
         </button>
 
-        <button
-          @click="handleEndStream"
-          class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
-          title="Salir"
-        >
+        <button @click="handleEndStream"
+          class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200" title="Salir">
           <PowerIcon class="w-6 h-6 text-red-500" />
         </button>
       </div>
@@ -105,20 +78,18 @@
         Participantes Activos
       </h3>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-x-auto custom-scrollbar max-h-60 p-1">
-        <div v-for="p in participantes" :key="p.socketId || p.idSocket" class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video">
+        <div v-for="p in participantes" :key="p.socketId || p.idSocket"
+          class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video">
           <!-- Video del participante -->
-          <video
-            :id="'remote-video-' + (p.socketId || p.idSocket)"
-            autoplay
-            playsinline
-            class="w-full h-full object-cover bg-black"
-          ></video>
-          
+          <video :id="'remote-video-' + (p.socketId || p.idSocket)" autoplay playsinline
+            class="w-full h-full object-cover bg-black"></video>
+
           <!-- Overlay con nombre y estado -->
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white text-left">
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white text-left">
             <div class="flex items-center justify-between gap-2">
               <span class="text-xs font-medium truncate">{{ p.name || p.email }}</span>
-              
+
               <!-- Indicador de Audio (Visual Simplificado) -->
               <div class="flex items-end gap-0.5 h-3">
                 <div class="w-1 bg-blue-400 rounded-full h-1"></div>
@@ -130,41 +101,26 @@
 
           <!-- Avatar si no hay video -->
           <div v-if="!p.hasVideo" class="absolute inset-0 flex items-center justify-center bg-gray-700">
-             <UserCircleIcon class="w-12 h-12 text-gray-500" />
+            <UserCircleIcon class="w-12 h-12 text-gray-500" />
           </div>
         </div>
       </div>
     </div>
 
     <!-- Panel derecho: chat (Componente extraído) -->
-    <ChatStreamComponent
-      v-show="expandirBool"
-      :room-id="roomId"
-      :user-data="userData"
-      :is-host="false"
-      :is-expanded="expandirBool"
-      class="w-[25%]"
-    />
+    <ChatStreamComponent v-show="expandirBool" :room-id="roomId" :user-data="userData" :is-host="false"
+      :is-expanded="expandirBool" class="w-[25%]" />
 
     <!-- Modal de confirmación para finalizar stream -->
-    <div
-      v-if="showEndStreamConfirm"
-      class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
-    >
+    <div v-if="showEndStreamConfirm" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
       <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm space-y-4">
         <h3 class="text-lg font-semibold text-center">Salir de la reunión</h3>
         <p class="text-center text-gray-300">¿Estás seguro de que deseas salir?</p>
         <div class="flex justify-center space-x-4 pt-2">
-          <button
-            @click="showEndStreamConfirm = false"
-            class="bg-gray-600 hover:bg-gray-500 px-6 py-2 rounded-lg"
-          >
+          <button @click="showEndStreamConfirm = false" class="bg-gray-600 hover:bg-gray-500 px-6 py-2 rounded-lg">
             No
           </button>
-          <button
-            @click="confirmEndStream"
-            class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg"
-          >
+          <button @click="confirmEndStream" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg">
             Sí
           </button>
         </div>
@@ -221,7 +177,15 @@ export default {
   },
   data() {
     return {
-      userData : JSON.parse(localStorage.getItem('user')),
+      servers: {
+        iceServers: [
+          {
+            urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'],
+          },
+        ],
+      },
+
+      userData: JSON.parse(localStorage.getItem('user')),
 
       viewerId: null,
       pc: null,
@@ -337,87 +301,61 @@ export default {
     }
   },
 
-  methods: {   
+  methods: {
     initViewer() {
-      if (this.pc) return
-      this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
+      this.pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
 
-      this.pc.addTransceiver('video', { direction: 'recvonly' })
-      this.pc.addTransceiver('audio', { direction: 'recvonly' })
+      this.remoteStream = new MediaStream();
 
-      this.pc.ontrack = (event) => {
-        // Si el track viene del host (principal)
-        if (!event.streams[0] || event.streams[0].id === 'host-stream' || !this.participantes.some(p => p.socketId === event.streams[0]?.id)) {
-          if (!this.remoteStream) {
-            this.remoteStream = new MediaStream()
-            if (this.$refs.videoRef) {
-              this.$refs.videoRef.srcObject = this.remoteStream
-            }
-          }
-          this.remoteStream.addTrack(event.track)
-        } else {
-          // Track de otro participante (Cuadrícula)
-          const participantSocketId = event.streams[0].id;
-          if (event.track.kind === 'audio') {
-            this.setupParticipantAnalyzer(participantSocketId, event.track);
-          } else if (event.track.kind === 'video') {
-            const remoteVideo = document.getElementById(`remote-video-${participantSocketId}`);
-            if (remoteVideo) remoteVideo.srcObject = new MediaStream([event.track]);
-            const p = this.participantes.find(part => part.socketId === participantSocketId);
-            if (p) p.hasVideo = true;
-          }
-        }
-        console.log('Track recibido en Viewer:', event.track.kind)
-      }
-
-      this.pc.onicecandidate = (e) => {
-        if (e.candidate) {
-          socket.emit('signal', { targetId: this.hostId, data: e.candidate })
-        }
-      }
-    },
-
-    _handleSignal(data) {
-      this.handleSignal(data)
-    },
-
-    //SIGAL webRTC
-    async handleSignal({ from, data }) {
-      this.hostId = from
-      //1. Si PC no está inicializada, ¡INICIALIZARLA AHORA!
-      if (!this.pc) {
-        console.log('PC no inicializada al recibir señal. Inicializando ahora...')
-        this.initViewer()
-      }
-
-      // 2️⃣ Revisar tipo de señal
-      if (data.type === 'offer') {
-        console.log('Offer recibida. Generando Answer...')
-        await this.pc.setRemoteDescription(new RTCSessionDescription(data))
-        
-        // Procesar candidatos acumulados
-        this.candidateBuffer.forEach(candidate => {
-          this.pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error(e));
+      this.pc.ontrack = e => {
+        e.streams[0].getTracks().forEach(track => {
+          this.remoteStream.addTrack(track);
         });
-        this.candidateBuffer = [];
+      };
 
-        const answer = await this.pc.createAnswer()
-        await this.pc.setLocalDescription(new RTCSessionDescription(answer))
-        console.log("ANSWER CREADO")
-        socket.emit('signal', { targetId: from, data: answer })
-      } else if (data.candidate) {
-        // 3️⃣ Agregar candidatos ICE
+      this.pc.onicecandidate = e => {
+        if (e.candidate) {
+          socket.emit('signal', {
+            targetId: this.hostId,
+            data: { type: 'ice', candidate: e.candidate }
+          });
+        }
+      };
+    }
+    ,
+
+    async _handleSignal({ from, data }) {
+      if (!this.pc) return;
+
+      if (data.type === 'offer') {
+        await this.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+        const answer = await this.pc.createAnswer();
+        await this.pc.setLocalDescription(answer);
+
+        socket.emit('signal', {
+          targetId: from,
+          data: { type: 'answer', sdp: answer }
+        });
+      }
+
+      if (data.type === 'answer') {
+        await this.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      }
+
+      if (data.type === 'ice') {
         if (this.pc.remoteDescription) {
-          try {
-            await this.pc.addIceCandidate(new RTCIceCandidate(data))
-          } catch (err) {
-            console.warn('Error agregando candidato ICE', err)
-          }
+          await this.pc.addIceCandidate(data.candidate);
         } else {
-          this.candidateBuffer.push(data);
+          this._iceBuffer = this._iceBuffer || [];
+          this._iceBuffer.push(data.candidate);
         }
       }
-    },
+    }
+    ,
+
     handleEndStream() {
       this.showOptionsMenu = false
       this.showEndStreamConfirm = true
@@ -449,7 +387,7 @@ export default {
         this.audioStream.getTracks().forEach((track) => track.stop())
       }
       if (this.audioContext) {
-        this.audioContext.close().catch(() => {})
+        this.audioContext.close().catch(() => { })
       }
       this.audioLevel = 0
     },
@@ -459,7 +397,7 @@ export default {
       if (this.micAct) {
         try {
           this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-          
+
           // Enviar audio al host
           const audioTrack = this.localStream.getAudioTracks()[0];
           if (this.pc) {
@@ -493,7 +431,7 @@ export default {
         if (this.pc) {
           const sender = this.pc.getSenders().find(s => s.track && s.track.kind === 'audio');
           if (sender) await sender.replaceTrack(null);
-          
+
           const transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'audio' || t.sender.track?.kind === 'audio');
           if (transceiver) {
             transceiver.direction = 'recvonly';
@@ -605,21 +543,29 @@ export default {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #000000;
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1f2937; /* bg-gray-800 */
+  background: #1f2937;
+  /* bg-gray-800 */
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4b5563; /* bg-gray-600 */
+  background: #4b5563;
+  /* bg-gray-600 */
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6b7280; /* bg-gray-500 */
+  background: #6b7280;
+  /* bg-gray-500 */
 }
 </style>

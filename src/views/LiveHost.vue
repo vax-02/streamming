@@ -1,35 +1,24 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white overflow-hidden">
-    <aside
-      v-show="expandirBool"
-      class="w-[22%] bg-gray-900 text-white p-4 flex flex-col space-y-5 border-l border-gray-800 shadow-xl"
-    >
+    <aside v-show="expandirBool"
+      class="w-[22%] bg-gray-900 text-white p-4 flex flex-col space-y-5 border-l border-gray-800 shadow-xl">
       <!-- Encabezado -->
       <div class="relative flex items-center justify-between">
         <h2 class="text-lg font-bold tracking-wide">Participantes</h2>
         <div class="relative">
-          <button
-            @click="showOptionsMenu = !showOptionsMenu"
-            class="p-2 rounded-full hover:bg-gray-700 transition"
-          >
+          <button @click="showOptionsMenu = !showOptionsMenu" class="p-2 rounded-full hover:bg-gray-700 transition">
             <EllipsisHorizontalIcon class="w-5 h-5" />
           </button>
 
-          <div
-            v-if="showOptionsMenu"
-            class="absolute right-0 mt-2 w-44 bg-gray-800 border border-gray-700 rounded-xl shadow-lg z-20 overflow-hidden"
-          >
-            <button
-              @click="handleEndStream"
-              class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2"
-            >
+          <div v-if="showOptionsMenu"
+            class="absolute right-0 mt-2 w-44 bg-gray-800 border border-gray-700 rounded-xl shadow-lg z-20 overflow-hidden">
+            <button @click="handleEndStream"
+              class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2">
               <PowerIcon class="w-4 h-4 text-red-500" />
               <span>Finalizar transmisión</span>
             </button>
-            <button
-              @click="openShareModal"
-              class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2"
-            >
+            <button @click="openShareModal"
+              class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2">
               <ShareIcon class="w-4 h-4 text-blue-400" />
               <span>Compartir</span>
             </button>
@@ -42,29 +31,15 @@
         <h3 class="font-semibold text-sm text-gray-400 mb-2 uppercase tracking-wide">
           Sala de espera
         </h3>
-        <div
-          v-if="salaEspera.length"
-          class="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar"
-        >
-          <div
-            v-for="(user, i) in salaEspera"
-            :key="i"
-            class="flex justify-between items-center bg-gray-800 rounded-lg px-3 py-2"
-          >
+        <div v-if="salaEspera.length" class="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+          <div v-for="(user, i) in salaEspera" :key="i"
+            class="flex justify-between items-center bg-gray-800 rounded-lg px-3 py-2">
             <span class="font-medium text-sm">{{ user.name }}</span>
             <div class="flex space-x-1">
-              <button
-                @click="admitir(user)"
-                class="bg-green-600 hover:bg-green-700 p-1 rounded"
-                title="Admitir"
-              >
+              <button @click="admitir(user)" class="bg-green-600 hover:bg-green-700 p-1 rounded" title="Admitir">
                 <CheckIcon class="w-5 h-5" />
               </button>
-              <button
-                @click="rechazar(user)"
-                class="bg-red-600 hover:bg-red-700 p-1 rounded"
-                title="Rechazar"
-              >
+              <button @click="rechazar(user)" class="bg-red-600 hover:bg-red-700 p-1 rounded" title="Rechazar">
                 <XMarkIcon class="w-5 h-5" />
               </button>
             </div>
@@ -84,11 +59,8 @@
         </div>
 
         <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
-          <div
-            v-for="(p, i) in participantes"
-            :key="p.idSocket || i"
-            class="flex justify-between items-center bg-gray-700 hover:bg-gray-600 transition px-3 py-2 rounded-lg"
-          >
+          <div v-for="(p, i) in participantes" :key="p.idSocket || i"
+            class="flex justify-between items-center bg-gray-700 hover:bg-gray-600 transition px-3 py-2 rounded-lg">
             <div class="flex items-center gap-2">
               <UserCircleIcon class="w-5 h-5 text-blue-400" />
               <span class="text-sm font-medium">{{ p.name || p.email }}</span>
@@ -99,27 +71,18 @@
               <MicrophoneIcon v-else class="w-5 h-5 text-red-500 opacity-60" />
 
               <div class="relative">
-                <button
-                  @click="menuAbierto = menuAbierto === i ? null : i"
-                  class="p-1 hover:bg-gray-500 rounded-full transition"
-                >
+                <button @click="menuAbierto = menuAbierto === i ? null : i"
+                  class="p-1 hover:bg-gray-500 rounded-full transition">
                   <EllipsisHorizontalIcon class="w-4 h-4 text-gray-300" />
                 </button>
 
-                <div
-                  v-if="menuAbierto === i"
-                  class="absolute right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg w-28 text-sm py-1 z-10"
-                >
-                  <button
-                    @click="silenciar(p)"
-                    class="block w-full text-left px-3 py-1.5 hover:bg-gray-700"
-                  >
+                <div v-if="menuAbierto === i"
+                  class="absolute right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg w-28 text-sm py-1 z-10">
+                  <button @click="silenciar(p)" class="block w-full text-left px-3 py-1.5 hover:bg-gray-700">
                     Silenciar
                   </button>
-                  <button
-                    @click="expulsar(p)"
-                    class="block w-full text-left px-3 py-1.5 text-red-400 hover:bg-gray-700"
-                  >
+                  <button @click="expulsar(p)"
+                    class="block w-full text-left px-3 py-1.5 text-red-400 hover:bg-gray-700">
                     Expulsar
                   </button>
                 </div>
@@ -135,18 +98,15 @@
     <div class="flex-1 flex flex-col justify-between p-4">
       <!-- Video principal -->
       <div class="relative bg-gray-700 rounded-xl flex-1 mb-4 flex justify-center items-center">
-          <video ref="videoRef" autoplay muted class="w-full h-full object-cover rounded-xl"></video>
+        <video ref="videoRef" autoplay muted class="w-full h-full object-cover rounded-xl"></video>
 
         <div
-          class="absolute top-3 left-3 bg-blue-600 px-3 py-1 rounded-full flex items-center space-x-2 text-sm font-semibold"
-        >
+          class="absolute top-3 left-3 bg-blue-600 px-3 py-1 rounded-full flex items-center space-x-2 text-sm font-semibold">
           <span>{{ tiempoFormateado }}</span>
         </div>
 
         <!-- Contador de participantes -->
-        <div
-          class="absolute top-3 right-3 bg-blue-600 px-3 py-1 rounded-full flex space-x-2 text-sm font-semibold"
-        >
+        <div class="absolute top-3 right-3 bg-blue-600 px-3 py-1 rounded-full flex space-x-2 text-sm font-semibold">
           <span class="flex items-center space-x-1">
             <EyeIcon class="w-5 h-5" /><span>{{ participantes.length }}</span>
           </span>
@@ -154,21 +114,13 @@
 
         <!--  Tarjeta del perfil actual (mini video o imagen) -->
         <div
-          class="absolute bottom-3 right-3 bg-gray-800 rounded-xl shadow-lg p-2 flex flex-col items-center w-40 h-28 border border-gray-600"
-        >
+          class="absolute bottom-3 right-3 bg-gray-800 rounded-xl shadow-lg p-2 flex flex-col items-center w-40 h-28 border border-gray-600">
           <!-- Imagen o video del usuario -->
           <div class="relative w-full h-full rounded-lg overflow-hidden">
-            <video
-              v-if="camaraAct"
-              ref="modalVideoRef"
-              autoplay
-              muted
-              class="w-full h-full bg-black rounded-lg"
-            ></video>
-            <div
-              v-else
-              class="w-full h-full flex items-center justify-center bg-gray-700 text-gray-300 text-sm font-semibold rounded-lg"
-            >
+            <video v-if="camaraAct" ref="modalVideoRef" autoplay muted
+              class="w-full h-full bg-black rounded-lg"></video>
+            <div v-else
+              class="w-full h-full flex items-center justify-center bg-gray-700 text-gray-300 text-sm font-semibold rounded-lg">
               <UserCircleIcon class="w-14 h-14 text-white-400" />
             </div>
           </div>
@@ -182,23 +134,17 @@
 
       <!-- Controles -->
       <div class="flex justify-center items-center space-x-3 mb-2">
-        <button
-          @click="toggleMic"
-          :class="[
-            'p-3 rounded-full transition-all duration-200',
-            micAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
-          ]"
-        >
+        <button @click="toggleMic" :class="[
+          'p-3 rounded-full transition-all duration-200',
+          micAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
+        ]">
           <MicrophoneIcon class="w-6 h-6 text-white" />
         </button>
 
-        <button
-          @click="toggleCamara"
-          :class="[
-            'p-3 rounded-full transition-all duration-200',
-            camaraAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
-          ]"
-        >
+        <button @click="toggleCamara" :class="[
+          'p-3 rounded-full transition-all duration-200',
+          camaraAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
+        ]">
           <template v-if="camaraAct">
             <VideoCameraIcon class="w-6 h-6 text-white" />
           </template>
@@ -207,20 +153,15 @@
           </template>
         </button>
 
-        <button
-          @click="toggleScreenShare"
-          :class="[
-            'p-3 rounded-full transition-all duration-200',
-            pantallaAct ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600',
-          ]"
-        >
+        <button @click="toggleScreenShare" :class="[
+          'p-3 rounded-full transition-all duration-200',
+          pantallaAct ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600',
+        ]">
           <ComputerDesktopIcon class="w-6 h-6 text-white" />
         </button>
 
-        <button
-          @click="expandirBool = !expandirBool"
-          class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
-        >
+        <button @click="expandirBool = !expandirBool"
+          class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200">
           <ArrowsPointingOutIcon class="w-6 h-6 text-white" />
         </button>
 
@@ -233,17 +174,19 @@
         <UserGroupIcon class="w-4 h-4 text-blue-400" />
         Participantes Activos
       </h3>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-x-auto custom-scrollbar max-h-60 p-1">
-        <div v-for="p in participantes" :key="p.socketId || p.idSocket" class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video">
-          <video
-            :id="'remote-video-' + (p.socketId || p.idSocket)"
-            autoplay
-            playsinline
-            class="w-full h-full object-cover bg-black"
-          ></video>
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white text-left">
+
+      <div class="grid grid-cols-1 gap-2 overflow-y-auto custom-scrollbar max-h-30 p-1">
+        <div v-for="p in participantes" :key="p.socketId || p.idSocket"
+          class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video">
+          <video :id="'remote-video-' + (p.socketId || p.idSocket)" autoplay playsinline
+            class="w-full h-full object-cover bg-black"></video>
+
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white text-left">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-medium truncate">{{ p.name || p.email }}</span>
+              <span class="text-xs font-medium truncate">
+                {{ p.name || p.email }}
+              </span>
               <div class="flex items-end gap-0.5 h-3">
                 <div class="w-1 bg-blue-400 rounded-full h-1"></div>
                 <div class="w-1 bg-blue-400 rounded-full h-2"></div>
@@ -251,42 +194,29 @@
               </div>
             </div>
           </div>
+
           <div v-if="!p.hasVideo" class="absolute inset-0 flex items-center justify-center bg-gray-700">
-             <UserCircleIcon class="w-12 h-12 text-gray-500" />
+            <UserCircleIcon class="w-12 h-12 text-gray-500" />
           </div>
         </div>
       </div>
     </div>
 
+
     <!-- Panel derecho: chat (Componente extraído) -->
-    <ChatStreamComponent
-      v-show="expandirBool"
-      :room-id="roomId"
-      :user-data="userData"
-      :is-host="true"
-      :is-expanded="expandirBool"
-      class="w-[25%]"
-    />
+    <ChatStreamComponent v-show="expandirBool" :room-id="roomId" :user-data="userData" :is-host="true"
+      :is-expanded="expandirBool" class="w-[25%]" />
 
     <!-- Modal de confirmación para finalizar stream -->
-    <div
-      v-if="showEndStreamConfirm"
-      class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
-    >
+    <div v-if="showEndStreamConfirm" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
       <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm space-y-4">
         <h3 class="text-lg font-semibold text-center">Finalizar Stream</h3>
         <p class="text-center text-gray-300">¿Estás seguro de que deseas finalizar el stream?</p>
         <div class="flex justify-center space-x-4 pt-2">
-          <button
-            @click="showEndStreamConfirm = false"
-            class="bg-gray-600 hover:bg-gray-500 px-6 py-2 rounded-lg"
-          >
+          <button @click="showEndStreamConfirm = false" class="bg-gray-600 hover:bg-gray-500 px-6 py-2 rounded-lg">
             No
           </button>
-          <button
-            @click="confirmEndStream"
-            class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg"
-          >
+          <button @click="confirmEndStream" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg">
             Sí
           </button>
         </div>
@@ -348,6 +278,15 @@ export default {
   },
   data() {
     return {
+      servers: {
+        iceServers: [
+          {
+            urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'],
+          },
+        ],
+      }
+      ,
+
       peers: {},
       candidateBuffers: {},
       localStream: null,
@@ -390,7 +329,7 @@ export default {
     }
   },
 
-      
+
   async mounted() {
     try {
       await api.put(`/transmissions/${this.roomId}/status`, { status: 1 });
@@ -398,7 +337,7 @@ export default {
       console.log("Error starting stream status:", e);
     }
     socket.emit('start-stream', { roomId: this.roomId, hostData: this.userData })
-    
+
     socket.on('stream-started', ({ startTime }) => {
       this.startTime = startTime;
       this.iniciarContador();
@@ -414,14 +353,14 @@ export default {
       this.startTime = startTime;
       this.iniciarContador();
     });
-    
+
     socket.on('pending-request', (data) => {
       const viewer = data.viewerData || data
       if (viewer.id && !this.salaEspera.some((u) => u.id === viewer.id)) {
         this.salaEspera.push(viewer)
       }
     })
-    
+
     // Listener para nuevos viewers listos (dispara la Offer inicial)
     socket.on('viewer-joined', ({ viewerData }) => {
       this.addToast(`Participante ${viewerData.name} se unió`);
@@ -435,7 +374,7 @@ export default {
         this.addToast(`${this.participantes[pIndex].name} salió`);
         this.participantes.splice(pIndex, 1);
       }
-      
+
       // Limpiar conexión WebRTC
       if (this.peers[viewerId]) {
         this.peers[viewerId].close();
@@ -446,12 +385,10 @@ export default {
       }
     });
 
-    
-    // this.iniciarContador(); - Se inicia vía socket events ahora
-        
-    /*this._handleSignalBound = this._handleSignal.bind(this)
+
+    this._handleSignalBound = this._handleSignal.bind(this)
     socket.removeAllListeners('signal')
-    socket.on('signal', this._handleSignalBound) */
+    socket.on('signal', this._handleSignalBound)
   },
 
 
@@ -505,7 +442,7 @@ export default {
         // 1. El video principal muestra la pantalla
         this.localStream = screenStream
         this.$refs.videoRef.srcObject = this.localStream
-        
+
         // 2. Si la cámara está activa, nos aseguramos que se vea en el modal (PiP)
         if (this.cameraStream && this.camaraAct) {
           this.$nextTick(() => {
@@ -514,7 +451,7 @@ export default {
             }
           });
         }
-        
+
         await this.replaceStreamForAllPeers(screenStream)
       } catch (err) {
         console.error('Error al compartir pantalla:', err)
@@ -528,7 +465,7 @@ export default {
       }
       this.localStream = this.cameraStream
       this.$refs.videoRef.srcObject = this.localStream
-      
+
       // Restaurar cámara en el video principal
       if (this.camaraAct) {
         this.$nextTick(() => {
@@ -537,7 +474,7 @@ export default {
           }
         });
       }
-      
+
       this.pantallaAct = false
       await this.replaceStreamForAllPeers(this.cameraStream)
     },
@@ -563,43 +500,46 @@ export default {
         }
       }
     },
-  
+
 
     _handleSignal(data) {
       this.handleSignal(data)
     },
 
     async handleSignal({ from, data }) {
-      let pc = this.peers[from] // Obtener el PC específico del viewer
-      let buffer = this.candidateBuffers[from]
+      const pc = this.peers[from]
       if (!pc) return
 
-      // El Host solo espera la Answer del Viewer o los candidatos ICE
       try {
+        // ✅ ANSWER
         if (data.type === 'answer') {
-          if (pc.signalingState !== 'have-local-offer') {
-            console.warn(
-              `Host: Recibida Answer de ${from} en estado no esperado: ${pc.signalingState}. Ignorando.`,
-            )
-            return
-          }
-          await pc.setRemoteDescription(new RTCSessionDescription(data))
-          console.log(`Host: Answer de ${from} establecida. Procesando candidatos.`)
-          buffer.forEach((candidate) => {
-            pc.addIceCandidate(new RTCIceCandidate(candidate))
-          })
-          this.candidateBuffers[from] = [] // Vaciar el buffer
-        } else if (data.candidate) {
-          if (pc.remoteDescription) {
-            await pc.addIceCandidate(new RTCIceCandidate(data))
-          } else {
-            // Si la Answer aún NO ha llegado, almacenar en el buffer
-            buffer.push(data)
-            console.log(`Candidato de ${from} bufferizado. Esperando Answer.`)
+          await pc.setRemoteDescription(
+            new RTCSessionDescription(data.sdp)
+          )
+
+          // aplicar ICE que llegaron antes del answer
+          const buffered = this.candidateBuffers[from]
+          if (buffered?.length) {
+            for (const candidate of buffered) {
+              await pc.addIceCandidate(candidate)
+            }
+            this.candidateBuffers[from] = []
           }
         }
+
+        // ✅ ICE
+        else if (data.type === 'ice') {
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(data.candidate)
+          } else {
+            this.candidateBuffers[from].push(data.candidate)
+            console.log(`ICE bufferizado de ${from}`)
+          }
+        }
+
+        // 🚫 NO otros casos
       } catch (e) {
-        console.error('Error al procesar señal en Host:', e)
+        console.error('Error al procesar señal en Host:', e, data)
       }
     },
     handleEndStream() {
@@ -622,11 +562,11 @@ export default {
           audioTrack.enabled = !audioTrack.enabled
           this.micAct = audioTrack.enabled
         } else {
-            // Si el stream existe pero no tiene audio (ej: solo cámara), pedimos audio
-            const newStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            const [track] = newStream.getAudioTracks()
-            this.localStream.addTrack(track)
-            this.micAct = true
+          // Si el stream existe pero no tiene audio (ej: solo cámara), pedimos audio
+          const newStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          const [track] = newStream.getAudioTracks()
+          this.localStream.addTrack(track)
+          this.micAct = true
         }
       }
       await this.updateTrackForPeers('audio', this.micAct ? this.localStream.getAudioTracks()[0] : null, this.localStream)
@@ -637,13 +577,13 @@ export default {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true })
           const [videoTrack] = stream.getVideoTracks()
-          
+
           if (!this.localStream) {
             this.localStream = stream
           } else {
             this.localStream.addTrack(videoTrack)
           }
-          
+
           this.cameraStream = this.localStream
           this.camaraAct = true
         } catch (e) {
@@ -671,7 +611,7 @@ export default {
       } catch (e) {
         console.error("Error closing stream status:", e);
       }
-      
+
       // Detener tracks locales
       if (this.localStream) {
         this.localStream.getTracks().forEach(t => t.stop());
@@ -679,11 +619,11 @@ export default {
       if (this.cameraStream) {
         this.cameraStream.getTracks().forEach(t => t.stop());
       }
-      
+
       // Cerrar WebRTC
       Object.values(this.peers).forEach(pc => pc.close());
       this.peers = {};
-      
+
       router.push({ name: 'transmitions' });
     },
     async admitir(user) {
@@ -693,7 +633,7 @@ export default {
         response: true,
       })
 
-      this.participantes.push({ ...user, estado: 'Activo' })
+      this.participantes.push({ ...user, estado: 'Inactivo' })
       this.salaEspera = this.salaEspera.filter((u) => u.socketId !== user.socketId)
     },
 
@@ -735,65 +675,64 @@ export default {
 
     //SECCION webRTC
     async createOfferForViewer(viewerData) {
+      const viewerSocketId = viewerData.socketId;
+
       const pc = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       });
 
-      const viewerSocketId = viewerData.socketId;
       this.peers[viewerSocketId] = pc;
       this.candidateBuffers[viewerSocketId] = [];
-      
-      // 1. Agregar tracks del owner
-      // Intentamos agregar el video actual (cámara o pantalla)
+
+      // VIDEO (cámara o pantalla)
       if (this.localStream) {
-        this.localStream.getVideoTracks().forEach((track) => {
+        this.localStream.getTracks().forEach(track => {
           pc.addTrack(track, this.localStream);
         });
       }
-
-      // Siempre intentamos agregar el audio de la cámara (micrófono) si existe
-      // Esto asegura que el viewer escuche al host incluso si está compartiendo pantalla
+      // AUDIO siempre desde mic
       if (this.cameraStream) {
-        this.cameraStream.getAudioTracks().forEach((track) => {
+        this.cameraStream.getAudioTracks().forEach(track => {
           pc.addTrack(track, this.cameraStream);
         });
       }
 
-      // 2. Manejo de ICE candidates
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit('signal', { targetId: viewerSocketId, data: event.candidate });
+      pc.onicecandidate = e => {
+        if (e.candidate) {
+          socket.emit('signal', {
+            targetId: viewerSocketId,
+            data: { type: 'ice', candidate: e.candidate }
+          });
         }
       };
 
-      // 3. RECIBIR audio del viewer
-      pc.ontrack = (event) => {
-        console.log(`Track recibido de: ${viewerData.name}`, event.track.kind);
-        if (event.track.kind === 'audio') {
-          const remoteAudio = document.createElement('audio');
-          remoteAudio.srcObject = new MediaStream([event.track]);
-          remoteAudio.autoplay = true;
-          pc._remoteAudio = remoteAudio;
-          
-          // Audio Spectrum for Participant
-          this.setupParticipantAnalyzer(viewerSocketId, event.track);
-          
-          // Debug: attach to body if hidden
-          remoteAudio.style.display = 'none';
-          document.body.appendChild(remoteAudio);
-        } else if (event.track.kind === 'video') {
-           const remoteVideo = document.getElementById(`remote-video-${viewerSocketId}`);
-           if (remoteVideo) remoteVideo.srcObject = new MediaStream([event.track]);
-           const p = this.participantes.find(part => part.socketId === viewerSocketId || part.idSocket === viewerSocketId);
-           if (p) p.hasVideo = true;
+      //. RECIBIR audio del viewer
+      pc.ontrack = e => {
+        if (e.track.kind === 'audio') {
+          const audio = document.createElement('audio');
+          audio.srcObject = new MediaStream([e.track]);
+          audio.autoplay = true;
+          audio.style.display = 'none';
+          document.body.appendChild(audio);
+
+          this.setupParticipantAnalyzer(viewerSocketId, e.track);
+        }
+
+        if (e.track.kind === 'video') {
+          const video = document.getElementById(`remote-video-${viewerSocketId}`);
+          if (video) video.srcObject = e.streams[0];
         }
       };
 
       // 4. Crear Offer
       try {
+
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        socket.emit('signal', { targetId: viewerSocketId, data: offer });
+        socket.emit('signal', {
+          targetId: viewerSocketId,
+          data: { type: 'offer', sdp: offer }
+        });
         console.log(`Offer enviada a ${viewerData.name}`);
       } catch (error) {
         console.error('Error al crear offer:', error);
@@ -843,21 +782,29 @@ export default {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #000000;
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1f2937; /* bg-gray-800 */
+  background: #1f2937;
+  /* bg-gray-800 */
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4b5563; /* bg-gray-600 */
+  background: #4b5563;
+  /* bg-gray-600 */
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6b7280; /* bg-gray-500 */
+  background: #6b7280;
+  /* bg-gray-500 */
 }
 </style>
