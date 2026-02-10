@@ -82,6 +82,17 @@
         </button>
 
         <button
+          @click="toggleScreenShare"
+          :class="[
+            'p-3 rounded-full transition-all duration-200',
+            pantallaAct ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600',
+          ]"
+          title="Compartir pantalla"
+        >
+          <ComputerDesktopIcon class="w-6 h-6 text-white" />
+        </button>
+
+        <button
           @click="expandirBool = !expandirBool"
           class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
         >
@@ -254,6 +265,7 @@ export default {
       localStream: null,
       stream: null,
       remoteStream: null,
+      screenStream: null,
       candidateBuffer: [],
 
       micAct: false,
@@ -317,6 +329,11 @@ export default {
       setTimeout(() => this.confirmEndStream(), 2000);
     });
 
+    socket.on('expelled', () => {
+      alert('Has sido expulsado de la reunión');
+      this.confirmEndStream();
+    });
+
     // Si venimos de RoomWait, ya tenemos startTime en el query y hostId en params
     if (this.$route.query.startTime) {
       this.startTime = parseInt(this.$route.query.startTime);
@@ -342,32 +359,26 @@ export default {
       if (this.pc) return
       this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
 
-      this.pc.addTransceiver('video', { direction: 'recvonly' })
-      this.pc.addTransceiver('audio', { direction: 'recvonly' })
+      // No agregamos transceivers manualmente aquí para evitar conflictos con el Offer del Host
+      // En vez de eso, responderemos a los transceivers que el Host envíe.
 
       this.pc.ontrack = (event) => {
-        // Si el track viene del host (principal)
-        if (!event.streams[0] || event.streams[0].id === 'host-stream' || !this.participantes.some(p => p.socketId === event.streams[0]?.id)) {
-          if (!this.remoteStream) {
-            this.remoteStream = new MediaStream()
-            if (this.$refs.videoRef) {
-              this.$refs.videoRef.srcObject = this.remoteStream
-            }
+        console.log('Track recibido en Viewer:', event.track.kind, event.streams)
+        
+        // El video principal (el del host) siempre irá al videoRef
+        if (event.track.kind === 'video') {
+          if (this.$refs.videoRef) {
+            this.$refs.videoRef.srcObject = event.streams[0] || new MediaStream([event.track])
           }
-          this.remoteStream.addTrack(event.track)
-        } else {
-          // Track de otro participante (Cuadrícula)
-          const participantSocketId = event.streams[0].id;
-          if (event.track.kind === 'audio') {
-            this.setupParticipantAnalyzer(participantSocketId, event.track);
-          } else if (event.track.kind === 'video') {
-            const remoteVideo = document.getElementById(`remote-video-${participantSocketId}`);
-            if (remoteVideo) remoteVideo.srcObject = new MediaStream([event.track]);
-            const p = this.participantes.find(part => part.socketId === participantSocketId);
-            if (p) p.hasVideo = true;
-          }
+        } else if (event.track.kind === 'audio') {
+          // Si el audio es del host, se reproduce automáticamente si el stream es el mismo
+          // Si no, podrías necesitar un elemento audio separado para el host si no viene en el mismo stream
+          const remoteAudio = document.createElement('audio')
+          remoteAudio.srcObject = event.streams[0] || new MediaStream([event.track])
+          remoteAudio.autoplay = true
+          remoteAudio.style.display = 'none'
+          document.body.appendChild(remoteAudio)
         }
-        console.log('Track recibido en Viewer:', event.track.kind)
       }
 
       this.pc.onicecandidate = (e) => {
@@ -458,26 +469,30 @@ export default {
       this.micAct = !this.micAct
       if (this.micAct) {
         try {
-          this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          const audioTrack = stream.getAudioTracks()[0]
+          
+          if (!this.localStream) {
+            this.localStream = stream
+          } else {
+            // Si ya hay un stream (ej: de video), le agregamos este audio track
+            this.localStream.addTrack(audioTrack)
+          }
           
           // Enviar audio al host
-          const audioTrack = this.localStream.getAudioTracks()[0];
           if (this.pc) {
-            const sender = this.pc.getSenders().find(s => s.track && s.track.kind === 'audio');
-            if (sender) {
-              await sender.replaceTrack(audioTrack);
-            } else {
-              this.pc.addTrack(audioTrack, this.localStream);
-            }
-            // Cambiar dirección del transceiver si existe
-            const transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'audio' || t.sender.track?.kind === 'audio');
+            // Buscamos un transceiver de audio existente o un sender
+            let transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'audio')
             if (transceiver) {
-              transceiver.direction = 'sendrecv';
+              transceiver.direction = 'sendrecv'
+              await transceiver.sender.replaceTrack(audioTrack)
+            } else {
+              this.pc.addTrack(audioTrack, this.localStream)
             }
           }
 
           this.audioContext = new (window.AudioContext || window.webkitAudioContext)()
-          this.audioSource = this.audioContext.createMediaStreamSource(this.localStream)
+          this.audioSource = this.audioContext.createMediaStreamSource(new MediaStream([audioTrack]))
           this.audioAnalyser = this.audioContext.createAnalyser()
           this.audioAnalyser.fftSize = 256
           this.audioSource.connect(this.audioAnalyser)
@@ -488,16 +503,14 @@ export default {
         }
       } else {
         if (this.localStream) {
-          this.localStream.getTracks().forEach(t => t.stop());
+          const audioTrack = this.localStream.getAudioTracks()[0]
+          if (audioTrack) audioTrack.stop()
         }
         if (this.pc) {
-          const sender = this.pc.getSenders().find(s => s.track && s.track.kind === 'audio');
-          if (sender) await sender.replaceTrack(null);
-          
-          const transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'audio' || t.sender.track?.kind === 'audio');
-          if (transceiver) {
-            transceiver.direction = 'recvonly';
-          }
+          const sender = this.pc.getSenders().find(s => s.track && s.track.kind === 'audio')
+          if (sender) await sender.replaceTrack(null)
+          const transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'audio' || (t.sender.track && t.sender.track.kind === 'audio'))
+          if (transceiver) transceiver.direction = 'recvonly'
         }
         this.stopVisualization()
       }
@@ -531,18 +544,44 @@ export default {
       this.camaraAct = !this.camaraAct
       if (this.camaraAct) {
         try {
-          this.videoStream = await navigator.mediaDevices.getUserMedia({ video: true })
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+          const videoTrack = stream.getVideoTracks()[0]
+          
+          if (!this.localStream) {
+            this.localStream = stream
+          } else {
+            this.localStream.addTrack(videoTrack)
+          }
+
           await this.$nextTick()
           if (this.$refs.modalVideoRef) {
-            this.$refs.modalVideoRef.srcObject = this.videoStream
+            this.$refs.modalVideoRef.srcObject = this.localStream
+          }
+
+          // Enviar video al host
+          if (this.pc) {
+            let transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'video')
+            if (transceiver) {
+              transceiver.direction = 'sendrecv'
+              await transceiver.sender.replaceTrack(videoTrack)
+            } else {
+              this.pc.addTrack(videoTrack, this.localStream)
+            }
           }
         } catch (err) {
-          alert('Error al acceder a la cámara:', err)
+          console.error('Error al acceder a la cámara:', err)
           this.camaraAct = false
         }
       } else {
-        if (this.videoStream) {
-          this.videoStream.getTracks().forEach((track) => track.stop())
+        if (this.localStream) {
+          const videoTrack = this.localStream.getVideoTracks()[0]
+          if (videoTrack) videoTrack.stop()
+        }
+        if (this.pc) {
+          const sender = this.pc.getSenders().find(s => s.track && s.track.kind === 'video')
+          if (sender) await sender.replaceTrack(null)
+          const transceiver = this.pc.getTransceivers().find(t => t.receiver.track.kind === 'video' || (t.sender.track && t.sender.track.kind === 'video'))
+          if (transceiver) transceiver.direction = 'recvonly'
         }
         if (this.$refs.modalVideoRef) {
           this.$refs.modalVideoRef.srcObject = null
@@ -552,6 +591,104 @@ export default {
 
     async confirmEndStream() {
       router.push({ name: 'transmitions' })
+    },
+    
+    async toggleScreenShare() {
+      this.pantallaAct = !this.pantallaAct
+      if (this.pantallaAct) {
+        await this.startScreenShare()
+      } else {
+        await this.stopScreenShare()
+      }
+    },
+
+    async startScreenShare() {
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true,
+        })
+
+        // Cuando el usuario deja de compartir desde el navegador, detener el toggle
+        screenStream.getVideoTracks()[0].onended = () => {
+          this.stopScreenShare()
+        }
+
+        // El video del modal muestra la pantalla compartida
+        if (this.$refs.modalVideoRef) {
+          this.$refs.modalVideoRef.srcObject = screenStream
+        }
+
+        // Obtener el track de video de la pantalla
+        const screenVideoTrack = screenStream.getVideoTracks()[0]
+        const screenAudioTrack = screenStream.getAudioTracks()[0]
+
+        // Reemplazar el track de video en la conexión WebRTC
+        if (this.pc) {
+          const videoSender = this.pc.getSenders().find(s => s.track && s.track.kind === 'video')
+          if (videoSender && screenVideoTrack) {
+            await videoSender.replaceTrack(screenVideoTrack)
+          } else if (screenVideoTrack) {
+            this.pc.addTrack(screenVideoTrack, screenStream)
+          }
+
+          // Si hay audio en la pantalla compartida, también enviarlo
+          if (screenAudioTrack) {
+            const audioSender = this.pc.getSenders().find(s => s.track && s.track.kind === 'audio')
+            if (audioSender) {
+              await audioSender.replaceTrack(screenAudioTrack)
+            } else {
+              this.pc.addTrack(screenAudioTrack, screenStream)
+            }
+          }
+        }
+
+        this.screenStream = screenStream
+      } catch (err) {
+        console.error('Error al compartir pantalla:', err)
+        this.pantallaAct = false
+      }
+    },
+
+    async stopScreenShare() {
+      try {
+        // Detener todos los tracks de la pantalla compartida
+        if (this.screenStream) {
+          this.screenStream.getTracks().forEach(track => track.stop())
+          this.screenStream = null
+        }
+
+        // Restaurar a la cámara local si estaba activa
+        if (this.camaraAct && this.localStream) {
+          const videoTrack = this.localStream.getVideoTracks()[0]
+          const audioTrack = this.localStream.getAudioTracks()[0]
+
+          if (this.pc) {
+            const videoSender = this.pc.getSenders().find(s => s.track && s.track.kind === 'video')
+            if (videoSender && videoTrack) {
+              await videoSender.replaceTrack(videoTrack)
+            }
+
+            const audioSender = this.pc.getSenders().find(s => s.track && s.track.kind === 'audio')
+            if (audioSender && audioTrack) {
+              await audioSender.replaceTrack(audioTrack)
+            }
+          }
+
+          // Restaurar el video del modal
+          if (this.$refs.modalVideoRef) {
+            this.$refs.modalVideoRef.srcObject = this.localStream
+          }
+        } else if (this.$refs.modalVideoRef) {
+          // Si no hay cámara, limpiar el modal
+          this.$refs.modalVideoRef.srcObject = null
+        }
+
+        this.pantallaAct = false
+      } catch (err) {
+        console.error('Error al detener compartir pantalla:', err)
+        this.pantallaAct = false
+      }
     },
     async admitir(user) {
       try {

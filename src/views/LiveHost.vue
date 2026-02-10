@@ -227,16 +227,15 @@
       </div>
     </div>
 
-    <!-- Cuadrícula de Participantes -->
-    <div v-if="participantes.length > 0" class="mt-4 pb-4 px-4 overflow-hidden">
-      <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+    <div v-if="participantes.length > 0" class="mt-4 pb-4 px-4 overflow-hidden w-64 border-l border-gray-800">
+      <h3 class="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
         <UserGroupIcon class="w-4 h-4 text-blue-400" />
-        Participantes Activos
+        Activos
       </h3>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-x-auto custom-scrollbar max-h-60 p-1">
-        <div v-for="p in participantes" :key="p.socketId || p.idSocket" class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video">
+      <div class="flex flex-col gap-4 overflow-y-auto custom-scrollbar max-h-[calc(100vh-250px)] p-1">
+        <div v-for="p in participantes" :key="p.socketId" class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video w-full shrink-0">
           <video
-            :id="'remote-video-' + (p.socketId || p.idSocket)"
+            :id="'remote-video-' + p.socketId"
             autoplay
             playsinline
             class="w-full h-full object-cover bg-black"
@@ -252,7 +251,7 @@
             </div>
           </div>
           <div v-if="!p.hasVideo" class="absolute inset-0 flex items-center justify-center bg-gray-700">
-             <UserCircleIcon class="w-12 h-12 text-gray-500" />
+             <UserCircleIcon class="w-10 h-10 text-gray-500" />
           </div>
         </div>
       </div>
@@ -397,6 +396,36 @@ export default {
     } catch (e) {
       console.log("Error starting stream status:", e);
     }
+    
+    // Inicializar captura de audio y video automáticamente
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+      })
+      this.localStream = stream
+      this.cameraStream = stream
+      this.camaraAct = true
+      this.micAct = true
+      
+      // Mostrar el stream local en el video principal
+      if (this.$refs.videoRef) {
+        this.$nextTick(() => {
+          this.$refs.videoRef.srcObject = this.localStream
+        })
+      }
+      
+      // Mostrar también en el modal (picture-in-picture)
+      if (this.$refs.modalVideoRef) {
+        this.$nextTick(() => {
+          this.$refs.modalVideoRef.srcObject = this.localStream
+        })
+      }
+    } catch (err) {
+      console.warn('Advertencia: No se pudo acceder a cámara/micrófono automáticamente', err)
+      // Continuar incluso si no se pueden capturar los dispositivos
+    }
+    
     socket.emit('start-stream', { roomId: this.roomId, hostData: this.userData })
     
     socket.on('stream-started', ({ startTime }) => {
@@ -449,9 +478,8 @@ export default {
     
     // this.iniciarContador(); - Se inicia vía socket events ahora
         
-    /*this._handleSignalBound = this._handleSignal.bind(this)
-    socket.removeAllListeners('signal')
-    socket.on('signal', this._handleSignalBound) */
+    this._handleSignalBound = this.handleSignal.bind(this)
+    socket.on('signal', this._handleSignalBound)
   },
 
 
@@ -710,25 +738,24 @@ export default {
       this.menuAbierto = null
     },
     async expulsar(user) {
-      // Integración Backend: Eliminar participante (No bloqueante)
       if (user.id) {
         try {
           await api.delete(`/transmissions/${this.roomId}/participants/${user.id}`)
         } catch (error) {
-          console.error('Error al eliminar participante del backend (continuando expulsión):', error)
+          console.error('Error al eliminar participante del backend:', error)
         }
       }
 
       // Notificar al servidor para que desconecte al usuario
-      socket.emit('expel-viewer', { viewerId: user.idSocket, roomId: this.roomId })
+      socket.emit('expel-viewer', { viewerId: user.socketId, roomId: this.roomId })
 
       // Eliminarlo de la lista local inmediatamente
-      this.participantes = this.participantes.filter((p) => p.idSocket !== user.idSocket)
+      this.participantes = this.participantes.filter((p) => p.socketId !== user.socketId)
 
       // Limpiar la conexión WebRTC
-      if (this.peers[user.idSocket]) {
-        this.peers[user.idSocket].close()
-        delete this.peers[user.idSocket]
+      if (this.peers[user.socketId]) {
+        this.peers[user.socketId].close()
+        delete this.peers[user.socketId]
       }
       this.menuAbierto = null
     },
@@ -743,21 +770,22 @@ export default {
       this.peers[viewerSocketId] = pc;
       this.candidateBuffers[viewerSocketId] = [];
       
-      // 1. Agregar tracks del owner
-      // Intentamos agregar el video actual (cámara o pantalla)
+      // 1. Agregar tracks actuales del owner si existen
+      // Es mejor usar addTrack con el stream para asegurar la asociación en el viewer
       if (this.localStream) {
-        this.localStream.getVideoTracks().forEach((track) => {
+        this.localStream.getTracks().forEach(track => {
           pc.addTrack(track, this.localStream);
         });
-      }
-
-      // Siempre intentamos agregar el audio de la cámara (micrófono) si existe
-      // Esto asegura que el viewer escuche al host incluso si está compartiendo pantalla
-      if (this.cameraStream) {
-        this.cameraStream.getAudioTracks().forEach((track) => {
+      } else if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(track => {
           pc.addTrack(track, this.cameraStream);
         });
       }
+
+      // 2. Preparar transceivers para recibir del Viewer
+      // Usamos addTransceiver para asegurar que el host esté listo para recibir video/audio
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
 
       // 2. Manejo de ICE candidates
       pc.onicecandidate = (event) => {
@@ -784,7 +812,7 @@ export default {
         } else if (event.track.kind === 'video') {
            const remoteVideo = document.getElementById(`remote-video-${viewerSocketId}`);
            if (remoteVideo) remoteVideo.srcObject = new MediaStream([event.track]);
-           const p = this.participantes.find(part => part.socketId === viewerSocketId || part.idSocket === viewerSocketId);
+           const p = this.participantes.find(part => part.socketId === viewerSocketId);
            if (p) p.hasVideo = true;
         }
       };
