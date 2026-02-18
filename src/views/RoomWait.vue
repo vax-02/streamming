@@ -71,7 +71,7 @@
 
 <script>
 import socket from '@/services/socket.js'
-
+import api from '@/services/api.js'
 export default {
   name: 'RoomWait',
 
@@ -90,13 +90,13 @@ export default {
       viewerData: this.userData,
     })
 
-    socket.on('join-accepted', (data) => {
+    socket.on('join-accepted', async (data) => {
+      console.log(this.roomId);
+      const link = await this.getTransmissionData();
       this.$router.push({
         name: 'live-viewer',
         params: { 
-          id: this.roomId, 
-          idH: data.hostId, 
-          idV: this.userData.id 
+          link: link, 
         },
         query: { startTime: data.startTime }
       })
@@ -116,6 +116,17 @@ export default {
   },
 
   methods: {
+     
+    async getTransmissionData() {
+      try {
+        const response = await api.get(`/transmissions/${this.roomId}`);
+        return response.data.data[0].link;
+      } catch (error) {
+        console.error('Error al obtener datos de la transmisión:', error);
+        return null;
+      }
+    },
+
     cancelRequest() {
       this.$router.push({ name: 'transmitions' })
     },

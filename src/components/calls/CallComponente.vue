@@ -104,12 +104,8 @@ import socket from '@/services/socket.js'
 import CallingComponent from './CallingComponent.vue'
 import {
   MicrophoneIcon,
-  VideoCameraIcon,
   PhoneXMarkIcon,
-  ComputerDesktopIcon,
   LockClosedIcon,
-  SpeakerWaveIcon,
-  Squares2X2Icon,
   ChevronDownIcon
 } from '@heroicons/vue/24/solid'
 import { MicrophoneIcon as MicrophoneIconSlash } from '@heroicons/vue/24/outline'

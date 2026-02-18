@@ -1,17 +1,19 @@
 <template>
-<div class="flex flex-col h-screen bg-gray-900 text-white font-sans">
+  <div class="flex flex-col h-screen bg-gray-900 text-white font-sans">
     <!-- Header superior con Pestañas -->
     <header class="bg-gray-800 border-b border-gray-700 shadow-xl z-10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between py-4 gap-6">
           <div class="flex items-center space-x-3">
             <div class="p-2 bg-blue-500/10 rounded-lg">
-                <VideoCameraIcon class="h-6 w-6 text-blue-500" />
+              <VideoCameraIcon class="h-6 w-6 text-blue-500" />
             </div>
             <span class="text-xl font-bold tracking-wide">Transmisiones</span>
           </div>
-          
-          <nav class="flex items-center bg-gray-900/50 p-1 rounded-2xl border border-gray-700 overflow-x-auto custom-scrollbar no-scrollbar">
+
+          <nav
+            class="flex items-center bg-gray-900/50 p-1 rounded-2xl border border-gray-700 overflow-x-auto custom-scrollbar no-scrollbar"
+          >
             <button
               v-for="tab in tabs"
               :key="tab.id"
@@ -34,29 +36,31 @@
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
       <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        
         <!-- Header Section -->
-        <header v-if="currentTab === 'programadas'" class="flex justify-between items-center mb-8 pb-4 border-b border-gray-800">
-            <div>
-              <h1 class="text-2xl font-bold text-white">Transmisiones Programadas</h1>
-              <p class="text-gray-400 text-sm mt-1">Gestiona tus próximos eventos en vivo.</p>
-            </div>
-             <button
-              @click="abrirNuevoFormulario"
-              class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-            >
-              <PlusIcon class="h-5 w-5" />
-            </button>
+        <header
+          v-if="currentTab === 'programadas'"
+          class="flex justify-between items-center mb-8 pb-4 border-b border-gray-800"
+        >
+          <div>
+            <h1 class="text-2xl font-bold text-white">Transmisiones Programadas</h1>
+            <p class="text-gray-400 text-sm mt-1">Gestiona tus próximos eventos en vivo.</p>
+          </div>
+          <button
+            @click="abrirNuevoFormulario"
+            class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <PlusIcon class="h-5 w-5" />
+          </button>
         </header>
 
-         <header v-if="currentTab === 'publicas'" class="mb-8 pb-4 border-b border-gray-800">
-              <h1 class="text-2xl font-bold text-white">Explorar Transmisiones Públicas</h1>
-              <p class="text-gray-400 text-sm mt-1">Descubre contenido de otros creadores.</p>
+        <header v-if="currentTab === 'publicas'" class="mb-8 pb-4 border-b border-gray-800">
+          <h1 class="text-2xl font-bold text-white">Explorar Transmisiones Públicas</h1>
+          <p class="text-gray-400 text-sm mt-1">Descubre contenido de otros creadores.</p>
         </header>
 
         <header v-if="currentTab === 'pasadas'" class="mb-8 pb-4 border-b border-gray-800">
-             <h1 class="text-2xl font-bold text-white">Historial de Transmisiones</h1>
-             <p class="text-gray-400 text-sm mt-1">Revive tus eventos pasados.</p>
+          <h1 class="text-2xl font-bold text-white">Historial de Transmisiones</h1>
+          <p class="text-gray-400 text-sm mt-1">Revive tus eventos pasados.</p>
         </header>
 
         <!-- Tab: Programadas -->
@@ -69,15 +73,22 @@
             >
               <div class="mb-4 md:mb-0">
                 <div class="flex items-center space-x-3 mb-1">
-                    <span class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider" :class="trans.categoria === 'Publico' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'">
-                        {{ trans.categoria }}
-                    </span>
-                    <h3 class="font-bold text-lg text-white">{{ trans.titulo }}</h3>
+                  <span
+                    class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider"
+                    :class="
+                      trans.categoria === 'Publico'
+                        ? 'bg-green-900 text-green-300'
+                        : 'bg-yellow-900 text-yellow-300'
+                    "
+                  >
+                    {{ trans.categoria }}
+                  </span>
+                  <h3 class="font-bold text-lg text-white">{{ trans.titulo }}</h3>
                 </div>
                 <p class="text-gray-400 text-sm mb-2 max-w-xl">{{ trans.descripcion }}</p>
                 <div class="flex items-center text-gray-500 text-sm">
-                    <CalendarIcon class="w-4 h-4 mr-1.5" />
-                    {{ trans.fechaHora }}
+                  <CalendarIcon class="w-4 h-4 mr-1.5" />
+                  {{ trans.fechaHora }}
                 </div>
               </div>
 
@@ -90,21 +101,21 @@
                   <PlayIcon class="w-4 h-4" />
                   <span class="md:hidden lg:inline">Iniciar</span>
                 </button>
-                 <button
+                <button
                   @click="openShareModal(trans)"
                   class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                   title="Compartir"
                 >
                   <ShareIcon class="w-4 h-4" />
                 </button>
-                 <button
+                <button
                   @click="editarTransmision(index)"
                   class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                   title="Editar"
                 >
                   <PencilIcon class="w-4 h-4" />
                 </button>
-                 <button
+                <button
                   @click="openDeleteConfirm(trans.id, index)"
                   class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                   title="Eliminar"
@@ -114,8 +125,11 @@
               </div>
             </div>
           </div>
-          
-           <div v-else class="flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-700">
+
+          <div
+            v-else
+            class="flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-700"
+          >
             <VideoCameraSlashIcon class="w-16 h-16 mb-4 opacity-40" />
             <p class="text-lg font-medium">No hay transmisiones programadas</p>
             <p class="text-sm opacity-70">Crea una nueva para comenzar a transmitir</p>
@@ -124,38 +138,53 @@
 
         <!-- Tab: Pasadas -->
         <section v-if="currentTab === 'pasadas'" class="space-y-6">
-           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <div
               v-for="video in pastStreams"
               :key="video.id"
               class="group bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-700 hover:border-gray-600 transform hover:-translate-y-1"
             >
-              <div class="relative cursor-pointer aspect-video bg-gray-900 group" @click="playVideo(video)">
-                 <!-- Placeholder if no thumbnail -->
-                 <div v-if="!video.thumbnail && !video.url" class="absolute inset-0 flex items-center justify-center text-gray-600">
-                    <FilmIcon class="w-12 h-12 opacity-30" />
-                 </div>
-                 <img v-else :src="video.thumbnail || 'https://via.placeholder.com/640x360?text=Video'" alt="thumbnail" class="w-full h-full object-cover" />
-                
+              <div
+                class="relative cursor-pointer aspect-video bg-gray-900 group"
+                @click="playVideo(video)"
+              >
+                <!-- Placeholder if no thumbnail -->
+                <div
+                  v-if="!video.thumbnail && !video.url"
+                  class="absolute inset-0 flex items-center justify-center text-gray-600"
+                >
+                  <FilmIcon class="w-12 h-12 opacity-30" />
+                </div>
+                <img
+                  v-else
+                  :src="video.thumbnail || 'https://via.placeholder.com/640x360?text=Video'"
+                  alt="thumbnail"
+                  class="w-full h-full object-cover"
+                />
+
                 <div
                   class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
                 >
-                  <div class="bg-blue-600 p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform">
+                  <div
+                    class="bg-blue-600 p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform"
+                  >
                     <PlayIcon class="w-8 h-8 text-white ml-1" />
                   </div>
                 </div>
               </div>
               <div class="p-4">
-                <h4 class="font-bold text-white text-lg mb-1 line-clamp-1" :title="video.title">{{ video.title }}</h4>
+                <h4 class="font-bold text-white text-lg mb-1 line-clamp-1" :title="video.title">
+                  {{ video.title }}
+                </h4>
                 <div class="flex items-center text-gray-400 text-xs mb-3">
-                   <ClockIcon class="w-3.5 h-3.5 mr-1" />
-                   <span>{{ video.date }}</span>
+                  <ClockIcon class="w-3.5 h-3.5 mr-1" />
+                  <span>{{ video.date }}</span>
                 </div>
-                <button 
-                    @click="playVideo(video)"
-                    class="w-full text-center py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                <button
+                  @click="playVideo(video)"
+                  class="w-full text-center py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
                 >
-                    Ver grabación
+                  Ver grabación
                 </button>
               </div>
             </div>
@@ -168,24 +197,26 @@
             <div
               v-for="(trans, index) in publicStreams"
               :key="index"
-               class="bg-gray-800 border border-gray-700 p-5 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center hover:bg-gray-750 transition-colors shadow-sm hover:shadow-md"
+              class="bg-gray-800 border border-gray-700 p-5 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center hover:bg-gray-750 transition-colors shadow-sm hover:shadow-md"
             >
               <div class="mb-4 md:mb-0">
-                  <div class="flex items-center space-x-3 mb-1">
-                    <span class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-purple-900 text-purple-300">
-                        {{ trans.categoria }}
-                    </span>
-                    <h3 class="font-bold text-lg text-white">{{ trans.titulo }}</h3>
+                <div class="flex items-center space-x-3 mb-1">
+                  <span
+                    class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-purple-900 text-purple-300"
+                  >
+                    {{ trans.categoria }}
+                  </span>
+                  <h3 class="font-bold text-lg text-white">{{ trans.titulo }}</h3>
                 </div>
                 <p class="text-gray-400 text-sm mb-2 max-w-xl">{{ trans.descripcion }}</p>
-                 <div class="flex items-center text-gray-500 text-sm">
-                    <CalendarIcon class="w-4 h-4 mr-1.5" />
-                    {{ trans.fechaHora }}
+                <div class="flex items-center text-gray-500 text-sm">
+                  <CalendarIcon class="w-4 h-4 mr-1.5" />
+                  {{ trans.fechaHora }}
                 </div>
               </div>
 
-               <div class="flex items-center space-x-2 w-full md:w-auto mt-2 md:mt-0">
-                 <button
+              <div class="flex items-center space-x-2 w-full md:w-auto mt-2 md:mt-0">
+                <button
                   @click="requestLive(trans.id)"
                   class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                 >
@@ -193,7 +224,7 @@
                   <span class="md:hidden lg:inline">Ver Transmisión</span>
                 </button>
                 <button
-                   @click="openShareModal(trans)"
+                  @click="openShareModal(trans)"
                   class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                   title="Compartir"
                 >
@@ -202,7 +233,10 @@
               </div>
             </div>
           </div>
-           <div v-else class="flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-700">
+          <div
+            v-else
+            class="flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-700"
+          >
             <GlobeAltIcon class="w-16 h-16 mb-4 opacity-40" />
             <p class="text-lg font-medium">No hay transmisiones públicas disponibles</p>
           </div>
@@ -212,177 +246,213 @@
 
     <!-- Modal Formulario -->
     <div v-if="abrirFormulario" class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" @click="cancelarFormulario"></div>
-        <div class="flex min-h-full items-center justify-center p-4">
-             <div class="relative w-full max-w-lg bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700">
-                <div class="flex justify-between items-center mb-6">
-                  <h3 class="text-2xl font-bold text-white">
-                    {{ nuevaTrans.id ? 'Editar Transmisión' : 'Nueva Transmisión' }}
-                  </h3>
-                   <button @click="cancelarFormulario" class="text-gray-400 hover:text-white transition-colors">
-                    <XMarkIcon class="w-6 h-6" />
-                  </button>
-                </div>
+      <div
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+        @click="cancelarFormulario"
+      ></div>
+      <div class="flex min-h-full items-center justify-center p-4">
+        <div
+          class="relative w-full max-w-lg bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700"
+        >
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold text-white">
+              {{ nuevaTrans.id ? 'Editar Transmisión' : 'Nueva Transmisión' }}
+            </h3>
+            <button
+              @click="cancelarFormulario"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              <XMarkIcon class="w-6 h-6" />
+            </button>
+          </div>
 
-                <form @submit.prevent="guardarTransmision" class="space-y-5">
-                  <div class="space-y-2">
-                    <label class="text-sm font-medium text-gray-300">Título</label>
-                    <input
-                      v-model="nuevaTrans.titulo"
-                      type="text"
-                      placeholder="Ej: Clase de Matemáticas"
-                      class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                      required
-                    />
-                  </div>
-                  
-                  <div class="space-y-2">
-                    <label class="text-sm font-medium text-gray-300">Descripción</label>
-                    <textarea
-                      v-model="nuevaTrans.descripcion"
-                      placeholder="Describe el contenido..."
-                      class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none h-24"
-                      required
-                    ></textarea>
-                  </div>
+          <form @submit.prevent="guardarTransmision" class="space-y-5">
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-300">Título</label>
+              <input
+                v-model="nuevaTrans.titulo"
+                type="text"
+                placeholder="Ej: Clase de Matemáticas"
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                required
+              />
+            </div>
 
-                  <div class="grid grid-cols-2 gap-4">
-                     <div class="space-y-2">
-                        <label class="text-sm font-medium text-gray-300">Tipo</label>
-                        <select
-                            v-model="nuevaTrans.categoria"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            required
-                        >
-                            <option value="">Seleccionar</option>
-                            <option value="Publico">Público</option>
-                            <option value="Privado">Privado</option>
-                        </select>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium text-gray-300">Fecha y Hora</label>
-                        <input
-                        v-model="nuevaTrans.fechaHora"
-                        type="datetime-local"
-                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        required
-                        />
-                    </div>
-                  </div>
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-300">Descripción</label>
+              <textarea
+                v-model="nuevaTrans.descripcion"
+                placeholder="Describe el contenido..."
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none h-24"
+                required
+              ></textarea>
+            </div>
 
-                  <div class="mt-8 flex justify-end space-x-3 pt-4 border-t border-gray-700">
-                    <button
-                      type="button"
-                      @click="cancelarFormulario"
-                      class="px-5 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors font-medium border border-gray-600 hover:border-gray-500"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg hover:shadow-blue-500/20 transition-all"
-                    >
-                      {{ nuevaTrans.id ? 'Guardar Cambios' : 'Crear Transmisión' }}
-                    </button>
-                  </div>
-                </form>
-             </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-gray-300">Tipo</label>
+                <select
+                  v-model="nuevaTrans.categoria"
+                  class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  required
+                >
+                  <option value="">Seleccionar</option>
+                  <option value="Publico">Público</option>
+                  <option value="Privado">Privado</option>
+                </select>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-gray-300">Fecha y Hora</label>
+                <input
+                  v-model="nuevaTrans.fechaHora"
+                  type="datetime-local"
+                  class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="mt-8 flex justify-end space-x-3 pt-4 border-t border-gray-700">
+              <button
+                type="button"
+                @click="cancelarFormulario"
+                class="px-5 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors font-medium border border-gray-600 hover:border-gray-500"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg hover:shadow-blue-500/20 transition-all"
+              >
+                {{ nuevaTrans.id ? 'Guardar Cambios' : 'Crear Transmisión' }}
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
 
-     <!-- Share Modal -->
-     <div v-if="shareTransmision" class="fixed inset-0 z-50 overflow-y-auto">
-         <div class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" @click="shareTransmision = false"></div>
+    <!-- Share Modal -->
+    <div v-if="shareTransmision" class="fixed inset-0 z-50 overflow-y-auto">
+      <div
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+        @click="shareTransmision = false"
+      ></div>
 
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative w-full max-w-lg bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-700">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold text-white">Compartir Transmisión</h3>
-                     <button @click="shareTransmision = false" class="text-gray-400 hover:text-white transition-colors">
-                        <XMarkIcon class="w-6 h-6" />
-                    </button>
-                </div>
-                        
-                <div class="space-y-4">
-                     <div class="bg-gray-900 p-3 rounded-lg border border-gray-700 flex items-center">
-                         <span class="text-gray-400 text-sm truncate flex-1 px-2 select-all">{{ linkTransmision }}</span>
-                         <button class="p-2 text-blue-400 hover:text-white hover:bg-blue-600/50 rounded-md transition-colors">
-                             <ClipboardDocumentIcon class="w-5 h-5" />
-                         </button>
-                     </div>
-                            
-                     <div>
-                         <label class="text-sm text-gray-400 mb-2 block font-medium">Asignar a Grupos</label>
-                         <input
-                             type="text"
-                             v-model="search"
-                             placeholder="Buscar grupo..."
-                             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-500"
-                         />
-                     </div>
-
-                     <div class="max-h-56 overflow-y-auto space-y-1 custom-scrollbar pr-1">
-                         <div
-                             v-for="grupo in filteredGrupos"
-                             :key="grupo.id"
-                             @click="toggleGrupo(grupo.id)"
-                             class="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200"
-                             :class="selectedGrupos.includes(grupo.id) ? 'bg-blue-600/20 border border-blue-500/50' : 'hover:bg-gray-700 border border-transparent'"
-                         >
-                             <span class="text-sm font-medium text-gray-200">{{ grupo.nombre }}</span>
-                             <div class="w-5 h-5 rounded-full border border-gray-500 flex items-center justify-center transition-colors" :class="selectedGrupos.includes(grupo.id) ? 'bg-blue-500 border-blue-500' : ''">
-                                 <CheckIcon v-if="selectedGrupos.includes(grupo.id)" class="w-3 h-3 text-white" />
-                             </div>
-                         </div>
-                         <div v-if="filteredGrupos.length === 0" class="text-center py-4 text-gray-500 text-sm">
-                             No se encontraron grupos.
-                         </div>
-                     </div>
-                </div>
-
-                <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700">
-                     <button
-                        @click="shareTransmision = false"
-                        class="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-                    >
-                        Cerrar
-                    </button>
-                    <button
-                        @click="enviarTransmision"
-                        :disabled="selectedGrupos.length === 0"
-                        class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-blue-500/20 transition-all"
-                    >
-                        Compartir
-                    </button>
-                </div>
-            </div>
-        </div>
-     </div>
-
-     <!-- Video Player Modal -->
-    <div v-if="activeVideo" class="fixed inset-0 z-[60] overflow-y-auto">
-      <div class="fixed inset-0 bg-black/95 backdrop-blur-md transition-opacity" @click="closeVideo"></div>
-      
-      <div class="flex min-h-screen items-center justify-center p-4">
-        <div class="relative w-full max-w-6xl bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-800">
-           
-           <!-- Close Button Mobile -->
-           <button @click="closeVideo" class="absolute top-4 right-4 z-10 p-2 bg-black/50 text-white rounded-full md:hidden">
+      <div class="flex min-h-full items-center justify-center p-4">
+        <div
+          class="relative w-full max-w-lg bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-700"
+        >
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-white">Compartir Transmisión</h3>
+            <button
+              @click="shareTransmision = false"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
               <XMarkIcon class="w-6 h-6" />
-           </button>
+            </button>
+          </div>
 
-           <!-- Video Section (Premium Player) -->
-           <div class="flex-1 bg-black flex flex-col justify-center relative">
-              <PremiumPlayer 
-                v-if="activeVideo"
-                :src="activeVideo.url"
-                :title="activeVideo.title"
-                :date="activeVideo.date"
-                @close="closeVideo"
+          <div class="space-y-4">
+            <div class="bg-gray-900 p-3 rounded-lg border border-gray-700 flex items-center">
+              <span class="text-gray-400 text-sm truncate flex-1 px-2 select-all">{{
+                linkTransmision
+              }}</span>
+              <button
+                class="p-2 text-blue-400 hover:text-white hover:bg-blue-600/50 rounded-md transition-colors"
+              >
+                <ClipboardDocumentIcon class="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <label class="text-sm text-gray-400 mb-2 block font-medium">Asignar a Grupos</label>
+              <input
+                type="text"
+                v-model="search"
+                placeholder="Buscar grupo..."
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-500"
               />
-           </div>
+            </div>
 
+            <div class="max-h-56 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+              <div
+                v-for="grupo in filteredGrupos"
+                :key="grupo.id"
+                @click="toggleGrupo(grupo.id)"
+                class="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200"
+                :class="
+                  selectedGrupos.includes(grupo.id)
+                    ? 'bg-blue-600/20 border border-blue-500/50'
+                    : 'hover:bg-gray-700 border border-transparent'
+                "
+              >
+                <span class="text-sm font-medium text-gray-200">{{ grupo.nombre }}</span>
+                <div
+                  class="w-5 h-5 rounded-full border border-gray-500 flex items-center justify-center transition-colors"
+                  :class="selectedGrupos.includes(grupo.id) ? 'bg-blue-500 border-blue-500' : ''"
+                >
+                  <CheckIcon v-if="selectedGrupos.includes(grupo.id)" class="w-3 h-3 text-white" />
+                </div>
+              </div>
+              <div
+                v-if="filteredGrupos.length === 0"
+                class="text-center py-4 text-gray-500 text-sm"
+              >
+                No se encontraron grupos.
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700">
+            <button
+              @click="shareTransmision = false"
+              class="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+            >
+              Cerrar
+            </button>
+            <button
+              @click="enviarTransmision"
+              :disabled="selectedGrupos.length === 0"
+              class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-blue-500/20 transition-all"
+            >
+              Compartir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video Player Modal -->
+    <div v-if="activeVideo" class="fixed inset-0 z-[60] overflow-y-auto">
+      <div
+        class="fixed inset-0 bg-black/95 backdrop-blur-md transition-opacity"
+        @click="closeVideo"
+      ></div>
+
+      <div class="flex min-h-screen items-center justify-center p-4">
+        <div
+          class="relative w-full max-w-6xl bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-800"
+        >
+          <!-- Close Button Mobile -->
+          <button
+            @click="closeVideo"
+            class="absolute top-4 right-4 z-10 p-2 bg-black/50 text-white rounded-full md:hidden"
+          >
+            <XMarkIcon class="w-6 h-6" />
+          </button>
+
+          <!-- Video Section (Premium Player) -->
+          <div class="flex-1 bg-black flex flex-col justify-center relative">
+            <PremiumPlayer
+              v-if="activeVideo"
+              :src="activeVideo.url"
+              :title="activeVideo.title"
+              :date="activeVideo.date"
+              @close="closeVideo"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -400,14 +470,14 @@
 
 <script>
 // Components
-import { 
-  VideoCameraIcon, 
-  CalendarIcon, 
-  ClockIcon, 
-  ShareIcon, 
-  PencilIcon, 
-  TrashIcon, 
-  PlayIcon, 
+import {
+  VideoCameraIcon,
+  CalendarIcon,
+  ClockIcon,
+  ShareIcon,
+  PencilIcon,
+  TrashIcon,
+  PlayIcon,
   PlusIcon,
   ChevronRightIcon,
   ChevronDownIcon,
@@ -418,7 +488,7 @@ import {
   EyeIcon,
   ClipboardDocumentIcon,
   CheckIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
 } from '@heroicons/vue/24/solid'
 import VideoPlayer from '@/components/video/VideoPlayerComponent.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
@@ -434,11 +504,28 @@ export default {
     ConfirmationComponent,
     PremiumPlayer,
     // Icons
-    VideoCameraIcon, CalendarIcon, ClockIcon, ShareIcon, PencilIcon, TrashIcon, PlayIcon, PlusIcon, ChevronRightIcon, ChevronDownIcon, XMarkIcon, VideoCameraSlashIcon, FilmIcon, GlobeAltIcon, EyeIcon, ClipboardDocumentIcon, CheckIcon, PaperAirplaneIcon
+    VideoCameraIcon,
+    CalendarIcon,
+    ClockIcon,
+    ShareIcon,
+    PencilIcon,
+    TrashIcon,
+    PlayIcon,
+    PlusIcon,
+    ChevronRightIcon,
+    ChevronDownIcon,
+    XMarkIcon,
+    VideoCameraSlashIcon,
+    FilmIcon,
+    GlobeAltIcon,
+    EyeIcon,
+    ClipboardDocumentIcon,
+    CheckIcon,
+    PaperAirplaneIcon,
   },
 
   data() {
-     const userData = JSON.parse(localStorage.getItem('user')) || {}
+    const userData = JSON.parse(localStorage.getItem('user')) || {}
     return {
       userData,
       currentTab: 'programadas',
@@ -466,7 +553,7 @@ export default {
       selectedTransmission: null,
       showDeleteConfirm: false,
       transmitionToDelete: null,
-      
+
       // Video Player Logic
       activeVideo: null,
     }
@@ -484,18 +571,18 @@ export default {
   },
   methods: {
     getTabIcon(id) {
-        const icons = {
-            'programadas': 'CalendarIcon',
-            'pasadas': 'ClockIcon',
-            'publicas': 'GlobeAltIcon'
-        }
-        return icons[id] || 'CalendarIcon';
+      const icons = {
+        programadas: 'CalendarIcon',
+        pasadas: 'ClockIcon',
+        publicas: 'GlobeAltIcon',
+      }
+      return icons[id] || 'CalendarIcon'
     },
     toLive(id) {
       localStorage.setItem('live_id', id)
       // Determinar si el usuario actual es el propietario de esta transmisión
-      const transmission = this.transmisiones.find(t => t.id === id)
-      
+      const transmission = this.transmisiones.find((t) => t.id === id)
+
       if (transmission && transmission.id_user === this.userData.id) {
         // El usuario es el propietario -> enviar a LiveHost
         router.push(`/liveHost/${id}`)
@@ -561,7 +648,7 @@ export default {
             date: u.date_t + ' ' + u.time_t,
             status: u.status,
             url: u.link,
-            thumbnail: '' 
+            thumbnail: '',
           })),
           // Video de prueba solicitado por el usuario
           {
@@ -573,8 +660,9 @@ export default {
             date: '24 de Enero, 2026',
             status: 2,
             url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=600'
-          }
+            thumbnail:
+              'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=600',
+          },
         ]
       } catch (error) {
         console.error('Error al cargar transmisiones pasadas:', error)
@@ -584,22 +672,22 @@ export default {
       const isEdit = !!this.nuevaTrans.id
       try {
         // Prepare payload
-        let datePart = '';
-        let timePart = '';
-        
+        let datePart = ''
+        let timePart = ''
+
         if (this.nuevaTrans.fechaHora) {
-            const parts = this.nuevaTrans.fechaHora.split('T');
-            datePart = parts[0];
-            timePart = parts[1];
-             if (timePart.length === 5) {
-              timePart += ':00'
-            }
+          const parts = this.nuevaTrans.fechaHora.split('T')
+          datePart = parts[0]
+          timePart = parts[1]
+          if (timePart.length === 5) {
+            timePart += ':00'
+          }
         }
-        
+
         // Find original status/link if editing
-        const original = isEdit ? this.transmisiones.find(t => t.id === this.nuevaTrans.id) : null;
-        const originalStatus = original ? original.status : 0;
-        const originalLink = original ? original.link : '';
+        const original = isEdit ? this.transmisiones.find((t) => t.id === this.nuevaTrans.id) : null
+        const originalStatus = original ? original.status : 0
+        const originalLink = original ? original.link : ''
 
         const payload = {
           id_user: this.userData.id,
@@ -615,42 +703,41 @@ export default {
         if (isEdit) {
           await api.put(`/transmissions/${this.nuevaTrans.id}`, payload)
           this.addToast('Transmisión actualizada correctamente', 'success')
-           
-           // Update local list (Splice approach from user)
-           const index = this.transmisiones.findIndex(t => t.id === this.nuevaTrans.id);
-           if (index !== -1) {
-             this.transmisiones.splice(index, 1, {
-                 ...this.transmisiones[index],
-                 titulo: this.nuevaTrans.titulo,
-                 descripcion: this.nuevaTrans.descripcion,
-                 categoria: this.nuevaTrans.categoria,
-                 fechaHora: this.nuevaTrans.fechaHora.replace('T', ' ')
-             })
-           }
 
+          // Update local list (Splice approach from user)
+          const index = this.transmisiones.findIndex((t) => t.id === this.nuevaTrans.id)
+          if (index !== -1) {
+            this.transmisiones.splice(index, 1, {
+              ...this.transmisiones[index],
+              titulo: this.nuevaTrans.titulo,
+              descripcion: this.nuevaTrans.descripcion,
+              categoria: this.nuevaTrans.categoria,
+              fechaHora: this.nuevaTrans.fechaHora.replace('T', ' '),
+            })
+          }
         } else {
           const response = await api.post('/transmissions', payload)
           this.addToast('Transmisión creada correctamente', 'success')
-          
+
           // Add to local list
-           this.transmisiones.push({
-             id: response.data.data?.insertId || Date.now(), // Fallback ID if needed
-             id_user: this.userData.id,
-             titulo: this.nuevaTrans.titulo,
-             descripcion: this.nuevaTrans.descripcion,
-             categoria: this.nuevaTrans.categoria,
-             fechaHora: this.nuevaTrans.fechaHora.replace('T', ' '),
-             status: 0,
-             link: ''
+          this.transmisiones.push({
+            id: response.data.data?.insertId || Date.now(), // Fallback ID if needed
+            id_user: this.userData.id,
+            titulo: this.nuevaTrans.titulo,
+            descripcion: this.nuevaTrans.descripcion,
+            categoria: this.nuevaTrans.categoria,
+            fechaHora: this.nuevaTrans.fechaHora.replace('T', ' '),
+            status: 0,
+            link: '',
           })
         }
 
         this.cancelarFormulario()
       } catch (e) {
         console.error('Error saving transmission:', e)
-        let msg = e.response?.data?.message || e.response?.data || 'Error al guardar la transmisión';
+        let msg = e.response?.data?.message || e.response?.data || 'Error al guardar la transmisión'
         if (typeof msg === 'string' && msg.includes('<!DOCTYPE html>')) {
-             msg = 'Error de conexión o ruta no encontrada';
+          msg = 'Error de conexión o ruta no encontrada'
         }
         this.addToast(msg, 'error')
       }
@@ -658,15 +745,15 @@ export default {
     editarTransmision(index) {
       // Logic adjusted to receive INDEX as per user preference in last diff
       const trans = this.transmisiones[index]
-      if(!trans) return;
+      if (!trans) return
 
-      this.nuevaTrans = { ...trans, id: trans.id } 
-      
+      this.nuevaTrans = { ...trans, id: trans.id }
+
       if (this.nuevaTrans.fechaHora) {
-         const formatted = this.nuevaTrans.fechaHora.replace(' ', 'T').substring(0, 16);
-         this.nuevaTrans.fechaHora = formatted;
+        const formatted = this.nuevaTrans.fechaHora.replace(' ', 'T').substring(0, 16)
+        this.nuevaTrans.fechaHora = formatted
       }
-      
+
       this.abrirFormulario = true
     },
     abrirNuevoFormulario() {
@@ -677,7 +764,7 @@ export default {
     cancelarFormulario() {
       this.abrirFormulario = false
       setTimeout(() => {
-          this.nuevaTrans = { id: null, titulo: '', descripcion: '', categoria: '', fechaHora: '' }
+        this.nuevaTrans = { id: null, titulo: '', descripcion: '', categoria: '', fechaHora: '' }
       }, 300)
     },
     openDeleteConfirm(id, index) {
@@ -689,11 +776,11 @@ export default {
       const { id, index } = this.transmitionToDelete
       try {
         await api.delete(`/transmissions/${id}`)
-        
+
         if (this.currentTab === 'programadas') {
-             this.transmisiones.splice(index, 1)
+          this.transmisiones.splice(index, 1)
         } else if (this.currentTab === 'publicas') {
-             this.publicStreams.splice(index, 1)
+          this.publicStreams.splice(index, 1)
         }
 
         this.addToast('Transmisión eliminada correctamente', 'success')
@@ -713,25 +800,21 @@ export default {
     },
     async enviarTransmision() {
       if (!this.selectedTransmission || this.selectedGrupos.length === 0) return
-      
+
       try {
-        // Create formatted message
-        const message = `🎥 *Nueva Transmisión Compartida*\n\n` +
-          `📌 *Título:* ${this.selectedTransmission.titulo}\n` +
-          `📝 *Descripción:* ${this.selectedTransmission.descripcion}\n` +
-          `📅 *Fecha y Hora:* ${this.selectedTransmission.fechaHora}\n` +
-          `🔗 *Link:* ${this.selectedTransmission.link || 'Generando...'}`
-        
-        // Send message to each selected group
-        const promises = this.selectedGrupos.map(groupId => 
+        const message = `Ingresa a la transmision: Titulo: ${this.selectedTransmission.titulo}
+        Descripcion ${this.selectedTransmission.descripcion}
+        << Ingresar >> 
+        `
+        const promises = this.selectedGrupos.map((groupId) =>
           api.post('/messages/bulk', {
             groupIds: [groupId],
-            message: message
-          })
+            message: message,
+          }),
         )
-        
+
         await Promise.all(promises)
-        
+
         this.addToast('Transmisión compartida exitosamente', 'success')
         this.shareTransmision = false
         this.selectedGrupos = []
@@ -746,10 +829,10 @@ export default {
       try {
         const response = await api.get('/groups')
         const temp = response.data.data || []
-        
+
         this.grupos = temp.map((u) => ({
           id: u.id,
-          nombre: u.name
+          nombre: u.name,
         }))
       } catch (error) {
         console.error('Error al cargar grupos:', error)
@@ -760,18 +843,15 @@ export default {
       this.linkTransmision = trans.link || 'Generando...'
       this.shareTransmision = true
     },
-    
+
     // Video Player Logic
     playVideo(video) {
       this.activeVideo = video
-      
     },
     closeVideo() {
-        this.activeVideo = null
-        
+      this.activeVideo = null
     },
-   
-    
+
     addToast(message, type) {
       this.$refs.toastRef.addToast(message, type)
     },

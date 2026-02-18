@@ -81,7 +81,7 @@
           </td>
         </tr>
         <tr v-if="paginatedUsers.length === 0">
-          <td colspan="4" class="text-center py-4 text-gray-400">No se encontraron usuarios</td>
+          <td colspan="5" class="text-center py-4 text-gray-400">No se encontraron usuarios</td>
         </tr>
       </tbody>
     </table>

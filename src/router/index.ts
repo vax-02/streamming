@@ -21,12 +21,18 @@ import ApplicationComponent from '@/components/ApplicationComponent.vue'
 import VideoPlayerComponent from '@/components/video/VideoPlayerComponent.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import RoomWait from '@/views/RoomWait.vue'
-import Generate from '@/components/Generate.vue'
+import Host from '@/components/VideoTest.vue'
+import Viewer from '@/components/VideoTestV.vue'
 const routes = [
   {
-    path: '/test',
-    name: 'request-A',
-    component: Generate,
+    path: '/host',
+    name: 'request-A',  
+    component: Host,
+  },
+  {
+    path: '/viewer',
+    name: 'request-B',  
+    component: Viewer,  
   },
   {
     path: '/request-live/:id',
@@ -100,7 +106,7 @@ const routes = [
     component: Live,
   },
   {
-    path: '/liveViewer/:id/host/:idH/viewer/:idV',
+    path: '/liveViewer/:link',
     name: 'live-viewer',
     component: LiveViewer,
   },
