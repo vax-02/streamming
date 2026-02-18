@@ -1,9 +1,8 @@
 <template>
   <div class="flex h-screen bg-gray-900 text-white overflow-hidden">
     <!-- Panel central: video principal y controles -->
-
     <div class="flex-1 flex flex-col justify-between p-4">
-      <!-- Video principal -->
+      <!-- Video principal (Host) - OCUPA CASI TODO -->
       <div class="relative bg-gray-700 rounded-xl flex-1 mb-4 flex justify-center items-center">
         <video
           ref="remoteVideo"
@@ -11,6 +10,19 @@
           playsinline
           class="w-full h-full object-cover rounded-xl"
         ></video>
+        
+        <!-- Overlay cuando el host no tiene cámara -->
+        <div 
+          v-if="!hostVideoEnabled" 
+          class="absolute inset-0 flex items-center justify-center bg-gray-800/80 rounded-xl"
+        >
+          <div class="text-center">
+            <UserCircleIcon class="w-20 h-20 text-gray-500 mx-auto mb-2" />
+            <p class="text-gray-400">Host sin cámara</p>
+          </div>
+        </div>
+
+        <!-- Tiempo de reunión -->
         <div
           class="absolute top-3 left-3 bg-blue-600 px-3 py-1 rounded-full flex items-center space-x-2 text-sm font-semibold"
         >
@@ -22,33 +34,46 @@
           class="absolute top-3 right-3 bg-blue-600 px-3 py-1 rounded-full flex space-x-2 text-sm font-semibold"
         >
           <span class="flex items-center space-x-1">
-            <EyeIcon class="w-5 h-5" /><span>{{ participantes.length }}</span>
+            <EyeIcon class="w-5 h-5" /><span>{{ otherViewers.length + 1 }}</span>
           </span>
         </div>
 
-        <!--  Tarjeta del perfil actual (mini video o imagen) -->
+        <!-- MINIATURA DE TU CÁMARA (si está activa) -->
         <div
-          class="absolute bottom-3 right-3 bg-gray-800 rounded-xl shadow-lg p-2 flex flex-col items-center w-40 h-28 border border-gray-600"
+          v-if="localVideoEnabled && localStream"
+          class="absolute bottom-3 right-3 bg-gray-800 rounded-xl shadow-lg p-1 w-40 h-24 border-2 border-blue-500 cursor-pointer hover:border-blue-400 transition"
+          @click="toggleMainView()"
         >
-          <!-- Imagen o video del usuario -->
-          <div class="relative w-full h-full rounded-lg overflow-hidden">
-            <video
-              v-if="camaraAct"
-              ref="modalVideoRef"
-              autoplay
-              muted
-              class="w-full h-full bg-black rounded-lg"
-            ></video>
-            <div
-              v-else
-              class="w-full h-full flex items-center justify-center bg-gray-700 text-gray-300 text-sm font-semibold rounded-lg"
-            >
-              <UserCircleIcon class="w-14 h-14 text-white-400" />
-            </div>
+          <video
+            ref="localVideo"
+            autoplay
+            muted
+            class="w-full h-full bg-black rounded-lg object-cover"
+          ></video>
+          <span class="absolute bottom-1 left-1 text-xs text-white bg-black/60 px-1 py-0.5 rounded">
+            Tú
+          </span>
+          
+          <!-- Indicador de micrófono -->
+          <div class="absolute top-1 right-1">
+            <MicrophoneIcon 
+              v-if="localAudioEnabled" 
+              class="w-3 h-3 text-green-500" 
+            />
+            <MicrophoneIcon 
+              v-else 
+              class="w-3 h-3 text-red-500" 
+            />
           </div>
+        </div>
 
-          <!-- Nombre -->
-          <span class="absolute bottom-1 left-1 text-xs text-white bg-black/60 px-2 py-0.5 rounded">
+        <!-- Si no hay cámara, mostrar avatar en miniatura -->
+        <div
+          v-else
+          class="absolute bottom-3 right-3 bg-gray-800 rounded-xl shadow-lg p-1 w-40 h-24 border border-gray-600 flex items-center justify-center"
+        >
+          <UserCircleIcon class="w-12 h-12 text-gray-400" />
+          <span class="absolute bottom-1 left-1 text-xs text-white bg-black/60 px-1 py-0.5 rounded">
             Tú
           </span>
         </div>
@@ -57,28 +82,35 @@
       <!-- Controles -->
       <div class="flex justify-center items-center space-x-3 mb-2">
         <button
-          @click="toggleMic"
+          @click="toggleLocalAudio"
           :class="[
             'p-3 rounded-full transition-all duration-200',
-            micAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
+            localAudioEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
           ]"
         >
           <MicrophoneIcon class="w-6 h-6 text-white" />
         </button>
 
         <button
-          @click="toggleCamara"
+          @click="toggleLocalVideo"
           :class="[
             'p-3 rounded-full transition-all duration-200',
-            camaraAct ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
+            localVideoEnabled ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-500',
           ]"
         >
-          <template v-if="camaraAct">
-            <VideoCameraIcon class="w-6 h-6 text-white" />
-          </template>
-          <template v-else>
-            <VideoCameraSlashIcon class="w-6 h-6 text-white" />
-          </template>
+          <VideoCameraIcon v-if="localVideoEnabled" class="w-6 h-6 text-white" />
+          <VideoCameraSlashIcon v-else class="w-6 h-6 text-white" />
+        </button>
+
+        <button
+          @click="toggleScreenShare"
+          :class="[
+            'p-3 rounded-full transition-all duration-200',
+            screenStream ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-700 hover:bg-gray-600',
+          ]"
+          :title="screenStream ? 'Dejar de compartir' : 'Compartir pantalla'"
+        >
+          <ComputerDesktopIcon class="w-6 h-6 text-white" />
         </button>
 
         <button
@@ -89,62 +121,79 @@
           <PowerIcon class="w-6 h-6 text-red-500" />
         </button>
       </div>
+
+      <!-- Panel de debug (opcional) -->
+      <div v-if="debugMode" class="mt-4 p-4 bg-gray-800 rounded-lg text-xs font-mono">
+        <p>Host video: {{ hostVideoEnabled ? '✅' : '❌' }}</p>
+        <p>Host audio: {{ hostAudioEnabled ? '✅' : '❌' }}</p>
+        <p>Mi video: {{ localVideoEnabled ? '✅' : '❌' }}</p>
+        <p>Mi audio: {{ localAudioEnabled ? '✅' : '❌' }}</p>
+        <p>Compartiendo: {{ screenStream ? '✅' : '❌' }}</p>
+        <p>Otros viewers: {{ otherViewers.length }}</p>
+        <button @click="debugMode = false" class="mt-2 px-2 py-1 bg-gray-700 rounded">Cerrar</button>
+      </div>
+
+      <!-- Botón flotante para debug -->
+      <button 
+        @click="debugMode = !debugMode" 
+        class="fixed bottom-4 right-4 bg-gray-700 text-white px-3 py-1 rounded-full text-xs z-50"
+      >
+        🐞 Debug
+      </button>
     </div>
 
-    <!-- Cuadrícula de Participantes (Abajo del video principal) -->
-    <div v-if="participantes.length > 0" class="mt-4 pb-4 px-4 overflow-hidden">
-      <h3
-        class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2"
-      >
-        <UserGroupIcon class="w-4 h-4 text-blue-400" />
-        Participantes Activos
-      </h3>
-      <div
-        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-x-auto custom-scrollbar max-h-60 p-1"
-      >
+    <!-- Panel derecho: Miniaturas de OTROS participantes (excluyendo host) -->
+    <div v-if="otherViewers.length > 0" class="w-80 flex flex-col border-l border-gray-800">
+      <div class="p-4 border-b border-gray-800">
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+          <UserGroupIcon class="w-4 h-4 text-blue-400" />
+          Otros participantes ({{ otherViewers.length }})
+        </h3>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
         <div
-          v-for="p in participantes"
-          :key="p.socketId || p.idSocket"
-          class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg group aspect-video"
+          v-for="viewer in otherViewers"
+          :key="viewer.id"
+          class="relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700 aspect-video cursor-pointer hover:border-blue-500 transition"
+          @click="setMainVideo(viewer)"
         >
-          <!-- Video del participante -->
           <video
-            :id="'remote-video-' + (p.socketId || p.idSocket)"
+            :ref="'viewerVideo_' + viewer.id"
             autoplay
             playsinline
             class="w-full h-full object-cover bg-black"
           ></video>
 
-          <!-- Overlay con nombre y estado -->
-          <div
-            class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white text-left"
-          >
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-medium truncate">{{ p.name || p.email }}</span>
-
-              <!-- Indicador de Audio (Visual Simplificado) -->
-              <div class="flex items-end gap-0.5 h-3">
-                <div class="w-1 bg-blue-400 rounded-full h-1"></div>
-                <div class="w-1 bg-blue-400 rounded-full h-2"></div>
-                <div class="w-1 bg-blue-400 rounded-full h-1.5"></div>
-              </div>
+          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-white truncate max-w-[100px]">
+                {{ viewer.name }}
+              </span>
+              <MicrophoneIcon 
+                v-if="viewer.audioEnabled" 
+                class="w-3 h-3 text-green-500 flex-shrink-0" 
+              />
+              <MicrophoneIcon 
+                v-else 
+                class="w-3 h-3 text-red-500 flex-shrink-0" 
+              />
             </div>
           </div>
 
-          <!-- Avatar si no hay video -->
           <div
-            v-if="!p.hasVideo"
-            class="absolute inset-0 flex items-center justify-center bg-gray-700"
+            v-if="!viewer.videoEnabled"
+            class="absolute inset-0 flex items-center justify-center bg-gray-700/90"
           >
-            <UserCircleIcon class="w-12 h-12 text-gray-500" />
+            <UserCircleIcon class="w-8 h-8 text-gray-500" />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Panel derecho: chat (Componente extraído) -->
+    <!-- Panel derecho: chat (cuando está expandido) -->
     <ChatStreamComponent
-      v-show="expandirBool"
+      v-if="expandirBool"
       :room-id="roomId"
       :user-data="userData"
       :is-host="false"
@@ -152,7 +201,7 @@
       class="w-[25%]"
     />
 
-    <!-- Modal de confirmación para finalizar stream -->
+    <!-- Modal de confirmación para salir -->
     <div
       v-if="showEndStreamConfirm"
       class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
@@ -185,221 +234,589 @@ import Peer from 'peerjs'
 import axios from 'axios'
 import {
   UserCircleIcon,
-  EllipsisHorizontalIcon,
   MicrophoneIcon,
-  PlusCircleIcon,
-  ChartBarIcon,
-  PencilSquareIcon,
   VideoCameraIcon,
   VideoCameraSlashIcon,
   ComputerDesktopIcon,
-  ArrowsPointingOutIcon,
-  CheckIcon,
-  XMarkIcon,
   EyeIcon,
   UserGroupIcon,
-  ShareIcon,
   PowerIcon,
 } from '@heroicons/vue/24/solid'
 import ToastNotification from '@/components/ToastNotification.vue'
-
 import router from '@/router'
 import socket from '@/services/socket.js'
 import api from '@/services/api.js'
 import ChatStreamComponent from '@/components/ChatStreamComponent.vue'
 
 export default {
-  name: 'LiveView',
+  name: 'LiveViewer',
   components: {
     ChatStreamComponent,
     UserCircleIcon,
-    EllipsisHorizontalIcon,
     MicrophoneIcon,
-    PlusCircleIcon,
-    ChartBarIcon,
-    PencilSquareIcon,
     VideoCameraIcon,
     VideoCameraSlashIcon,
     ComputerDesktopIcon,
-    ArrowsPointingOutIcon,
-    CheckIcon,
-    XMarkIcon,
     EyeIcon,
     UserGroupIcon,
-    ShareIcon,
     PowerIcon,
     ToastNotification
   },
   data() {
     return {
+      // Peer y streams
       peer: null,
-      roomId: '',
+      localStream: null,
+      screenStream: null,
+      call: null,
+      
+      // Conexión
+      roomId: this.$route.params.link, // ID de la sala (link)
       hostPeerId: null,
-
-      userData: JSON.parse(localStorage.getItem('user')),
-
-      viewerId: null,
-
-      // ID del Host, necesario para enviar la Answer y los ICE candidates
-      hostId: null,
-
+      myPeerId: null,
+      
+      // Estado medios viewer
+      localAudioEnabled: false,
+      localVideoEnabled: false,
+      
+      // Estado medios host
+      hostVideoEnabled: false,
+      hostAudioEnabled: false,
+      
+      // Viewers (otros participantes además del host)
+      viewers: [], // { id, call, stream, videoEnabled, audioEnabled, name }
+      
+      // UI
+      isJoining: true,
+      isConnected: false,
+      participantes: [], // Para compatibilidad
+      expandirBool: true,
+      showEndStreamConfirm: false,
+      debugMode: false,
+      
+      // Tiempo
       startTime: null,
       tiempo: 0,
       tiempoFormateado: '00:00',
       intervalo: null,
-
-      videoStream: null,
-
-      participantes: [],
-      expandirBool: true,
-      showEndStreamConfirm: false,
-
-      modalVideoRef: null,
-
-      stream: null,
-
-      micAct: false,
-      camaraAct: false,
-
-      link: this.$route.params.link,
-
+      
+      // Usuario
+      userData: JSON.parse(localStorage.getItem('user') || '{}'),
+      viewerId: null,
+      
+      // Control de vista principal
+      mainVideoSource: 'host', // 'host' o id de otro viewer
     }
   },
-  mounted() {
-    //expulsion
-    socket.on('viewer-expelled', () => {
-      router.push({ name: 'transmitions' })
-    })
 
-    socket.on('join-accepted', (data) => {
-      if (data) {
-        this.startTime = data.startTime
-        this.hostId = data.hostId
-        this.iniciarContador()
-      }
-    })
-
-    socket.on('meeting-time', ({ startTime }) => {
-      console.log('Sincronización de tiempo recibida:', startTime)
-      this.startTime = startTime
-      this.iniciarContador()
-    })
-
-    socket.on('stream-ended', () => {
-      alert('La transmisión ha finalizado')
-      setTimeout(() => this.confirmEndStream(), 2000)
-    })
-
-    // Si venimos de RoomWait, ya tenemos startTime en el query y hostId en params
-    if (this.$route.query.startTime) {
-      this.startTime = parseInt(this.$route.query.startTime)
-      this.iniciarContador()
-    } else {
-      // Si entramos directo, solicitamos unirse
-      socket.emit('request-join', { roomId: this.roomId, viewerData: this.userData })
+  computed: {
+    otherViewers() {
+      // Filtramos para no mostrar al host (que ya está en video principal)
+      return this.viewers.filter(v => v.id !== this.hostPeerId)
     }
+  },
 
-    // Siempre solicitar el tiempo actual para asegurar sincronización
-    socket.emit('get-meeting-time', { roomId: this.roomId })
+  watch: {
+    // Cuando cambia el video del host, actualizar la vista principal si corresponde
+    hostVideoEnabled() {
+      if (this.mainVideoSource === 'host') {
+        this.updateMainVideo()
+      }
+    }
+  },
 
-    this.joinRoom();
+  async mounted() {
+    // Configurar socket events
+    this.setupSocketEvents()
+    
+    // Unirse a la reunión
+    await this.joinRoom()
   },
 
   methods: {
+    setupSocketEvents() {
+      socket.on('viewer-expelled', () => {
+        this.addToast('Has sido expulsado de la reunión', 'error')
+        setTimeout(() => this.confirmEndStream(), 2000)
+      })
+
+      socket.on('join-accepted', (data) => {
+        if (data) {
+          this.startTime = data.startTime
+          this.hostPeerId = data.hostId
+          this.iniciarContador()
+          this.addToast('Conectado a la reunión', 'success')
+        }
+      })
+
+      socket.on('meeting-time', ({ startTime }) => {
+        console.log('Sincronización de tiempo recibida:', startTime)
+        this.startTime = startTime
+        this.iniciarContador()
+      })
+
+      socket.on('stream-ended', () => {
+        this.addToast('La transmisión ha finalizado', 'info')
+        setTimeout(() => this.confirmEndStream(), 2000)
+      })
+
+      socket.on('left-room', (data) => {
+        // Un viewer se fue
+        this.viewers = this.viewers.filter(v => v.id !== data.viewerId)
+        
+        // Si el video principal era de ese viewer, volver al host
+        if (this.mainVideoSource === data.viewerId) {
+          this.setMainVideo('host')
+        }
+      })
+    },
 
     async joinRoom() {
-      // 1️⃣ Obtener datos de sala
-      const res = await axios.get(`http://localhost:3001/api/room/${this.link}`)
+      this.isJoining = true
+      
+      try {
+        // 1️⃣ Obtener información de la sala desde el servidor PeerJS
+        console.log('🔍 Buscando sala:', this.roomId)
+        const res = await axios.get(`http://localhost:3001/api/room/${this.roomId}`)
+        this.hostPeerId = res.data.hostPeerId
+        console.log('🎯 Host Peer ID:', this.hostPeerId)
 
-      this.hostPeerId = res.data.hostPeerId
+        // 2️⃣ Solicitar unirse vía socket
+        socket.emit('request-join', { 
+          roomId: this.roomId, 
+          viewerData: {
+            ...this.userData,
+            socketId: socket.id
+          } 
+        })
 
-      // 2️⃣ Crear peer viewer
-      this.peer = new Peer(undefined, {
-        host: 'localhost',
-        port: 3001,
-        path: '/peerjs',
-      })
+        // 3️⃣ Obtener stream local del viewer (TU CÁMARA)
+        console.log('🎥 Solicitando tu cámara y micrófono...')
+        
+        try {
+          this.localStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 320, max: 320 }, // Más pequeña para la miniatura
+              height: { ideal: 240, max: 240 },
+              frameRate: { ideal: 15, max: 30 }
+            },
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          })
+          
+          this.localVideoEnabled = true
+          this.localAudioEnabled = true
+          
+        } catch (err) {
+          console.warn('Fallo configuración, intentando solo audio:', err)
+          try {
+            this.localStream = await navigator.mediaDevices.getUserMedia({
+              video: false,
+              audio: true
+            })
+            this.localVideoEnabled = false
+            this.localAudioEnabled = true
+          } catch (audioErr) {
+            console.error('No se pudo obtener ningún medio:', audioErr)
+            this.localStream = new MediaStream()
+            this.localVideoEnabled = false
+            this.localAudioEnabled = false
+          }
+        }
 
-      this.peer.on('open', async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        // Mostrar TU video local en la miniatura
+        if (this.localVideoEnabled && this.$refs.localVideo) {
+          this.$refs.localVideo.srcObject = this.localStream
+          await this.$refs.localVideo.play().catch(e => console.warn('Error play local:', e))
+        }
+
+        // 4️⃣ Crear peer para el viewer
+        this.peer = new Peer(undefined, {
+          host: 'localhost',
+          port: 3001,
+          path: '/peerjs',
+          debug: 3
+        })
+
+        this.peer.on('open', (id) => {
+          this.myPeerId = id
+          console.log('🔑 Mi Peer ID:', id)
+          
+          // 5️⃣ Llamar al host con TU stream
+          console.log('📞 Llamando al host...')
+          this.call = this.peer.call(this.hostPeerId, this.localStream, {
+            metadata: {
+              name: this.userData.name || this.userData.email,
+              socketId: socket.id
+            }
+          })
+
+          // 6️⃣ Recibir stream del host (LO QUE SE VE EN GRANDE)
+          this.call.on('stream', (remoteStream) => {
+            console.log('✅ Stream del host recibido')
+            
+            this.hostVideoEnabled = remoteStream.getVideoTracks().length > 0
+            this.hostAudioEnabled = remoteStream.getAudioTracks().length > 0
+            
+            // Asignar al elemento video principal (GRANDE)
+            this.updateMainVideo()
+          })
+
+          // Monitorear tracks del host
+          this.call.on('track', (track, stream) => {
+            console.log('Track del host:', track.kind, track.enabled)
+            if (track.kind === 'video') {
+              this.hostVideoEnabled = track.enabled
+              this.updateMainVideo()
+            } else if (track.kind === 'audio') {
+              this.hostAudioEnabled = track.enabled
+            }
+          })
+
+          this.call.on('error', (err) => {
+            console.error('Error en llamada:', err)
+            this.addToast('Error de conexión con el host', 'error')
+          })
+
+          this.call.on('close', () => {
+            console.log('Llamada cerrada')
+            this.isConnected = false
+          })
+        })
+
+        this.peer.on('error', (error) => {
+          console.error('Error en Peer:', error)
+          this.addToast(`Error de conexión: ${error.type}`, 'error')
+        })
+
+        // 7️⃣ Escuchar llamadas de otros viewers (para mesh networking)
+        this.peer.on('call', (call) => {
+          console.log('📞 Conexión de otro viewer:', call.peer)
+          
+          // Responder con nuestro stream
+          call.answer(this.localStream)
+          
+          const viewer = {
+            id: call.peer,
+            call: call,
+            stream: null,
+            videoEnabled: true,
+            audioEnabled: true,
+            name: call.metadata?.name || 'Viewer'
+          }
+          
+          call.on('stream', (remoteStream) => {
+            viewer.stream = remoteStream
+            viewer.videoEnabled = remoteStream.getVideoTracks().length > 0
+            viewer.audioEnabled = remoteStream.getAudioTracks().length > 0
+            
+            this.$nextTick(() => {
+              const videoRef = this.$refs['viewerVideo_' + viewer.id]
+              if (videoRef && videoRef[0]) {
+                videoRef[0].srcObject = remoteStream
+                videoRef[0].play().catch(e => console.warn('Error play viewer:', e))
+              }
+            })
+          })
+          
+          call.on('track', (track) => {
+            if (track.kind === 'video') {
+              viewer.videoEnabled = track.enabled
+            } else if (track.kind === 'audio') {
+              viewer.audioEnabled = track.enabled
+            }
+          })
+          
+          call.on('close', () => {
+            this.viewers = this.viewers.filter(v => v.id !== call.peer)
+          })
+          
+          this.viewers.push(viewer)
+        })
+
+        // Una vez que el peer está listo, indicamos que estamos conectados
+        this.isConnected = true
+        this.isJoining = false
+
+      } catch (error) {
+        console.error('Error al unirse:', error)
+        this.handleMediaError(error)
+        this.isJoining = false
+      }
+    },
+
+    // Actualizar el video principal según la fuente seleccionada
+    updateMainVideo() {
+      if (this.mainVideoSource === 'host') {
+        // Mostrar stream del host (lo que recibimos en la llamada principal)
+        if (this.call && this.call.remoteStream) {
+          this.$refs.remoteVideo.srcObject = this.call.remoteStream
+        }
+      } else {
+        // Mostrar stream de otro viewer
+        const viewer = this.viewers.find(v => v.id === this.mainVideoSource)
+        if (viewer?.stream) {
+          this.$refs.remoteVideo.srcObject = viewer.stream
+        }
+      }
+      
+      // Forzar reproducción
+      this.$refs.remoteVideo.play().catch(e => console.warn('Error play remote:', e))
+    },
+
+    // Cambiar el video principal para ver a otro participante
+    setMainVideo(viewer) {
+      if (viewer === 'host') {
+        this.mainVideoSource = 'host'
+        this.updateMainVideo()
+      } else {
+        this.mainVideoSource = viewer.id
+        if (viewer.stream) {
+          this.$refs.remoteVideo.srcObject = viewer.stream
+          this.$refs.remoteVideo.play().catch(e => console.warn('Error play remote:', e))
+        }
+      }
+    },
+
+    // Alternar entre tu cámara y el host (útil para verificar)
+    toggleMainView() {
+      if (this.mainVideoSource === 'host') {
+        // Cambiar a tu propia cámara (por si quieres ver cómo te ven)
+        if (this.localStream) {
+          this.$refs.remoteVideo.srcObject = this.localStream
+          this.mainVideoSource = 'self'
+        }
+      } else {
+        // Volver al host
+        this.mainVideoSource = 'host'
+        this.updateMainVideo()
+      }
+    },
+
+    toggleLocalAudio() {
+      if (this.localStream) {
+        this.localAudioEnabled = !this.localAudioEnabled
+        this.localStream.getAudioTracks().forEach(track => {
+          track.enabled = this.localAudioEnabled
+        })
+        console.log('🎤 Audio:', this.localAudioEnabled ? 'activado' : 'desactivado')
+      }
+    },
+
+    toggleLocalVideo() {
+      if (!this.localStream) return
+      
+      if (this.localVideoEnabled) {
+        // Apagar video
+        this.localStream.getVideoTracks().forEach(track => {
+          track.enabled = false
+        })
+        this.localVideoEnabled = false
+        
+        // Si está compartiendo pantalla, detener
+        if (this.screenStream) {
+          this.stopScreenShare()
+        }
+      } else {
+        // Encender video
+        if (this.localStream.getVideoTracks().length === 0) {
+          // No hay track de video, hay que crearlo
+          navigator.mediaDevices.getUserMedia({ 
+            video: {
+              width: { ideal: 320, max: 320 },
+              height: { ideal: 240, max: 240 }
+            } 
+          })
+            .then(stream => {
+              const videoTrack = stream.getVideoTracks()[0]
+              this.localStream.addTrack(videoTrack)
+              this.localVideoEnabled = true
+              
+              // Reemplazar track en la llamada
+              this.replaceVideoTrack(videoTrack)
+              
+              // Mostrar localmente
+              if (this.$refs.localVideo) {
+                this.$refs.localVideo.srcObject = this.localStream
+              }
+            })
+            .catch(err => {
+              console.error('Error al activar cámara:', err)
+              this.addToast('No se pudo activar la cámara', 'error')
+            })
+        } else {
+          // Ya hay track, solo habilitar
+          this.localStream.getVideoTracks().forEach(track => {
+            track.enabled = true
+          })
+          this.localVideoEnabled = true
+        }
+      }
+    },
+
+    async toggleScreenShare() {
+      if (this.screenStream) {
+        await this.stopScreenShare()
+      } else {
+        await this.startScreenShare()
+      }
+    },
+
+    async startScreenShare() {
+      try {
+        this.screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
-          audio: true,
+          audio: false
         })
 
-        // 3️⃣ Llamar al host
-        const call = this.peer.call(this.hostPeerId, stream)
+        const screenTrack = this.screenStream.getVideoTracks()[0]
 
-        call.on('stream', (remoteStream) => {
-          this.$refs.remoteVideo.srcObject = remoteStream
-        })
-      })
-    },
-    toggleMic() {
-      this.micAct = !this.micAct
-      if (this.micAct) {
-        this.startVideo()
-      } else {
-        this.stopVideo()
+        // Reemplazar track en la llamada al host
+        await this.replaceVideoTrack(screenTrack)
+
+        // Mostrar pantalla localmente en la miniatura
+        if (this.$refs.localVideo) {
+          this.$refs.localVideo.srcObject = this.screenStream
+        }
+
+        screenTrack.onended = () => {
+          this.stopScreenShare()
+        }
+
+      } catch (error) {
+        console.error('Error compartiendo pantalla:', error)
+        this.screenStream = null
       }
     },
-    toggleCamara() {
-      this.camaraAct = !this.camaraAct
-      if (this.camaraAct) {
-        this.startVideo()
-      } else {
-        this.stopVideo()
+
+    async stopScreenShare() {
+      if (this.screenStream && this.localStream) {
+        // Volver a cámara si estaba activa
+        if (this.localVideoEnabled) {
+          const videoTrack = this.localStream.getVideoTracks()[0]
+          if (videoTrack) {
+            await this.replaceVideoTrack(videoTrack)
+            if (this.$refs.localVideo) {
+              this.$refs.localVideo.srcObject = this.localStream
+            }
+          }
+        }
+
+        this.screenStream.getTracks().forEach(track => track.stop())
+        this.screenStream = null
       }
     },
-    startVideo() {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: this.micAct })
-        .then((stream) => {
-          this.videoStream = stream
-          this.$refs.modalVideoRef.srcObject = stream
-          // Aquí podrías agregar lógica para enviar el nuevo stream al host si es necesario
-        })
-        .catch((err) => {
-          console.error('Error al acceder a la cámara:', err)
-          this.addToast('No se pudo acceder a la cámara', 'error')
-          this.camaraAct = false
-        })
+
+    async replaceVideoTrack(newTrack) {
+      if (this.call && this.call.peerConnection) {
+        const senders = this.call.peerConnection.getSenders()
+        const videoSender = senders.find(s => s.track && s.track.kind === 'video')
+
+        if (videoSender) {
+          try {
+            await videoSender.replaceTrack(newTrack)
+            console.log('Track de video reemplazado')
+          } catch (err) {
+            console.error('Error reemplazando track:', err)
+          }
+        }
+      }
     },
+
+    handleMediaError(error) {
+      if (error.name === 'NotAllowedError') {
+        this.addToast('Permiso denegado. Por favor, permite el acceso en la URL del navegador', 'error')
+      } else if (error.name === 'NotFoundError') {
+        this.addToast('No se encontró cámara/micrófono', 'error')
+      } else if (error.name === 'NotReadableError') {
+        this.addToast('El dispositivo está siendo usado por otra aplicación', 'error')
+      } else {
+        this.addToast(`Error: ${error.message}`, 'error')
+      }
+    },
+
     handleEndStream() {
       this.showEndStreamConfirm = true
+    },
+
+    async confirmEndStream() {
+      // Notificar al host que nos vamos
+      socket.emit('leave-room', { 
+        roomId: this.roomId, 
+        viewerId: this.userData.id 
+      })
+
+      // Limpiar recursos
+      if (this.localStream) {
+        this.localStream.getTracks().forEach(t => t.stop())
+      }
+      if (this.screenStream) {
+        this.screenStream.getTracks().forEach(t => t.stop())
+      }
+      if (this.peer) {
+        this.peer.destroy()
+      }
+      if (this.intervalo) {
+        clearInterval(this.intervalo)
+      }
+
+      router.push({ name: 'transmitions' })
     },
 
     iniciarContador() {
       if (!this.startTime) return
       if (this.intervalo) clearInterval(this.intervalo)
+      
+      const startMs = this.startTime < 10000000000 ? this.startTime * 1000 : this.startTime
+      
       this.intervalo = setInterval(() => {
         const ahora = Date.now()
-        const diff = Math.floor((ahora - this.startTime) / 1000)
+        const diff = Math.floor((ahora - startMs) / 1000)
         this.tiempo = diff > 0 ? diff : 0
         this.tiempoFormateado = this.formatTime(this.tiempo)
       }, 1000)
     },
 
-    terminarReunion() {
-      if (this.intervalo) clearInterval(this.intervalo)
-      this.tiempo = 0
-      this.tiempoFormateado = this.formatTime(this.tiempo)
-    },
-    async confirmEndStream() {
-      socket.emit('leave-room', { roomId: this.roomId, viewerId: this.viewerId })
-      router.push({ name: 'transmitions' })
-    },
     formatTime(segundos) {
-      const min = Math.floor(segundos / 60)
-        .toString()
-        .padStart(2, '0')
-      const seg = (segundos % 60).toString().padStart(2, '0')
-      return `${min}:${seg}`
+      const horas = Math.floor(segundos / 3600)
+      const minutos = Math.floor((segundos % 3600) / 60)
+      const seg = segundos % 60
+      
+      if (horas > 0) {
+        return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`
+      }
+      return `${minutos.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`
     },
 
     addToast(message, type = 'info', duration = 3000) {
-      this.$refs.toastRef.addToast(message, type, duration)
-    },
+      this.$refs.toastRef?.addToast(message, type, duration)
+    }
   },
+
+  beforeDestroy() {
+    if (this.localStream) {
+      this.localStream.getTracks().forEach(t => t.stop())
+    }
+    if (this.screenStream) {
+      this.screenStream.getTracks().forEach(t => t.stop())
+    }
+    if (this.peer) {
+      this.peer.destroy()
+    }
+    if (this.intervalo) {
+      clearInterval(this.intervalo)
+    }
+    
+    // Desconectar sockets
+    socket.off('viewer-expelled')
+    socket.off('join-accepted')
+    socket.off('meeting-time')
+    socket.off('stream-ended')
+    socket.off('left-room')
+  }
 }
 </script>
 
@@ -414,22 +831,24 @@ export default {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #1f2937;
-  /* bg-gray-800 */
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #4b5563;
-  /* bg-gray-600 */
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
-  /* bg-gray-500 */
+}
+
+/* Asegurar que el video se vea bien */
+.aspect-video {
+  aspect-ratio: 16 / 9;
 }
 </style>
