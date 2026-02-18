@@ -228,6 +228,55 @@
         >
           <ArrowsPointingOutIcon class="w-6 h-6 text-white" />
         </button>
+
+        <!-- NUEVO: Botón de grabación con api.video -->
+        <button
+          @click="toggleRecording"
+          :class="[
+            'p-3 rounded-full transition-all duration-200',
+            isRecording
+              ? 'bg-red-600 hover:bg-red-700 animate-pulse'
+              : 'bg-purple-600 hover:bg-purple-700',
+          ]"
+          :title="isRecording ? 'Detener grabación' : 'Iniciar grabación'"
+        >
+          <svg
+            v-if="!isRecording"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="{2}"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+            />
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="{2}"
+              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="{2}"
+              d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+            />
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -446,6 +495,110 @@
       </div>
     </div>
   </Teleport>
+
+  <!-- Modal para mostrar el resultado de la grabación -->
+  <div
+    v-if="showRecordingModal"
+    class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+  >
+    <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-lg space-y-4">
+      <h3 class="text-lg text-center">Grabación lista</h3>
+
+      <p class="text-center text-gray-300">Tu grabación ya está disponible en api.video</p>
+
+      <!-- Link de reproducción -->
+      <div class="bg-gray-700 p-4 rounded-lg">
+        <p class="text-xs text-gray-400 mb-1">Link del video:</p>
+        <a
+          :href="recordingData.playerUrl"
+          target="_blank"
+          class="text-blue-400 hover:underline break-all"
+        >
+          {{ recordingData.playerUrl }}
+        </a>
+      </div>
+
+      <!-- Vista previa (si quieres) -->
+      <div v-if="recordingData.iframe" class="mt-2">
+        <p class="text-xs text-gray-400 mb-1">Vista previa:</p>
+        <div class="bg-black rounded-lg overflow-hidden" v-html="recordingData.iframe"></div>
+      </div>
+
+      <div class="flex justify-center space-x-4 pt-2">
+        <button
+          @click="copyRecordingLink"
+          class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg"
+        >
+          Copiar enlace
+        </button>
+        <button
+          @click="showRecordingModal = false"
+          class="bg-gray-600 hover:bg-gray-500 px-6 py-2 rounded-lg"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- 🎯 NUEVO: Modal de progreso de subida -->
+  <Teleport to="body">
+    <div
+      v-if="showUploadProgress"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
+      @click.self="showUploadProgress = false"
+    >
+      <div class="bg-gray-800 rounded-xl p-6 w-80 shadow-2xl border border-gray-700">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="bg-blue-600/20 p-2 rounded-full">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-6 h-6 text-blue-400 animate-spin"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="{2}"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold">Subiendo grabación</h3>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Barra de progreso -->
+          <div class="relative h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div
+              class="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 ease-out rounded-full"
+              :style="{ width: uploadProgress + '%' }"
+            ></div>
+          </div>
+
+          <!-- Porcentaje y tamaño -->
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-400">{{ uploadProgress }}%</span>
+          </div>
+
+          <!-- Estado actual -->
+          <p class="text-xs text-gray-500 text-center">
+            {{ uploadStatus }}
+          </p>
+
+          <!-- Botón cancelar (opcional) -->
+          <button
+            v-if="uploadProgress < 100"
+            @click="cancelUpload"
+            class="w-full mt-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script>
@@ -493,6 +646,22 @@ export default {
   },
   data() {
     return {
+      //api.video
+      mediaRecorder: null,
+      recordedChunks: [],
+      isRecording: false,
+      showRecordingModal: false,
+      recordingData: null,
+      uploadToken: null,
+
+      //subiendo
+      showUploadProgress: false,
+      uploadProgress: 0,
+      uploadedSize: 0,
+      totalSize: 0,
+      uploadStatus: 'Preparando...',
+      uploadCancelToken: null,
+
       // Peer y streams (WebRTC)
       peer: null,
       localStream: null,
@@ -605,7 +774,16 @@ export default {
       this.addToast('Error al iniciar el stream', 'error')
     }
   },
+  watch: {
+    // Para debug - ver cuando cambia pantallaAct
+    pantallaAct(newVal, oldVal) {
+      console.log('🔄 pantallaAct cambió:', oldVal, '→', newVal)
+    },
 
+    screenStream(newVal) {
+      console.log('🔄 screenStream cambió:', newVal ? '✅ existe' : '❌ null')
+    },
+  },
   methods: {
     // ========== CONTROL DE VIDEO PRINCIPAL ==========
     setMainVideo(source) {
@@ -821,7 +999,6 @@ export default {
         await this.startScreenShare()
       }
     },
-
     async startScreenShare() {
       try {
         this.screenStream = await navigator.mediaDevices.getDisplayMedia({
@@ -831,6 +1008,17 @@ export default {
 
         const screenTrack = this.screenStream.getVideoTracks()[0]
 
+        console.log('🖥️ Stream de pantalla creado:', {
+          enabled: screenTrack.enabled,
+          settings: screenTrack.getSettings(),
+        })
+
+        // ✅ IMPORTANTE: Actualizar pantallaAct ANTES de reemplazar tracks
+        this.pantallaAct = true
+
+        // Verificar que pantallaAct se actualizó
+        console.log('📊 Estado actualizado - pantallaAct:', this.pantallaAct)
+
         // Reemplazar track en todas las conexiones
         await this.replaceVideoTrackForAll(screenTrack)
 
@@ -838,29 +1026,74 @@ export default {
         this.$refs.videoRef.srcObject = this.screenStream
         this.$refs.videoUserRef.srcObject = this.screenStream
 
-        this.pantallaAct = true
-
+        // Cuando el usuario deja de compartir
         screenTrack.onended = () => {
+          console.log('🖥️ Compartir pantalla terminado por el usuario')
           this.stopScreenShare()
+        }
+
+        // Si está grabando, actualizar automáticamente
+        if (this.isRecording) {
+          console.log('🎥 Grabando - actualizando fuente a PANTALLA')
+          this.handleRecordingSourceChange()
         }
       } catch (error) {
         console.error('Error compartiendo pantalla:', error)
         this.pantallaAct = false
+        this.screenStream = null
       }
     },
+    // NUEVO: Manejar cambio de fuente durante grabación
+    handleRecordingSourceChange() {
+      if (this.isRecording && this.mediaRecorder) {
+        console.log('🔄 Cambiando fuente de grabación...')
 
+        // Guardar el tipo de fuente actual
+        const fuenteAnterior = this.pantallaAct ? 'pantalla' : 'cámara'
+        console.log('📹 Fuente anterior:', fuenteAnterior)
+
+        // Detener grabación actual
+        this.mediaRecorder.stop()
+
+        // La nueva grabación empezará en onstop
+        // Porque uploadToApiVideo() se llama y luego...
+
+        // Mostrar mensaje
+        const nuevaFuente = this.pantallaAct ? 'PANTALLA' : 'CÁMARA'
+        this.addToast(`⏸️ Cambiando a grabación de ${nuevaFuente}...`, 'info')
+      }
+    },
     async stopScreenShare() {
-      if (this.screenStream && this.localStream) {
-        const cameraTrack = this.localStream.getVideoTracks()[0]
+      if (this.screenStream) {
+        console.log('🖥️ Deteniendo compartir pantalla')
+
+        // Detener todos los tracks
+        this.screenStream.getTracks().forEach((track) => {
+          track.stop()
+        })
+
+        this.screenStream = null
+
+        // ✅ IMPORTANTE: Actualizar pantallaAct a false
+        this.pantallaAct = false
+
+        console.log('📊 Estado actualizado - pantallaAct:', this.pantallaAct)
 
         // Volver a cámara
-        await this.replaceVideoTrackForAll(cameraTrack)
-        this.$refs.videoRef.srcObject = this.localStream
-        this.$refs.videoUserRef.srcObject = this.localStream
+        if (this.localStream) {
+          const cameraTrack = this.localStream.getVideoTracks()[0]
+          if (cameraTrack) {
+            await this.replaceVideoTrackForAll(cameraTrack)
+            this.$refs.videoRef.srcObject = this.localStream
+            this.$refs.videoUserRef.srcObject = this.localStream
+          }
+        }
 
-        this.screenStream.getTracks().forEach((track) => track.stop())
-        this.screenStream = null
-        this.pantallaAct = false
+        // Si está grabando, actualizar automáticamente
+        if (this.isRecording) {
+          console.log('🎥 Grabando - actualizando fuente a CÁMARA')
+          this.handleRecordingSourceChange()
+        }
       }
     },
 
@@ -1040,6 +1273,8 @@ export default {
         this.viewers = []
 
         socket.emit('end-stream', { roomId: this.roomId })
+        //flag
+        await api.put(`/transmissions/${this.roomId}/status`, { status: 2 })
 
         this.addToast('Transmisión finalizada con éxito', 'success')
         router.push({ name: 'transmitions' })
@@ -1053,6 +1288,277 @@ export default {
     // ========== UTILS ==========
     addToast(message, type = 'info', duration = 3000) {
       this.$refs.toastRef?.addToast(message, type, duration)
+    },
+
+    // ========== GRABACIÓN CON API.VIDEO ==========
+    async toggleRecording() {
+      if (this.isRecording) {
+        await this.stopRecording()
+      } else {
+        await this.startRecording()
+      }
+    },
+
+    async getUploadToken() {
+      try {
+        const response = await axios.post(
+          'http://localhost:3001/api/apivideo/generate-upload-token',
+        )
+        console.log('Respuesta token:', response.data)
+        if (response.data.success) {
+          this.uploadToken = response.data.token
+          console.log('✅ Token de subida obtenido:', this.uploadToken)
+          return this.uploadToken
+        } else {
+          throw new Error(response.data.error)
+        }
+      } catch (error) {
+        console.error('Error obteniendo token:', error)
+        this.addToast('Error al preparar la grabación', 'error')
+        return null
+      }
+    },
+
+    // Función para verificar qué codecs soporta el navegador
+    getSupportedMimeType() {
+      const possibleTypes = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm;codecs=h264,opus',
+        'video/webm',
+        'video/mp4',
+      ]
+
+      for (const type of possibleTypes) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          console.log('Usando codec:', type)
+          return type
+        }
+      }
+
+      console.warn('Usando formato por defecto')
+      return '' // Dejar que el navegador elija
+    },
+
+    async startRecording() {
+      try {
+        // Obtener el stream correcto para grabar
+        const streamToRecord = this.getStreamToRecord()
+
+        if (!streamToRecord) {
+          this.addToast('No hay stream para grabar', 'error')
+          return
+        }
+
+        // Verificar que el stream tenga tracks de video
+        const hasVideo = streamToRecord.getVideoTracks().length > 0
+        if (!hasVideo) {
+          this.addToast('El stream no tiene video para grabar', 'error')
+          return
+        }
+
+        // ✅ Usar pantallaAct para determinar el tipo, no solo el stream
+        const tipoGrabacion = this.pantallaAct ? 'PANTALLA' : 'CÁMARA'
+
+        console.log('📹 Stream a grabar:', {
+          tipo: tipoGrabacion,
+          pantallaAct: this.pantallaAct,
+          tracks: streamToRecord
+            .getTracks()
+            .map((t) => `${t.kind}:${t.enabled ? 'activo' : 'inactivo'}`),
+          settings: streamToRecord.getVideoTracks()[0]?.getSettings(),
+        })
+
+        // 1. Obtener token de subida primero
+        const token = await this.getUploadToken()
+        if (!token) return
+
+        // 2. Configurar MediaRecorder
+        this.recordedChunks = []
+
+        // Detectar codec soportado
+        const mimeType = this.getSupportedMimeType()
+        const options = mimeType ? { mimeType } : {}
+
+        this.mediaRecorder = new MediaRecorder(streamToRecord, options)
+
+        console.log('🎥 MediaRecorder creado con:', {
+          mimeType: this.mediaRecorder.mimeType,
+          state: this.mediaRecorder.state,
+          streamTracks: streamToRecord.getTracks().length,
+        })
+
+        this.mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            this.recordedChunks.push(event.data)
+            console.log('📦 Chunk grabado:', event.data.size, 'bytes')
+          }
+        }
+
+        this.mediaRecorder.onstop = () => {
+          console.log('⏹️ Grabación detenida, chunks:', this.recordedChunks.length)
+          this.uploadToApiVideo()
+        }
+
+        this.mediaRecorder.onerror = (error) => {
+          console.error('Error en MediaRecorder:', error)
+          this.addToast('Error durante la grabación', 'error')
+          this.isRecording = false
+        }
+
+        // Empezar a grabar
+        this.mediaRecorder.start(1000) // Capturar cada segundo
+        this.isRecording = true
+
+        // Mostrar qué se está grabando (usando pantallaAct)
+        this.addToast(
+          `🔴 Grabando ${tipoGrabacion} - Se subirá automáticamente al terminar`,
+          'info',
+        )
+      } catch (error) {
+        console.error('Error starting recording:', error)
+
+        if (error.name === 'NotSupportedError') {
+          this.addToast(
+            'Tu navegador no soporta grabación de video. Prueba con Chrome, Firefox o Edge',
+            'error',
+          )
+        } else {
+          this.addToast('Error al iniciar grabación: ' + error.message, 'error')
+        }
+      }
+    },
+
+    async uploadToApiVideo() {
+      try {
+        if (this.recordedChunks.length === 0) {
+          this.addToast('No se grabó ningún dato', 'error')
+          return
+        }
+
+        // Crear blob con el tipo correcto
+        const mimeType = this.mediaRecorder?.mimeType || 'video/webm'
+        const blob = new Blob(this.recordedChunks, { type: mimeType })
+
+        console.log('📦 Blob creado:', {
+          size: (blob.size / 1024 / 1024).toFixed(2) + ' MB',
+          type: blob.type,
+        })
+
+        // Crear FormData para la subida
+        const formData = new FormData()
+        formData.append('file', blob, `reunion-${this.roomId}-${Date.now()}.webm`)
+
+        // Mostrar progreso
+        this.addToast('Subiendo a api.video...', 'info')
+
+        // Subir directamente a api.video usando el token delegado
+        const response = await axios.post(
+          `https://ws.api.video/upload?token=${this.uploadToken}`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total,
+              )
+              //flag
+              this.showUploadProgress = true
+              this.uploadProgress = percentCompleted
+              console.log(`Subiendo: ${percentCompleted}%`)
+              // Opcional: mostrar progreso en UI
+            },
+          },
+        )
+        this.showUploadProgress = false
+
+        console.log('✅ Respuesta de api.video:', response.data)
+
+        // La respuesta incluye el videoId
+        const videoId = response.data.videoId
+
+        // Obtener detalles del video (links de reproducción)
+        const detailsResponse = await axios.get(
+          `http://localhost:3001/api/apivideo/video/${videoId}`,
+        )
+
+        if (detailsResponse.data.success) {
+          this.recordingData = detailsResponse.data.video
+          this.showRecordingModal = true
+          this.addToast('Grabación subida exitosamente a api.video', 'success')
+
+          // Guardar en historial local
+          this.saveToHistory(this.recordingData)
+        }
+      } catch (error) {
+        console.error('Error uploading to api.video:', error)
+
+        if (error.response) {
+          console.error('Detalles del error:', error.response.data)
+          this.addToast(`Error: ${error.response.data.message || 'Error en la subida'}`, 'error')
+        } else {
+          this.addToast('Error al subir la grabación: ' + error.message, 'error')
+        }
+      } finally {
+        this.recordedChunks = []
+      }
+    },
+    async stopRecording() {
+      if (this.mediaRecorder && this.isRecording) {
+        this.mediaRecorder.stop()
+        this.isRecording = false
+        this.addToast('Procesando grabación y subiendo a api.video...', 'info')
+      }
+    },
+
+    saveToHistory(videoData) {
+      const history = JSON.parse(localStorage.getItem('recordingHistory') || '[]')
+      history.push({
+        videoId: videoData.videoId,
+        title: videoData.title || `Reunión ${this.roomId}`,
+        playerUrl: videoData.playerUrl,
+        date: new Date().toISOString(),
+        roomId: this.roomId,
+      })
+      localStorage.setItem('recordingHistory', JSON.stringify(history))
+    },
+
+    copyRecordingLink() {
+      navigator.clipboard.writeText(this.recordingData.playerUrl).then(() => {
+        this.addToast('Enlace copiado al portapapeles', 'success')
+      })
+    },
+
+    getStreamToRecord() {
+      console.log('🔍 Buscando stream para grabar...')
+      console.log('📊 Estado actual - pantallaAct:', this.pantallaAct)
+      console.log('📊 screenStream existe:', !!this.screenStream)
+      console.log('📊 localStream existe:', !!this.localStream)
+
+      // 1️⃣ Si pantallaAct es true, usar pantalla (aunque también verificamos el stream)
+      if (this.pantallaAct && this.screenStream) {
+        const videoTracks = this.screenStream.getVideoTracks()
+        if (videoTracks.length > 0 && videoTracks[0].enabled) {
+          console.log('✅ Usando PANTALLA para grabar (pantallaAct = true)')
+          return this.screenStream
+        } else {
+          console.warn('⚠️ pantallaAct es true pero screenStream no tiene tracks activos')
+        }
+      }
+
+      // 2️⃣ Si no, usar cámara
+      if (this.localStream) {
+        const videoTracks = this.localStream.getVideoTracks()
+        if (videoTracks.length > 0) {
+          console.log('✅ Usando CÁMARA para grabar')
+          return this.localStream
+        }
+      }
+
+      console.error('❌ No hay streams de video disponibles')
+      return null
     },
   },
 

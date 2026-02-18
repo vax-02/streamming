@@ -16,6 +16,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@api.video/react-upload-button": "^0.0.2",
     "@heroicons/vue": "^2.2.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
