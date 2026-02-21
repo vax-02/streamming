@@ -14,8 +14,6 @@ api.interceptors.request.use(
     // Rutas públicas que no requieren token
     const publicRoutes = [
       { url: '/login', method: 'post' },
-      { url: '/user', method: 'post' },
-      { url: '/user/newpassword', method: 'post' },
     ]
 
     // Normalizar URL para asegurar que empiece con /
@@ -36,5 +34,4 @@ api.interceptors.request.use(
     return Promise.reject(error)
   },
 )
-
 export default api

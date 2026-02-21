@@ -18,7 +18,6 @@ import CallingComponent from '@/components/calls/CallingComponent.vue'
 import CallComponente from '@/components/calls/CallComponente.vue'
 import MiniCallComponent from '@/components/calls/MiniCallComponent.vue'
 import ApplicationComponent from '@/components/ApplicationComponent.vue'
-import VideoPlayerComponent from '@/components/video/VideoPlayerComponent.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import RoomWait from '@/views/RoomWait.vue'
 import Host from '@/components/VideoTest.vue'
@@ -110,7 +109,6 @@ const routes = [
     name: 'live-viewer',
     component: LiveViewer,
   },
-  { path: '/video', name: 'video', component: VideoPlayerComponent, props: true },
 ]
 
 const router = createRouter({

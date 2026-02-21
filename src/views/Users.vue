@@ -1,6 +1,7 @@
 <template>
   <div class="flex-col h-screen p-3 bg-gray-800">
     <div class="flex items-center justify-between mb-4">
+      
       <h1 class="text-2xl font-bold text-gray-200">Gestión de Usuarios</h1>
     </div>
     <div class="mb-[8vh] flex items-center justify-between mb-4">
@@ -48,10 +49,15 @@
           </td>
         </tr>
 
-        <tr v-else v-for="user in paginatedUsers" :key="user.id" class="hover:bg-gray-800 transition">
+        <tr
+          v-else
+          v-for="user in paginatedUsers"
+          :key="user.id"
+          class="hover:bg-gray-800 transition"
+        >
           <td class="px-6 py-3">
-            <img class="w-6 h-6 rounded-full object-cover" :src="user.photo" alt=""> 
-          </td>  
+            <img class="w-6 h-6 rounded-full object-cover" :src="user.photo" alt="" />
+          </td>
           <td class="px-6 py-3">{{ user.name }}</td>
           <td class="px-6 py-3">{{ user.email }}</td>
           <td class="px-6 py-3">{{ roles[user.rol - 1] }}</td>
@@ -137,9 +143,16 @@
                     alt="Foto de usuario"
                     class="w-24 h-24 rounded-full object-cover border-4 border-gray-700 shadow-md"
                   />
-                  <label class="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700 transition shadow-sm">
+                  <label
+                    class="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700 transition shadow-sm"
+                  >
                     <PencilIcon class="w-4 h-4 text-white" />
-                    <input type="file" class="hidden" @change="handleNewUserPhoto" accept="image/*" />
+                    <input
+                      type="file"
+                      class="hidden"
+                      @change="handleNewUserPhoto"
+                      accept="image/*"
+                    />
                   </label>
                 </div>
                 <span class="text-xs text-gray-400 mt-2">Foto de perfil (Opcional)</span>
@@ -176,8 +189,7 @@
                 >
                   <option value="">Selecciona un rol</option>
                   <option value="1">Administrador</option>
-                  <option value="2">Docente</option>
-                  <option value="3">Estudiante</option>
+                  <option value="2">Usuario</option>
                 </select>
               </div>
             </div>
@@ -251,8 +263,7 @@
                 >
                   <option value="">Selecciona un rol</option>
                   <option value="1">Administrador</option>
-                  <option value="2">Docente</option>
-                  <option value="3">Estudiante</option>
+                  <option value="2">Usuario</option>
                 </select>
               </div>
             </div>
@@ -305,9 +316,9 @@ export default {
 
   data() {
     return {
-      loading : true,
+      loading: true,
       users: [],
-      roles: ['Administrador', 'Docente', 'Estudiante'],
+      roles: ['Administrador', 'Estudiante'],
       addUserModal: false,
       editUserModal: false,
       removeUserModal: false,
@@ -328,16 +339,14 @@ export default {
 
   computed: {
     filteredUsers() {
-  return this.users.filter(u => {
-    const searchLower = this.search.toLowerCase()
-    
-    return (
-      u.name.toLowerCase().includes(searchLower) ||
-      u.email.toLowerCase().includes(searchLower) 
+      return this.users.filter((u) => {
+        const searchLower = this.search.toLowerCase()
+
+        return (
+          u.name.toLowerCase().includes(searchLower) || u.email.toLowerCase().includes(searchLower)
         )
-  })
-}
-,
+      })
+    },
     totalPages() {
       return Math.ceil(this.filteredUsers.length / this.perPage)
     },
@@ -373,7 +382,7 @@ export default {
         this.loading = false
       } catch (error) {
         this.addToast('Error al cargar los usuarios', 'error')
-        const mensaje = error.response?.data || 'Error al cargar los usuarios';
+        const mensaje = error.response?.data || 'Error al cargar los usuarios'
         this.addToast(mensaje, 'error')
       }
     },

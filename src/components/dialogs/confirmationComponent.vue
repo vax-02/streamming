@@ -9,16 +9,16 @@
 
       <div class="flex justify-center space-x-4">
         <button
-          @click="$emit('confirm')"
-          class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold transition"
-        >
-          Sí
-        </button>
-        <button
           @click="$emit('cancel')"
           class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg font-semibold transition"
         >
           Cancelar
+        </button>
+        <button
+          @click="$emit('confirm')"
+          class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold transition"
+        >
+          Sí
         </button>
       </div>
     </div>

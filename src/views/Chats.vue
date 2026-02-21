@@ -5,7 +5,7 @@
       :class="[chatSeleccionado ? 'hidden md:flex' : 'flex']">
       <div class="p-6 border-b border-gray-700 flex justify-between items-center">
         <h2 class="text-xl font-bold tracking-wide flex items-center space-x-2">
-          <ChatBubbleLeftRightIcon class="h-6 w-6 text-blue-500" />
+          <ChatBubbleLeftRightIcon class="h-6 w-6 text-purple-500" />
           <span>Chats</span>
         </h2>
         <button @click="addChatModal = true"
@@ -184,10 +184,10 @@
               class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 cursor-pointer transition-colors group"
               @click="startChat(contacto)">
               <div class="flex items-center space-x-3">
-                <div
+                <img
+                  :src="contacto.photo"
                   class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                  {{ contacto.nombre.charAt(0) }}
-                </div>
+              </img>
                 <div>
                   <p class="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">{{ contacto.nombre
                   }}
@@ -310,7 +310,7 @@ export default {
 
       addChatModal: false,
       searchContact: '',
-      friends: [{ id: 1, nombre: 'Ana López', email: 'ana@example.com' }],
+      friends: [],
     }
   },
 
@@ -445,11 +445,13 @@ export default {
             nombre: u.name,
             mensaje: msgs.length > 0 ? msgs[msgs.length - 1].message : 'Sin mensajes',
             nuevos: 0,
-            foto: u.photo || 'https://via.placeholder.com/100',
+            foto: (u.visibility != 3) ? u.photo : "https://ui-avatars.com/api/?name=?&background=000&color=fff",
             // Ensure messages have a date if missing, for the demo
             mensajes: msgs.map(m => ({ ...m, created_at: m.created_at || new Date().toISOString() })),
           }
         })
+
+        console.log("los asdasdasd",this.chats  )
       } catch (error) {
         console.error('Error al cargar los chats:', error)
         this.chats = [
@@ -476,10 +478,11 @@ export default {
           id: u.id,
           nombre: u.name,
           email: u.email,
-          foto: u.photo,
+          photo: (u.visibility != 3) ? u.photo : "https://ui-avatars.com/api/?name=?&background=000&color=fff",
         }))
+        console.log('Amigos cargados para chatear:', this.friends)
       } catch (error) {
-        console.error('Error al cargar amigos para chatear:', error)
+        console.error('Error al cargar amigos para chatear:', error.message)
       }
     },
     addToast(message, type) {

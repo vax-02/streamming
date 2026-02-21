@@ -88,7 +88,7 @@
                 <p class="text-gray-400 text-sm mb-2 max-w-xl">{{ trans.descripcion }}</p>
                 <div class="flex items-center text-gray-500 text-sm">
                   <CalendarIcon class="w-4 h-4 mr-1.5" />
-                  {{ trans.fechaHora }}
+                  {{ formatFechaHora(trans.fechaHora) }}
                 </div>
               </div>
 
@@ -101,13 +101,7 @@
                   <PlayIcon class="w-4 h-4" />
                   <span class="md:hidden lg:inline">Iniciar</span>
                 </button>
-                <button
-                  @click="openShareModal(trans)"
-                  class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
-                  title="Compartir"
-                >
-                  <ShareIcon class="w-4 h-4" />
-                </button>
+
                 <button
                   @click="editarTransmision(index)"
                   class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
@@ -139,54 +133,63 @@
         <!-- Tab: Pasadas -->
         <section v-if="currentTab === 'pasadas'" class="space-y-6">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <div
-              v-for="video in pastStreams"
-              :key="video.id"
-              class="group bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-700 hover:border-gray-600 transform hover:-translate-y-1"
-            >
+            <!-- Lista de videos -->
+            <template v-if="pastStreams && pastStreams.length">
               <div
-                class="relative cursor-pointer aspect-video bg-gray-900 group"
-                @click="playVideo(video)"
+                v-for="video in pastStreams"
+                :key="video.id"
+                class="group bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-700 hover:border-gray-600 transform hover:-translate-y-1"
               >
-                <!-- Placeholder if no thumbnail -->
-                <div
-                  v-if="!video.thumbnail && !video.url"
-                  class="absolute inset-0 flex items-center justify-center text-gray-600"
-                >
-                  <FilmIcon class="w-12 h-12 opacity-30" />
-                </div>
-                <img
-                  v-else
-                  :src="video.thumbnail || 'https://via.placeholder.com/640x360?text=Video'"
-                  alt="thumbnail"
-                  class="w-full h-full object-cover"
-                />
-
-                <div
-                  class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
-                >
+                <div class="relative cursor-pointer aspect-video bg-gray-900 group">
+                  <!-- Placeholder if no thumbnail -->
                   <div
-                    class="bg-blue-600 p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform"
+                    v-if="!video.thumbnail && !video.url"
+                    class="absolute inset-0 flex items-center justify-center text-gray-600"
                   >
-                    <PlayIcon class="w-8 h-8 text-white ml-1" />
+                    <FilmIcon class="w-12 h-12 opacity-30" />
+                  </div>
+                  <img
+                    v-else
+                    :src="video.thumbnail || 'https://placehold.co/600x400?text=Hello\nWorld'"
+                    alt="Video"
+                    class="w-full h-full object-cover"
+                  />
+
+                  <div
+                    class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                  >
+                    <div
+                      class="bg-blue-600 p-3 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform"
+                    >
+                      <a :href="video.url" target="_blank">
+                        <PlayIcon class="w-8 h-8 text-white ml-1" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <h4 class="font-bold text-white text-lg mb-1 line-clamp-1" :title="video.title">
+                    {{ video.title }}
+                  </h4>
+
+                  <div class="flex flex-col text-gray-400 text-xs mb-3">
+                    <span class="mb-1">{{ video.descripcion }}</span>
+                    <div class="flex items-center gap-1">
+                      <ClockIcon class="w-3.5 h-3.5" />
+                      <span>{{ video.fechaHora }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="p-4">
-                <h4 class="font-bold text-white text-lg mb-1 line-clamp-1" :title="video.title">
-                  {{ video.title }}
-                </h4>
-                <div class="flex items-center text-gray-400 text-xs mb-3">
-                  <ClockIcon class="w-3.5 h-3.5 mr-1" />
-                  <span>{{ video.date }}</span>
-                </div>
-                <button
-                  @click="playVideo(video)"
-                  class="w-full text-center py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  Ver grabación
-                </button>
-              </div>
+            </template>
+
+            <!-- Mensaje cuando no hay videos -->
+            <div
+              v-else
+              class="col-span-full flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-700"
+            >
+              <GlobeAltIcon class="w-16 h-16 mb-4 opacity-40" />
+              <p class="text-lg font-medium">No hay transmisiones pasadas disponibles</p>
             </div>
           </div>
         </section>
@@ -202,7 +205,7 @@
               <div class="mb-4 md:mb-0">
                 <div class="flex items-center space-x-3 mb-1">
                   <span
-                    class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-purple-900 text-purple-300"
+                    class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-green-900 text-green-300"
                   >
                     {{ trans.categoria }}
                   </span>
@@ -218,17 +221,10 @@
               <div class="flex items-center space-x-2 w-full md:w-auto mt-2 md:mt-0">
                 <button
                   @click="requestLive(trans.id)"
-                  class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
+                  class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                 >
                   <EyeIcon class="w-4 h-4" />
                   <span class="md:hidden lg:inline">Ver Transmisión</span>
-                </button>
-                <button
-                  @click="openShareModal(trans)"
-                  class="flex-1 md:flex-none flex items-center justify-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
-                  title="Compartir"
-                >
-                  <ShareIcon class="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -332,131 +328,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Share Modal -->
-    <div v-if="shareTransmision" class="fixed inset-0 z-50 overflow-y-auto">
-      <div
-        class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-        @click="shareTransmision = false"
-      ></div>
-
-      <div class="flex min-h-full items-center justify-center p-4">
-        <div
-          class="relative w-full max-w-lg bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-700"
-        >
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white">Compartir Transmisión</h3>
-            <button
-              @click="shareTransmision = false"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
-              <XMarkIcon class="w-6 h-6" />
-            </button>
-          </div>
-
-          <div class="space-y-4">
-            <div class="bg-gray-900 p-3 rounded-lg border border-gray-700 flex items-center">
-              <span class="text-gray-400 text-sm truncate flex-1 px-2 select-all">{{
-                linkTransmision
-              }}</span>
-              <button
-                class="p-2 text-blue-400 hover:text-white hover:bg-blue-600/50 rounded-md transition-colors"
-              >
-                <ClipboardDocumentIcon class="w-5 h-5" />
-              </button>
-            </div>
-
-            <div>
-              <label class="text-sm text-gray-400 mb-2 block font-medium">Asignar a Grupos</label>
-              <input
-                type="text"
-                v-model="search"
-                placeholder="Buscar grupo..."
-                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-500"
-              />
-            </div>
-
-            <div class="max-h-56 overflow-y-auto space-y-1 custom-scrollbar pr-1">
-              <div
-                v-for="grupo in filteredGrupos"
-                :key="grupo.id"
-                @click="toggleGrupo(grupo.id)"
-                class="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200"
-                :class="
-                  selectedGrupos.includes(grupo.id)
-                    ? 'bg-blue-600/20 border border-blue-500/50'
-                    : 'hover:bg-gray-700 border border-transparent'
-                "
-              >
-                <span class="text-sm font-medium text-gray-200">{{ grupo.nombre }}</span>
-                <div
-                  class="w-5 h-5 rounded-full border border-gray-500 flex items-center justify-center transition-colors"
-                  :class="selectedGrupos.includes(grupo.id) ? 'bg-blue-500 border-blue-500' : ''"
-                >
-                  <CheckIcon v-if="selectedGrupos.includes(grupo.id)" class="w-3 h-3 text-white" />
-                </div>
-              </div>
-              <div
-                v-if="filteredGrupos.length === 0"
-                class="text-center py-4 text-gray-500 text-sm"
-              >
-                No se encontraron grupos.
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700">
-            <button
-              @click="shareTransmision = false"
-              class="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-            >
-              Cerrar
-            </button>
-            <button
-              @click="enviarTransmision"
-              :disabled="selectedGrupos.length === 0"
-              class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-blue-500/20 transition-all"
-            >
-              Compartir
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Video Player Modal -->
-    <div v-if="activeVideo" class="fixed inset-0 z-[60] overflow-y-auto">
-      <div
-        class="fixed inset-0 bg-black/95 backdrop-blur-md transition-opacity"
-        @click="closeVideo"
-      ></div>
-
-      <div class="flex min-h-screen items-center justify-center p-4">
-        <div
-          class="relative w-full max-w-6xl bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-800"
-        >
-          <!-- Close Button Mobile -->
-          <button
-            @click="closeVideo"
-            class="absolute top-4 right-4 z-10 p-2 bg-black/50 text-white rounded-full md:hidden"
-          >
-            <XMarkIcon class="w-6 h-6" />
-          </button>
-
-          <!-- Video Section (Premium Player) -->
-          <div class="flex-1 bg-black flex flex-col justify-center relative">
-            <PremiumPlayer
-              v-if="activeVideo"
-              :src="activeVideo.url"
-              :title="activeVideo.title"
-              :date="activeVideo.date"
-              @close="closeVideo"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
     <ToastNotification ref="toastRef" />
     <ConfirmationComponent
       :visible="showDeleteConfirm"
@@ -490,19 +361,15 @@ import {
   CheckIcon,
   PaperAirplaneIcon,
 } from '@heroicons/vue/24/solid'
-import VideoPlayer from '@/components/video/VideoPlayerComponent.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
 import ConfirmationComponent from '@/components/dialogs/confirmationComponent.vue'
 import api from '@/services/api.js'
 import router from '@/router'
-import PremiumPlayer from '@/components/video/PremiumPlayer.vue'
 
 export default {
   components: {
-    VideoPlayer,
     ToastNotification,
     ConfirmationComponent,
-    PremiumPlayer,
     // Icons
     VideoCameraIcon,
     CalendarIcon,
@@ -536,7 +403,6 @@ export default {
       ],
       transmisiones: [],
       publicStreams: [],
-      shareTransmision: false,
       abrirFormulario: false,
       nuevaTrans: {
         id: null,
@@ -567,7 +433,6 @@ export default {
     this.loadTransmissions()
     this.loadPublicTransmissions()
     this.loadPastTransmissions()
-    this.loadGroups()
   },
   methods: {
     getTabIcon(id) {
@@ -616,6 +481,41 @@ export default {
         console.error('Error al cargar transmisiones:', error)
       }
     },
+    formatFechaHora(fechaHoraString) {
+      if (!fechaHoraString) return ''
+
+      // Separar por espacio
+      const [fechaStr, horaStr] = fechaHoraString.split(' ')
+
+      // Formatear fecha
+      const fecha = new Date(fechaStr)
+
+      const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+
+      // Formatear hora (03:00:00 → 03:00)
+      const horaFormateada = horaStr ? horaStr.slice(0, 5) : ''
+
+      return `${fechaFormateada} ${horaFormateada}`
+    },
+
+    formatFechaCorta(date) {
+      const d = new Date(date)
+
+      return d.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+    },
+    formatHoraCorta(time) {
+      if (!time) return ''
+
+      return time.slice(0, 5) // 04:54:00 → 04:54
+    },
     async loadPublicTransmissions() {
       try {
         const response = await api.get('/publicTransmissions')
@@ -626,7 +526,7 @@ export default {
           titulo: u.name,
           descripcion: u.description,
           categoria: u.type == 0 ? 'Privado' : 'Publico',
-          fechaHora: u.date_t + ' ' + u.time_t,
+          fechaHora: this.formatFechaCorta(u.date_t) + ' - ' + this.formatHoraCorta(u.time_t),
           status: u.status,
           link: u.link,
         }))
@@ -644,25 +544,10 @@ export default {
             user_id: u.id_user,
             title: u.name,
             descripcion: u.description,
-            categoria: u.type == 0 ? 'Privado' : 'Publico',
-            date: u.date_t + ' ' + u.time_t,
-            status: u.status,
+            fechaHora: this.formatFechaCorta(u.date_t) + ' - ' + this.formatHoraCorta(u.time_t),
             url: u.link,
-            thumbnail: '',
+            thumbnail: 'https://placehold.co/600x400/white/dark?text=Ver video',
           })),
-          // Video de prueba solicitado por el usuario
-          {
-            id: 'test-99',
-            user_id: 1,
-            title: '🎥 Video de Prueba Premium',
-            descripcion: 'Esta es una transmisión de prueba para verificar el reproductor.',
-            categoria: 'Publico',
-            date: '24 de Enero, 2026',
-            status: 2,
-            url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-            thumbnail:
-              'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=600',
-          },
         ]
       } catch (error) {
         console.error('Error al cargar transmisiones pasadas:', error)
@@ -790,66 +675,6 @@ export default {
         this.showDeleteConfirm = false
         this.transmitionToDelete = null
       }
-    },
-    toggleGrupo(id) {
-      if (this.selectedGrupos.includes(id)) {
-        this.selectedGrupos = this.selectedGrupos.filter((g) => g !== id)
-      } else {
-        this.selectedGrupos.push(id)
-      }
-    },
-    async enviarTransmision() {
-      if (!this.selectedTransmission || this.selectedGrupos.length === 0) return
-
-      try {
-        const message = `Ingresa a la transmision: Titulo: ${this.selectedTransmission.titulo}
-        Descripcion ${this.selectedTransmission.descripcion}
-        << Ingresar >> 
-        `
-        const promises = this.selectedGrupos.map((groupId) =>
-          api.post('/messages/bulk', {
-            groupIds: [groupId],
-            message: message,
-          }),
-        )
-
-        await Promise.all(promises)
-
-        this.addToast('Transmisión compartida exitosamente', 'success')
-        this.shareTransmision = false
-        this.selectedGrupos = []
-        this.search = ''
-        this.selectedTransmission = null
-      } catch (error) {
-        console.error('Error al compartir transmisión:', error)
-        this.addToast('Error al compartir la transmisión', 'error')
-      }
-    },
-    async loadGroups() {
-      try {
-        const response = await api.get('/groups')
-        const temp = response.data.data || []
-
-        this.grupos = temp.map((u) => ({
-          id: u.id,
-          nombre: u.name,
-        }))
-      } catch (error) {
-        console.error('Error al cargar grupos:', error)
-      }
-    },
-    openShareModal(trans) {
-      this.selectedTransmission = trans
-      this.linkTransmision = trans.link || 'Generando...'
-      this.shareTransmision = true
-    },
-
-    // Video Player Logic
-    playVideo(video) {
-      this.activeVideo = video
-    },
-    closeVideo() {
-      this.activeVideo = null
     },
 
     addToast(message, type) {

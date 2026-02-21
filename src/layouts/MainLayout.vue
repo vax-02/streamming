@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen">
+  <div class="flex h-screen" v-if="userData && userData.id">
     <div class="w-30 bg-gray-900 flex flex-col items-center py-6 space-y-4 px-3">
       <router-link :to="{ name: 'dashboard' }" title="Inicio">
         <div class="bg-blue-600 w-20 h-16 rounded-2xl flex items-center justify-center">
@@ -9,10 +9,11 @@
 
       <router-link
         :to="{ name: 'statistics' }"
+        v-if="userData.rol == 1"
         title="Estadísticas"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-        exact-active-class="bg-blue-500 text-white"
+        active-class="text-white border-b-4 border-blue-500 font-semibold"
+        exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
           <ChartBarIcon class="w-6 h-6 text-blue-500" />
@@ -21,13 +22,14 @@
 
       <router-link
         :to="{ name: 'users' }"
+        v-if="userData.rol == 1"
         title="Usuarios"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-        exact-active-class="bg-blue-500 text-white"
+        active-class="text-white border-b-4 border-blue-500 font-semibold"
+        exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
-          <UserGroupIcon class="w-6 h-6 text-blue-400" />
+          <UserGroupIcon class="w-6 h-6 text-blue-500" />
         </span>
       </router-link>
 
@@ -35,11 +37,11 @@
         :to="{ name: 'application' }"
         title="Solicitudes"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-        exact-active-class="bg-blue-500 text-white"
+        active-class="text-white border-b-4 border-blue-500 font-semibold"
+        exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
-          <ClipboardDocumentCheckIcon class="w-6 h-6 text-yellow-400" />
+          <ClipboardDocumentCheckIcon class="w-6 h-6 text-yellow-500" />
         </span>
       </router-link>
 
@@ -47,11 +49,11 @@
         :to="{ name: 'chats' }"
         title="Chats"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-        exact-active-class="bg-blue-500 text-white"
+        active-class="text-white border-b-4 border-blue-500 font-semibold"
+exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
-          <ChatBubbleLeftRightIcon class="w-6 h-6 text-purple-400" />
+          <ChatBubbleLeftRightIcon class="w-6 h-6 text-purple-500" />
         </span>
       </router-link>
 
@@ -59,11 +61,11 @@
         :to="{ name: 'groups' }"
         title="Grupos"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-        exact-active-class="bg-blue-500 text-white"
+        active-class="text-white border-b-4 border-blue-500 font-semibold"
+exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
-          <RectangleGroupIcon class="w-6 h-6 text-green-400" />
+          <UserGroupIcon class="w-6 h-6 text-green-500" />
         </span>
       </router-link>
 
@@ -71,20 +73,20 @@
         :to="{ name: 'transmitions' }"
         title="Transmisiones"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-        exact-active-class="bg-blue-500 text-white"
+        active-class="text-white border-b-4 border-blue-500 font-semibold"
+exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
-          <VideoCameraIcon class="w-6 h-6 text-red-400" />
+          <VideoCameraIcon class="w-6 h-6 text-blue-600" />
         </span>
       </router-link>
 
       <router-link
-        :to="{ name: 'settings' }"
+        :to="{ name: 'profile' }"
         title="Configuración"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-        exact-active-class="bg-blue-500 text-white"
+        active-class="text-white border-b-4 border-blue-500 font-semibold"
+exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
           <Cog6ToothIcon class="w-6 h-6 text-gray-400" />
@@ -95,8 +97,8 @@
         @click="logout"
         title="Cerrar sesión"
         class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
-        active-class="bg-blue-900 text-white border-l-4 border-blue-400 font-semibold"
-        exact-active-class="bg-blue-500 text-white"
+        active-class="text-white border-b-4 border-blue-500 font-semibold"
+        exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
           <ArrowRightOnRectangleIcon class="w-6 h-6 text-red-400" />
@@ -137,7 +139,11 @@
                   class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
                   required
                 />
-                <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
+                <button
+                  type="button"
+                  @click="showPassword = !showPassword"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
+                >
                   <EyeIcon v-if="!showPassword" class="h-5 w-5" />
                   <EyeSlashIcon v-else class="h-5 w-5" />
                 </button>
@@ -152,7 +158,11 @@
                   class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
                   required
                 />
-                <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white">
+                <button
+                  type="button"
+                  @click="showConfirmPassword = !showConfirmPassword"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
+                >
                   <EyeIcon v-if="!showConfirmPassword" class="h-5 w-5" />
                   <EyeSlashIcon v-else class="h-5 w-5" />
                 </button>
@@ -180,7 +190,7 @@
   />
 
   <!-- Componente global para recibir llamadas -->
-  <ReceivingCallComponent 
+  <ReceivingCallComponent
     :visible="incomingCallModal"
     :callerName="incomingCaller.name"
     :callerAvatar="incomingCaller.avatar"
@@ -242,12 +252,16 @@ const incomingCallModal = ref(false)
 const incomingCaller = ref({ id: null, name: '', avatar: '', signal: null })
 
 onMounted(() => {
-  console.log(userData)
+  if (!userData || !userData.id) {
+    router.push('/login')
+    return
+  }
+  //  console.log(userData)
   if (userData && userData.id) {
     if (!socket.connected) {
       socket.connect()
     }
-    
+
     socket.emit('join-video-room', userData.id)
 
     socket.on('call-made', (data) => {
@@ -255,13 +269,13 @@ onMounted(() => {
         id: data.from,
         name: data.name,
         avatar: data.avatar,
-        signal: data.signal
+        signal: data.signal,
       }
       incomingCallModal.value = true
     })
 
     socket.on('call-ended', () => {
-       incomingCallModal.value = false
+      incomingCallModal.value = false
     })
   }
 })
@@ -276,8 +290,8 @@ function acceptIncomingCall() {
       name: incomingCaller.value.name,
       photo: incomingCaller.value.avatar,
       incoming: 'true',
-      signal: btoa(JSON.stringify(incomingCaller.value.signal))
-    }
+      signal: btoa(JSON.stringify(incomingCaller.value.signal)),
+    },
   })
 }
 
@@ -295,8 +309,8 @@ function maximizeCall() {
     query: {
       name: callStore.callData.targetName,
       photo: callStore.callData.targetPhoto,
-      restore: 'true' // Flag to indicate we're restoring, not starting new
-    }
+      restore: 'true', // Flag to indicate we're restoring, not starting new
+    },
   })
 }
 
@@ -310,7 +324,7 @@ function endCallFromMini() {
 function toggleMuteFromMini() {
   callStore.toggleAudio()
   if (callStore.callData.localStream) {
-    callStore.callData.localStream.getAudioTracks().forEach(track => {
+    callStore.callData.localStream.getAudioTracks().forEach((track) => {
       track.enabled = callStore.callData.isAudioEnabled
     })
   }
@@ -322,17 +336,17 @@ function logout() {
 
 async function confirmLogout() {
   try {
-    await api.put('/logout');
-    socket.emit("online-offline");
-    await new Promise(resolve => setTimeout(resolve, 500));
-    if (socket) socket.disconnect();
+    await api.put('/logout')
+    socket.emit('online-offline')
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    if (socket) socket.disconnect()
   } catch (e) {
-    console.error("Logout error:", e);
+    console.error('Logout error:', e)
   } finally {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    router.push('/login');
-    showLogoutConfirm.value = false;
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    router.push('/login')
+    showLogoutConfirm.value = false
   }
 }
 

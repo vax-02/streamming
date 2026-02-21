@@ -426,26 +426,9 @@
           </button>
         </div>
 
-        <div class="mb-4">
-          <label class="block mb-2 text-sm font-medium">Enlace de la transmisión</label>
-          <div class="flex gap-2">
-            <input
-              type="text"
-              :value="link"
-              readonly
-              class="flex-1 px-3 py-2 rounded-lg bg-gray-700 text-white cursor-not-allowed outline-none"
-            />
-            <button
-              @click="copyLink"
-              class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 transition-colors"
-            >
-              Copiar
-            </button>
-          </div>
-        </div>
+     
 
         <div class="border-t border-gray-700 pt-4 flex-1 flex flex-col min-h-0">
-          <h3 class="text-md font-semibold mb-2">Compartir en la aplicación</h3>
           <div class="flex-1 flex flex-col min-h-0">
             <div class="mb-2">
               <input
@@ -1213,7 +1196,7 @@ export default {
         await api.post('/messages/share', {
           ids,
           senderId: this.userData.id,
-          message: '<<<' + this.link + '>>>',
+          message: '<<<' + this.roomId + '>>>',
         })
         this.addToast('Enlace enviado')
         this.showOptionsMenu = false
@@ -1273,9 +1256,12 @@ export default {
         this.viewers = []
 
         socket.emit('end-stream', { roomId: this.roomId })
+
         //flag
         await api.put(`/transmissions/${this.roomId}/status`, { status: 2 })
-
+        await api.put(`/transmissions/link/${this.roomId}`, {
+          playerUrl: this.recordingData.playerUrl,
+        })
         this.addToast('Transmisión finalizada con éxito', 'success')
         router.push({ name: 'transmitions' })
       } catch (error) {

@@ -406,16 +406,18 @@ export default {
       }
     },
     removeFriend(id) {
+
       try {
-        const response = api.delete(`friend/${id}`)
+        const response = api.delete(`/friend/${id}`)
         if (response.data) {
           alert('Amigo eliminado exitosamente')
           this.loadFriends()
         } else {
-          alert('Error al eliminar el amigo')
+          this.addToast('Error al eliminar el amigo', 'error')
         }
       } catch (e) {
-        alert('Error al eliminar amigo ' + e)
+        console.log(e.message())
+          this.addToast('Error al eliminar el amigo', 'error')
       }
     },
     async chatFriend(id) {

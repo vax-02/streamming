@@ -134,9 +134,13 @@ export default {
           password: this.password,
         })
         const token = response.data.token
+        if(response.data.user.status == 0) {//lock
+            this.errorMessage = true;
+            return
+        }
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
-        
+          
         if (response.token || token) {
              socket.auth = {
               token : response.token || token
