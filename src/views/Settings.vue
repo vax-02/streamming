@@ -3,7 +3,9 @@
     <!-- HEADER MODERNO -->
     <header class="bg-gray-800 border-b border-gray-700 shadow-xl z-10">
       <div class="max-w-7xl mx-auto px-6">
-        <div class="flex items-center justify-between py-4">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between py-4 gap-6">
+        
           <!-- Icono + Título -->
           <div class="flex items-center space-x-3">
             <div class="p-2 bg-blue-500/10 rounded-lg">
@@ -20,7 +22,7 @@
               active-class="bg-blue-600 text-white shadow-lg shadow-blue-500/20"
             >
               <UserCircleIcon class="h-4 w-4" />
-              <span>Perfil</span>
+              <span class="hidden md:block">Perfil</span>
             </router-link>
 
             <router-link
@@ -29,7 +31,7 @@
               active-class="bg-blue-600 text-white shadow-lg shadow-blue-500/20"
             >
               <LockClosedIcon class="h-4 w-4" />
-              <span>Privacidad</span>
+              <span class="hidden md:block">Privacidad</span>
             </router-link>
 
             <router-link
@@ -38,7 +40,7 @@
               active-class="bg-blue-600 text-white shadow-lg shadow-blue-500/20"
             >
               <ShieldCheckIcon class="h-4 w-4" />
-              <span>Seguridad</span>
+              <span class="hidden md:block">Seguridad</span>
             </router-link>
           </nav>
         </div>

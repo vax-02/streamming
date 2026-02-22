@@ -97,8 +97,8 @@ export default {
         name: 'live-viewer',
         params: { 
           link: link, 
+          id: this.roomId
         },
-        query: { startTime: data.startTime }
       })
     })
 

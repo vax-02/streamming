@@ -5,6 +5,7 @@
         <header class="flex items-center justify-between">
           <h2 class="text-3xl font-bold tracking-tight text-white">Panel de control</h2>
         </header>
+        
         <div class="w-full flex justify-center bg-red">
           <DashboardPanel
             :hourly-data="hourlyMessages"
@@ -12,20 +13,20 @@
           />
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
           <!-- Active Users Card -->
           <div
-            class="bg-gray-900 border border-gray-700/50 p-6 rounded-2xl text-center hover:scale-105 transition-transform duration-300 ease-out shadow-lg hover:shadow-xl"
+            class="bg-gray-900 border border-gray-700/50 p-2 md:p-6 rounded-2xl text-center hover:scale-105 transition-transform duration-300 ease-out shadow-lg hover:shadow-xl"
           >
             <div
-              class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 mb-4"
+              class="inline-flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-800 mb-4"
             >
               <UserGroupIcon class="w-6 h-6 text-green-500" />
             </div>
-            <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">
+            <p class="text-xs md:text-sm font-medium text-gray-400 uppercase tracking-wider">
               Usuarios activos
             </p>
-            <h3 class="text-3xl font-extrabold text-white mt-1">{{ usersActive }}</h3>
+            <h3 class="text-2xl md:text-3xl font-extrabold text-white mt-1">{{ usersActive }}</h3>
           </div>
 
           <!-- Live Streams Card -->
@@ -33,14 +34,14 @@
             class="bg-gray-900 border border-gray-700/50 p-6 rounded-2xl text-center hover:scale-105 transition-transform duration-300 ease-out shadow-lg hover:shadow-xl"
           >
             <div
-              class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 mb-4"
+              class="inline-flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-800 mb-4"
             >
               <VideoCameraIcon class="w-6 h-6 text-red-500" />
             </div>
-            <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">
+            <p class="text-xs md:text-sm font-medium text-gray-400 uppercase tracking-wider">
               Streams en Vivo
             </p>
-            <h3 class="text-3xl font-extrabold text-white mt-1">{{ streamsActive }}</h3>
+            <h3 class="text-2xl md:text-3xl font-extrabold text-white mt-1">{{ streamsActive }}</h3>
           </div>
 
           <!-- Messages Card -->
@@ -48,12 +49,12 @@
             class="bg-gray-900 border border-gray-700/50 p-6 rounded-2xl text-center hover:scale-105 transition-transform duration-300 ease-out shadow-lg hover:shadow-xl"
           >
             <div
-              class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 mb-4"
+              class="inline-flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-800 mb-4"
             >
               <ChatBubbleLeftIcon class="w-6 h-6 text-blue-400" />
             </div>
-            <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Mensajes Hoy</p>
-            <h3 class="text-3xl font-extrabold text-white mt-1">{{ cantMessageToday }}</h3>
+            <p class="text-xs md:text-sm font-medium text-gray-400 uppercase tracking-wider">Mensajes de Hoy</p>
+            <h3 class="text-2xl md:text-3xl font-extrabold text-white mt-1">{{ cantMessageToday }}</h3>
           </div>
 
           <!-- Groups Card -->
@@ -61,7 +62,7 @@
             class="bg-gray-900 border border-gray-700/50 p-6 rounded-2xl text-center hover:scale-105 transition-transform duration-300 ease-out shadow-lg hover:shadow-xl"
           >
             <div
-              class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 mb-4"
+              class="inline-flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-800 mb-4"
             >
               <ChatBubbleLeftRightIcon class="w-6 h-6 text-green-400" />
             </div>
@@ -75,7 +76,7 @@
         <section id="streams" class="lg:col-span-2 space-y-6">
           <h2 class="text-2xl font-bold text-white mb-4">Transmisiones en Vivo</h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-6">
             <div
               v-for="(stream, index) in streamsInLive"
               :key="index"

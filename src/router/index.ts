@@ -105,7 +105,7 @@ const routes = [
     component: Live,
   },
   {
-    path: '/liveViewer/:link',
+    path: '/liveViewer/:link/:id',
     name: 'live-viewer',
     component: LiveViewer,
   },

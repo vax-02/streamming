@@ -869,11 +869,6 @@ export default {
     await this.loadFriends()
     this.scrollToBottom()
     this.connectToUserGroups()
-
-    // Listen for global group updates
-    socket.on('update-report-groups', () => {
-      this.loadGroups()
-    })
   },
 
   updated() {
@@ -939,13 +934,14 @@ export default {
           if (!socket.connected) {
             socket.connect()
           }
-          socket.emit('room group', {
+          socket.emit('room-group', {
             userId: this.userData.id,
             rooms: rooms,
           })
 
           //Escucha de mensajes de llegada
           if (!socket.hasListeners('newMessageGroup')) {
+            
             socket.on('newMessageGroup', (dataMessage) => {
               console.log('Nuevo mensaje de grupo recibido', dataMessage.message)
               const chat = this.Grupos.find((c) => c.id === dataMessage.id_chat)

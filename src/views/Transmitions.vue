@@ -26,7 +26,7 @@
               ]"
             >
               <component :is="getTabIcon(tab.id)" class="h-4 w-4" />
-              <span>{{ tab.name }}</span>
+              <span class="hidden md:block">{{ tab.name }}</span>
             </button>
           </nav>
         </div>
@@ -42,8 +42,8 @@
           class="flex justify-between items-center mb-8 pb-4 border-b border-gray-800"
         >
           <div>
-            <h1 class="text-2xl font-bold text-white">Transmisiones Programadas</h1>
-            <p class="text-gray-400 text-sm mt-1">Gestiona tus próximos eventos en vivo.</p>
+            <h1 class="text-md md:text-2xl font-bold text-white">Transmisiones Programadas</h1>
+            <p class="hidden md:block text-gray-400 text-sm mt-1">Gestiona tus próximos eventos en vivo.</p>
           </div>
           <button
             @click="abrirNuevoFormulario"
@@ -54,13 +54,13 @@
         </header>
 
         <header v-if="currentTab === 'publicas'" class="mb-8 pb-4 border-b border-gray-800">
-          <h1 class="text-2xl font-bold text-white">Explorar Transmisiones Públicas</h1>
-          <p class="text-gray-400 text-sm mt-1">Descubre contenido de otros creadores.</p>
+          <h1 class="text-md md:text-2xl font-bold text-white">Explorar Transmisiones Públicas</h1>
+          <p class="hidden md:block text-gray-400 text-sm mt-1">Descubre contenido de otros creadores.</p>
         </header>
 
         <header v-if="currentTab === 'pasadas'" class="mb-8 pb-4 border-b border-gray-800">
-          <h1 class="text-2xl font-bold text-white">Historial de Transmisiones</h1>
-          <p class="text-gray-400 text-sm mt-1">Revive tus eventos pasados.</p>
+          <h1 class="text-md md:text-2xl font-bold text-white">Historial de Transmisiones</h1>
+          <p class="hidden md:block text-gray-400 text-sm mt-1">Revive tus eventos pasados.</p>
         </header>
 
         <!-- Tab: Programadas -->
@@ -125,8 +125,8 @@
             class="flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-700"
           >
             <VideoCameraSlashIcon class="w-16 h-16 mb-4 opacity-40" />
-            <p class="text-lg font-medium">No hay transmisiones programadas</p>
-            <p class="text-sm opacity-70">Crea una nueva para comenzar a transmitir</p>
+            <p class="text-center text-md md:text-lg font-medium">No hay transmisiones programadas</p>
+            <p class="text-center text-sm md:text-sm opacity-70">Crea una nueva para comenzar a transmitir</p>
           </div>
         </section>
 
@@ -189,7 +189,7 @@
               class="col-span-full flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-700"
             >
               <GlobeAltIcon class="w-16 h-16 mb-4 opacity-40" />
-              <p class="text-lg font-medium">No hay transmisiones pasadas disponibles</p>
+              <p class="text-md md:text-lg font-medium">No hay transmisiones pasadas disponibles</p>
             </div>
           </div>
         </section>
@@ -234,7 +234,7 @@
             class="flex flex-col items-center justify-center py-20 text-gray-500 bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-700"
           >
             <GlobeAltIcon class="w-16 h-16 mb-4 opacity-40" />
-            <p class="text-lg font-medium">No hay transmisiones públicas disponibles</p>
+            <p class="text-center text-sm md:text-lg font-medium">No hay transmisiones públicas disponibles</p>
           </div>
         </section>
       </div>
@@ -546,7 +546,7 @@ export default {
             descripcion: u.description,
             fechaHora: this.formatFechaCorta(u.date_t) + ' - ' + this.formatHoraCorta(u.time_t),
             url: u.link,
-            thumbnail: 'https://placehold.co/600x400/white/dark?text=Ver video',
+            thumbnail: 'https://placehold.co/600x400/black/gray?text=Ver video',
           })),
         ]
       } catch (error) {

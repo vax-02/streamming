@@ -3,7 +3,17 @@
     <!-- Panel lateral izquierdo (participantes, sala espera) -->
     <aside
       v-show="expandirBool"
-      class="w-[22%] bg-gray-900 text-white p-4 flex flex-col space-y-5 border-l border-gray-800 shadow-xl"
+      :class="[
+        // Base (mobile)
+        'fixed top-0 left-0 h-full w-72 bg-gray-900 z-50 transform transition-transform duration-300',
+
+        // Si está abierto en mobile
+        showParticipants ? 'translate-x-0' : '-translate-x-full',
+
+        // Desktop override
+        'md:relative md:translate-x-0 md:w-[20%] md:flex',
+      ]"
+      class="p-4 flex flex-col space-y-5 border-r border-gray-800 shadow-xl"
     >
       <!-- Encabezado -->
       <div class="relative flex items-center justify-between">
@@ -133,10 +143,10 @@
     </aside>
 
     <!-- Panel central: video principal y controles -->
-    <div class="flex-1 flex flex-col justify-between p-4">
+    <div class="flex-1 min-h-0 flex flex-col p-4">
       <!-- Video principal (pantalla completa del seleccionado) -->
       <div
-        class="relative bg-gray-700 rounded-xl flex-1 mb-4 flex justify-center items-center cursor-pointer"
+        class="relative bg-gray-700 rounded-xl flex-1 min-h-0 mb-4 flex justify-center items-center cursor-pointer"
         @dblclick="exitFullscreen"
       >
         <video
@@ -190,7 +200,15 @@
       </div>
 
       <!-- Controles -->
-      <div class="flex justify-center items-center space-x-3 mb-2">
+      <div class="flex justify-center items-center space-x-2 mb-2">
+        <button v-if="isMobile" @click="showParticipants = true" class="p-3 rounded-full transition-all duration-200 bg-gray-700 hover:bg-gray-600">
+          <UserGroupIcon class="w-6 h-6 text-white" />
+        </button>
+
+        <button v-if="isMobile" @click="showChat = true" class="p-3 rounded-full transition-all duration-200 bg-gray-700 hover:bg-gray-600">
+          <ChatBubbleLeftRightIcon class="h-6 w-6 text-white" />
+        </button>
+       
         <button
           @click="toggleMic"
           :class="[
@@ -223,6 +241,7 @@
         </button>
 
         <button
+          v-show="screenMobil == false"
           @click="expandirBool = !expandirBool"
           class="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
         >
@@ -233,55 +252,24 @@
         <button
           @click="toggleRecording"
           :class="[
-            'p-3 rounded-full transition-all duration-200',
+            'w-12 h-12 flex items-center justify-center rounded-full transition-all duration-200 ',
             isRecording
-              ? 'bg-red-600 hover:bg-red-700 animate-pulse'
-              : 'bg-purple-600 hover:bg-purple-700',
+              ? 'bg-red-600 hover:bg-red-500 border-red-400'
+              : 'bg-blue-600 hover:bg-blue-700 border-blue-400',
           ]"
           :title="isRecording ? 'Detener grabación' : 'Iniciar grabación'"
         >
-          <svg
-            v-if="!isRecording"
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="{2}"
-              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-            />
-          </svg>
-          <svg
-            v-else
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="{2}"
-              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="{2}"
-              d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
-            />
-          </svg>
+          <!-- Estado NO grabando -->
+          <div v-if="!isRecording" class="w-4 h-4 bg-white rounded-full"></div>
+
+          <!-- Estado grabando -->
+          <StopIcon v-else class="w-5 h-5 text-white" />
         </button>
       </div>
     </div>
 
     <!-- Panel derecho: miniaturas de participantes activos -->
-    <div class="w-80 flex flex-col border-l border-gray-800">
+    <div v-show="screenMobil == false" class="w-[13%] flex flex-col border-l border-gray-800">
       <!-- Header -->
       <div class="p-4 border-b border-gray-800">
         <h3
@@ -370,13 +358,20 @@
     </div>
 
     <!-- Panel derecho: chat (opcional, se muestra cuando expandirBool está activo) -->
+
     <ChatStreamComponent
+      :class="[
+        'fixed top-0 right-0 h-full w-80 bg-gray-900 z-50 transform transition-transform duration-300',
+
+        showChat ? 'translate-x-0' : 'translate-x-full',
+
+        'md:relative md:translate-x-0 md:w-[20%]',
+      ]"
       v-if="expandirBool"
       :room-id="roomId"
       :user-data="userData"
       :is-host="true"
       :is-expanded="expandirBool"
-      class="w-[25%]"
     />
 
     <!-- Modal de confirmación para finalizar stream -->
@@ -405,6 +400,17 @@
     </div>
   </div>
 
+  <div
+    v-if="showChat"
+    class="fixed inset-0 bg-black/50 z-40 md:hidden"
+    @click="showChat = false"
+  ></div>
+  
+  <div
+    v-if="showParticipants"
+    class="fixed inset-0 bg-black/50 z-40 md:hidden"
+    @click="showParticipants = false"
+  ></div>
   <ToastNotification ref="toastRef" />
 
   <!-- Modal Compartir -->
@@ -425,8 +431,6 @@
             ✖
           </button>
         </div>
-
-     
 
         <div class="border-t border-gray-700 pt-4 flex-1 flex flex-col min-h-0">
           <div class="flex-1 flex flex-col min-h-0">
@@ -482,41 +486,47 @@
   <!-- Modal para mostrar el resultado de la grabación -->
   <div
     v-if="showRecordingModal"
-    class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+    class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 text-white"
   >
     <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-lg space-y-4">
-      <h3 class="text-lg text-center">Grabación lista</h3>
+      <!-- Título -->
+      <h3 class="text-xl font-bold text-center text-white">Grabación lista</h3>
 
-      <p class="text-center text-gray-300">Tu grabación ya está disponible en api.video</p>
+      <!-- Descripción -->
+      <p class="text-center text-white">Tu grabación ya está disponible en api.video</p>
 
-      <!-- Link de reproducción -->
+      <!-- Link -->
       <div class="bg-gray-700 p-4 rounded-lg">
-        <p class="text-xs text-gray-400 mb-1">Link del video:</p>
+        <p class="text-sm text-white mb-1 font-medium">Link del video:</p>
+
         <a
           :href="recordingData.playerUrl"
           target="_blank"
-          class="text-blue-400 hover:underline break-all"
+          class="text-gray-300 hover:text-gray-100 hover:underline break-all transition"
         >
           {{ recordingData.playerUrl }}
         </a>
       </div>
 
-      <!-- Vista previa (si quieres) -->
+      <!-- Vista previa -->
       <div v-if="recordingData.iframe" class="mt-2">
-        <p class="text-xs text-gray-400 mb-1">Vista previa:</p>
+        <p class="text-sm text-white mb-1 font-medium">Vista previa:</p>
+
         <div class="bg-black rounded-lg overflow-hidden" v-html="recordingData.iframe"></div>
       </div>
 
+      <!-- Botones -->
       <div class="flex justify-center space-x-4 pt-2">
         <button
           @click="copyRecordingLink"
-          class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg"
+          class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg text-white transition"
         >
           Copiar enlace
         </button>
+
         <button
           @click="showRecordingModal = false"
-          class="bg-gray-600 hover:bg-gray-500 px-6 py-2 rounded-lg"
+          class="bg-gray-600 hover:bg-gray-500 px-6 py-2 rounded-lg text-white transition"
         >
           Cerrar
         </button>
@@ -548,7 +558,7 @@
               />
             </svg>
           </div>
-          <h3 class="text-lg font-semibold">Subiendo grabación</h3>
+          <h3 class="text-white text-lg font-semibold">Subiendo grabación</h3>
         </div>
 
         <div class="space-y-3">
@@ -582,10 +592,47 @@
       </div>
     </div>
   </Teleport>
+
+  <Teleport to="body">
+    <div
+      v-if="isStarting"
+      class="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] backdrop-blur-sm"
+    >
+      <div
+        class="bg-gray-900 rounded-2xl p-6 w-80 shadow-xl border border-gray-700 flex flex-col items-center"
+      >
+        <!-- Icono + Texto -->
+        <div class="flex flex-col items-center gap-4">
+          <!-- Icono giratorio -->
+          <div class="bg-blue-600/20 p-4 rounded-full">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-8 h-8 text-white animate-spin-slow"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </div>
+
+          <!-- Texto -->
+          <h3 class="text-white text-lg font-semibold text-center">Iniciando reunión</h3>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script>
 import {
+  ChatBubbleLeftRightIcon,
+  StopIcon,
   UserCircleIcon,
   EllipsisHorizontalIcon,
   MicrophoneIcon,
@@ -611,6 +658,8 @@ import axios from 'axios'
 export default {
   name: 'LiveView',
   components: {
+    ChatBubbleLeftRightIcon,
+    StopIcon,
     ToastNotification,
     ChatStreamComponent,
     UserCircleIcon,
@@ -629,6 +678,12 @@ export default {
   },
   data() {
     return {
+      showParticipants: false,
+      showChat: false,
+      showDropdown: false,
+      showMessageMobile: false,
+      screenMobil: false,
+      isStarting: false,
       //api.video
       mediaRecorder: null,
       recordedChunks: [],
@@ -724,6 +779,8 @@ export default {
   },
 
   async mounted() {
+    this.isStarting = true
+
     try {
       await api.put(`/transmissions/${this.roomId}/status`, { status: 1 })
       await this.startMeeting()
@@ -756,6 +813,9 @@ export default {
       console.error('Error en mounted:', e)
       this.addToast('Error al iniciar el stream', 'error')
     }
+
+    this.isStarting = false
+    this.isMobile()
   },
   watch: {
     // Para debug - ver cuando cambia pantallaAct
@@ -768,6 +828,10 @@ export default {
     },
   },
   methods: {
+    // Devuelve true si estamos en móvil (por ejemplo <768px)
+    isMobile() {
+      this.screenMobil = window.innerWidth < 768
+    },
     // ========== CONTROL DE VIDEO PRINCIPAL ==========
     setMainVideo(source) {
       this.mainVideoSource = source
@@ -800,7 +864,7 @@ export default {
 
       try {
         // 1️⃣ Obtener stream local
-        console.log('🎥 Solicitando cámara y micrófono...')
+        console.log('Solicitando cámara y micrófono...')
 
         try {
           this.localStream = await navigator.mediaDevices.getUserMedia({
@@ -823,7 +887,7 @@ export default {
           })
         }
 
-        console.log('✅ Stream obtenido:', {
+        console.log('Stream obtenido:', {
           video: this.localStream.getVideoTracks().length,
           audio: this.localStream.getAudioTracks().length,
         })
@@ -1328,61 +1392,41 @@ export default {
 
     async startRecording() {
       try {
-        // Obtener el stream correcto para grabar
-        const streamToRecord = this.getStreamToRecord()
+        console.log('🎥 Iniciando grabación sobre screenStream existente')
 
-        if (!streamToRecord) {
-          this.addToast('No hay stream para grabar', 'error')
+        // ✅ Verificar que ya existe el screenStream
+        if (!this.screenStream) {
+          this.addToast('No hay pantalla compartida para grabar', 'error')
           return
         }
 
-        // Verificar que el stream tenga tracks de video
-        const hasVideo = streamToRecord.getVideoTracks().length > 0
+        // ✅ Verificar que tenga video
+        const hasVideo = this.screenStream.getVideoTracks().length > 0
         if (!hasVideo) {
-          this.addToast('El stream no tiene video para grabar', 'error')
+          this.addToast('El stream no tiene video activo', 'error')
           return
         }
 
-        // ✅ Usar pantallaAct para determinar el tipo, no solo el stream
-        const tipoGrabacion = this.pantallaAct ? 'PANTALLA' : 'CÁMARA'
-
-        console.log('📹 Stream a grabar:', {
-          tipo: tipoGrabacion,
-          pantallaAct: this.pantallaAct,
-          tracks: streamToRecord
-            .getTracks()
-            .map((t) => `${t.kind}:${t.enabled ? 'activo' : 'inactivo'}`),
-          settings: streamToRecord.getVideoTracks()[0]?.getSettings(),
-        })
-
-        // 1. Obtener token de subida primero
+        // 1️⃣ Obtener token
         const token = await this.getUploadToken()
         if (!token) return
 
-        // 2. Configurar MediaRecorder
+        // 2️⃣ Preparar MediaRecorder
         this.recordedChunks = []
 
-        // Detectar codec soportado
         const mimeType = this.getSupportedMimeType()
         const options = mimeType ? { mimeType } : {}
 
-        this.mediaRecorder = new MediaRecorder(streamToRecord, options)
-
-        console.log('🎥 MediaRecorder creado con:', {
-          mimeType: this.mediaRecorder.mimeType,
-          state: this.mediaRecorder.state,
-          streamTracks: streamToRecord.getTracks().length,
-        })
+        this.mediaRecorder = new MediaRecorder(this.screenStream, options)
 
         this.mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             this.recordedChunks.push(event.data)
-            console.log('📦 Chunk grabado:', event.data.size, 'bytes')
           }
         }
 
         this.mediaRecorder.onstop = () => {
-          console.log('⏹️ Grabación detenida, chunks:', this.recordedChunks.length)
+          console.log('Grabación finalizada')
           this.uploadToApiVideo()
         }
 
@@ -1392,26 +1436,22 @@ export default {
           this.isRecording = false
         }
 
-        // Empezar a grabar
-        this.mediaRecorder.start(1000) // Capturar cada segundo
+        // 🔥 Si el usuario deja de compartir pantalla → detener grabación
+        this.screenStream.getVideoTracks()[0].onended = () => {
+          if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop()
+            this.isRecording = false
+          }
+        }
+
+        // 3️⃣ Iniciar grabación
+        this.mediaRecorder.start(1000)
         this.isRecording = true
 
-        // Mostrar qué se está grabando (usando pantallaAct)
-        this.addToast(
-          `🔴 Grabando ${tipoGrabacion} - Se subirá automáticamente al terminar`,
-          'info',
-        )
+        this.addToast('Grabando pantalla y audio...', 'info')
       } catch (error) {
         console.error('Error starting recording:', error)
-
-        if (error.name === 'NotSupportedError') {
-          this.addToast(
-            'Tu navegador no soporta grabación de video. Prueba con Chrome, Firefox o Edge',
-            'error',
-          )
-        } else {
-          this.addToast('Error al iniciar grabación: ' + error.message, 'error')
-        }
+        this.addToast('Error al iniciar grabación', 'error')
       }
     },
 
@@ -1460,7 +1500,7 @@ export default {
         )
         this.showUploadProgress = false
 
-        console.log('✅ Respuesta de api.video:', response.data)
+        console.log('Respuesta de api.video:', response.data)
 
         // La respuesta incluye el videoId
         const videoId = response.data.videoId
@@ -1516,35 +1556,8 @@ export default {
         this.addToast('Enlace copiado al portapapeles', 'success')
       })
     },
-
-    getStreamToRecord() {
-      console.log('🔍 Buscando stream para grabar...')
-      console.log('📊 Estado actual - pantallaAct:', this.pantallaAct)
-      console.log('📊 screenStream existe:', !!this.screenStream)
-      console.log('📊 localStream existe:', !!this.localStream)
-
-      // 1️⃣ Si pantallaAct es true, usar pantalla (aunque también verificamos el stream)
-      if (this.pantallaAct && this.screenStream) {
-        const videoTracks = this.screenStream.getVideoTracks()
-        if (videoTracks.length > 0 && videoTracks[0].enabled) {
-          console.log('✅ Usando PANTALLA para grabar (pantallaAct = true)')
-          return this.screenStream
-        } else {
-          console.warn('⚠️ pantallaAct es true pero screenStream no tiene tracks activos')
-        }
-      }
-
-      // 2️⃣ Si no, usar cámara
-      if (this.localStream) {
-        const videoTracks = this.localStream.getVideoTracks()
-        if (videoTracks.length > 0) {
-          console.log('✅ Usando CÁMARA para grabar')
-          return this.localStream
-        }
-      }
-
-      console.error('❌ No hay streams de video disponibles')
-      return null
+    openOptions() {
+      this.showDropdown = !this.showDropdown
     },
   },
 

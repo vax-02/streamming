@@ -1,10 +1,10 @@
 <template>
   <div class="flex h-screen w-full bg-gray-900 text-white">
-    <div class="flex-1 flex flex-col justify-start items-center p-8 overflow-y-auto">
+    <div class="flex-1 flex flex-col justify-start items-center p-2 overflow-y-auto">
       <div
-        class="w-full max-w-3xl bg-gray-800 p-8 rounded-2xl flex flex-col items-center space-y-6 shadow-lg"
+        class="w-[100%] h-[75%] md:w-[50%] md:h-[80%] max-w-3xl bg-gray-800 p-8 rounded-2xl flex flex-col items-center space-y-6 shadow-lg"
       >
-        <h2 class="text-3xl font-bold mb-4">Configuración de Perfil</h2>
+        <h2 class="text-lg md:text-3xl font-bold mb-4">Configuración de Perfil</h2>
         <div class="flex flex-col items-center space-y-3">
           <img
             :src="vistaPrevia || user.photo"
@@ -48,7 +48,7 @@
             />
           </div>
 
-          <div class="flex justify-end mt-4">
+          <div class="flex justify-end mt-4 mb-4">
             <button
               type="submit"
               class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2"

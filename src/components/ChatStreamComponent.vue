@@ -1,6 +1,9 @@
 <template>
   <div class="flex flex-col h-full overflow-hidden">
-    <aside v-show="isExpanded" class="w-full h-full bg-gray-800 p-4 flex flex-col space-y-2 border-l-2 border-black">
+    <aside
+      v-show="isExpanded"
+      class="w-full h-full bg-gray-800 p-4 flex flex-col space-y-2 border-l-2 border-black"
+    >
       <div class="flex justify-between items-center mb-2">
         <h2 class="text-lg font-bold text-center flex-1">Chat en vivo</h2>
         <span class="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded-full">
@@ -15,19 +18,22 @@
         </span>
       </div>
 
-      <div ref="chatContainer" class="flex-1 overflow-y-auto bg-gray-700 p-2 rounded-lg space-y-1 custom-scrollbar">
+      <div
+        ref="chatContainer"
+        class="flex-1 overflow-y-auto bg-gray-700 p-2 rounded-lg space-y-1 custom-scrollbar"
+      >
         <div v-if="chat.length === 0" class="text-center text-gray-400 py-4">
           No hay mensajes aún. ¡Sé el primero en escribir!
         </div>
-        
+
         <div v-for="(msg, i) in chat" :key="msg.id || i" class="text-sm">
           <!-- Mensaje simple -->
           <template v-if="!msg.tipo">
             <div class="flex items-start gap-2 hover:bg-gray-600/30 p-1 rounded">
-              <strong :class="msg.usuario === 'Tú' ? 'text-blue-400' : 'text-gray-300'">
-                {{ msg.usuario }}:
+              <strong :class="msg.user === 'Tú' ? 'text-blue-400' : 'text-green-300'">
+                {{ msg.user }}:
               </strong>
-              <span class="text-gray-200 break-words flex-1">{{ msg.mensaje }}</span>
+              <span class="text-sm text-gray-200 break-words flex-1">{{ msg.message }}</span>
               <span v-if="msg.timestamp" class="text-xs text-gray-500">
                 {{ formatTime(msg.timestamp) }}
               </span>
@@ -47,20 +53,20 @@
       </div>
 
       <div class="relative flex items-center space-x-2 mt-2">
-        <input 
-          v-model="mensaje" 
-          type="text" 
+        <input
+          v-model="mensaje"
+          type="text"
           placeholder="Escribe un mensaje..."
-          class="flex-1 bg-gray-600 rounded-lg px-3 py-2 outline-none text-white focus:ring-1 focus:ring-blue-500"
+          class="flex-1 bg-gray-600 text-sm rounded-lg p-1 outline-none text-white focus:ring-1 focus:ring-blue-500"
           @keyup.enter="enviarMensaje"
           :disabled="!isConnected"
         />
-        <button 
+        <button
           @click="enviarMensaje"
-          class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="bg-blue-600 hover:bg-blue-500 p-1 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!mensaje.trim() || !isConnected"
         >
-          Enviar
+          <PaperAirplaneIcon class="w-5 h-5 transform -rotate-45 translate-x-0.5" />
         </button>
       </div>
     </aside>
@@ -69,6 +75,7 @@
 
 <script>
 import {
+  PaperAirplaneIcon,
   PlusCircleIcon,
   ChartBarIcon,
   PencilSquareIcon,
@@ -81,6 +88,7 @@ import socket from '@/services/socket.js'
 export default {
   name: 'ChatStreamComponent',
   components: {
+    PaperAirplaneIcon,
     PlusCircleIcon,
     ChartBarIcon,
     PencilSquareIcon,
@@ -121,50 +129,20 @@ export default {
     },
   },
   mounted() {
-    this.setupSocketListeners()
-    
-    // Unirse a la sala específica
-    if (this.roomId) {
-      socket.emit('join-room', this.roomId)
-    }
+    this.connectChat()
+    this.isConnected = true
+    socket.on("newMessageStream", (data) => {
+      console.log("Mensaje recibido:", data)
+      this.chat.push(data)
+    })
   },
   methods: {
-    setupSocketListeners() {
-      socket.on('connect', () => {
-        this.isConnected = true
-        // Re-unirse a la sala al reconectar
-        if (this.roomId) {
-          socket.emit('join-room', this.roomId)
-        }
-      })
-
-      socket.on('disconnect', () => {
-        this.isConnected = false
-      })
-
-      socket.on('chat-message', (data) => {
-        // Solo agregar si no es un mensaje propio (para evitar duplicados)
-        if (data.usuario !== (this.userData.name || this.userData.email)) {
-          this.chat.push(data)
-        }
-      })
-
-      socket.on('new-poll', (encuesta) => {
-        this.chat.push(encuesta)
-      })
-
-      socket.on('poll-voted', ({ id, idx }) => {
-        const m = this.chat.find((c) => c.id === id)
-        if (m && m.tipo === 'encuesta') {
-          m.votos[idx] = (m.votos[idx] || 0) + 1
-          this.chat = [...this.chat]
-        }
-      })
-
-      // Estado inicial de conexión
-      this.isConnected = socket.connected
+    // ========== CONNECT CHAT =========
+    connectChat() {
+      const idRoom = 1024 * this.roomId
+      console.log('have link', idRoom)
+      socket.emit('room-stream', { userId: this.userData.id, room: idRoom })
     },
-
     scrollToBottom() {
       const container = this.$refs.chatContainer
       if (container) {
@@ -174,21 +152,16 @@ export default {
 
     enviarMensaje() {
       if (!this.mensaje.trim() || !this.isConnected) return
-      
       const msgData = {
-        usuario: this.userData.name || this.userData.email || 'Usuario',
-        mensaje: this.mensaje,
-        roomId: this.roomId,
-        timestamp: Date.now(),
-        id: Date.now() + Math.random()
+        user: this.userData.name || this.userData.email || 'Usuario',
+        message: this.mensaje,
+        id_chat: 1024 * this.roomId,
+        /*timestamp: Date.now(),
+        id: Date.now() + Math.random(),*/
       }
-
-      // Emitir a todos en la sala (incluyendo al remitente)
-      socket.emit('chat-message', msgData)
-      
-      // Agregar localmente (el servidor también reenviará)
-      this.chat.push({ ...msgData, usuario: 'Tú' })
-      
+      console.log('Enviando mensaje:', msgData)
+      socket.emit('sendMessageStream', msgData)
+      this.chat.push({ ...msgData, user: 'Tú' })
       this.mensaje = ''
     },
 
@@ -196,14 +169,6 @@ export default {
       const date = new Date(timestamp)
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     },
-  },
-  beforeDestroy() {
-    // Limpiar listeners
-    socket.off('connect')
-    socket.off('disconnect')
-    socket.off('chat-message')
-    socket.off('new-poll')
-    socket.off('poll-voted')
   },
 }
 </script>

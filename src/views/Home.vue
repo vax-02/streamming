@@ -1,144 +1,142 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-white flex flex-col font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden">
-    <!-- Navbar with Glassmorphism -->
-    <header class="fixed top-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-slate-900/60 border-b border-white/5">
+  <div class="min-h-screen bg-slate-950 text-white flex flex-col font-sans antialiased tracking-tight selection:bg-blue-500 selection:text-white overflow-x-hidden">
+    
+    <!-- NAVBAR -->
+    <header class="fixed top-0 w-full z-50 backdrop-blur-xl bg-slate-950/80 border-b border-blue-500/10 transition-all duration-300">
       <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <div class="h-8 w-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+
+        <!-- Logo -->
+        <div class="flex items-center space-x-3">
+          <div class="h-9 w-9 bg-gradient-to-tr from-blue-600 to-sky-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/30">
             <VideoCameraIcon class="h-5 w-5 text-white" />
           </div>
-          <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-sky-300 bg-clip-text text-transparent">
             EduStream
           </h1>
         </div>
 
+        <!-- Nav -->
         <nav class="hidden md:flex space-x-8">
-          <a href="#" class="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group">
+          <a href="#" class="text-sm font-medium text-slate-400 hover:text-white transition-colors relative group">
             Inicio
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-400 transition-all group-hover:w-full"></span>
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all group-hover:w-full"></span>
           </a>
-          <a href="#features" class="text-sm font-medium text-slate-300 hover:text-white transition-colors relative group">
+          <a href="#features" class="text-sm font-medium text-slate-400 hover:text-white transition-colors relative group">
             Características
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-400 transition-all group-hover:w-full"></span>
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all group-hover:w-full"></span>
           </a>
         </nav>
 
-        <div>
-          <button
-            @click="goToLogin"
-            class="group relative inline-flex items-center justify-center px-6 py-2 overflow-hidden font-medium text-indigo-600 transition duration-300 ease-out border-2 border-indigo-500 rounded-full shadow-md group"
-          >
-            <span class="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-indigo-500 group-hover:translate-x-0 ease">
-              <ArrowRightOnRectangleIcon class="h-5 w-5" />
-            </span>
-            <span class="absolute flex items-center justify-center w-full h-full text-indigo-500 transition-all duration-300 transform group-hover:translate-x-full ease">Ingresar</span>
-            <span class="relative invisible">Start Now</span>
-          </button>
-        </div>
+        <!-- Button -->
+        <button
+          @click="goToLogin"
+          class="px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/30 transition-all duration-300 hover:scale-105 active:scale-95"
+        >
+          Ingresar
+        </button>
+
       </div>
     </header>
 
-    <!-- Hero Section -->
-    <main class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
-      <!-- Background Effects -->
-      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
-        <div class="absolute top-20 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] animate-pulse-slow"></div>
-        <div class="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] animate-pulse-slow" style="animation-delay: 2s;"></div>
-      </div>
+    <!-- HERO -->
+    <main class="relative pt-36 pb-28 flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+
+      <!-- Background glow -->
+      <div class="absolute top-20 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] animate-pulse-slow"></div>
+      <div class="absolute bottom-20 right-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-[120px] animate-pulse-slow"></div>
 
       <div class="relative z-10 max-w-4xl mx-auto space-y-8 animate-fade-in-up">
-        <div class="inline-flex items-center px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-4 backdrop-blur-sm">
-          <span class="flex h-2 w-2 rounded-full bg-indigo-400 mr-2 animate-pulse"></span>
+
+        <div class="inline-flex items-center px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-sm font-medium backdrop-blur-sm">
+          <span class="flex h-2 w-2 rounded-full bg-blue-400 mr-2 animate-pulse"></span>
           Nueva versión disponible
         </div>
-        
-        <h2 class="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight">
+
+        <h2 class="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-tight">
           <span class="block text-white">Revoluciona tu</span>
-          <span class="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+          <span class="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-400 to-blue-300">
             Aprendizaje en Vivo
           </span>
         </h2>
-        
+
+        <div class="h-px w-40 mx-auto bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
+
         <p class="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
           Plataforma premium para transmisiones en tiempo real. 
           Interactúa, enseña y aprende con herramientas diseñadas para la educación moderna.
         </p>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-          <a href="#features" class="px-8 py-4 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-white font-semibold transition-all backdrop-blur-sm border border-white/5 hover:border-white/10">
+        <div class="pt-6">
+          <a href="#features" class="px-8 py-4 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-white font-semibold transition-all backdrop-blur-xl border border-blue-500/20 hover:border-blue-500/40 hover:scale-105">
             Saber más
           </a>
         </div>
+
       </div>
     </main>
 
-    <!-- Features Section -->
-    <section id="features" class="py-24 bg-slate-900/50 relative">
-      <div class="absolute inset-0 bg-[url('/images/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
-      
+    <!-- FEATURES -->
+    <section id="features" class="py-28 bg-slate-950 relative">
+
+      <div class="absolute inset-0 bg-gradient-to-b from-blue-900/10 to-transparent"></div>
+
       <div class="max-w-7xl mx-auto px-6 relative z-10">
-        <div class="text-center mb-16 space-y-4">
-          <h3 class="text-3xl md:text-4xl font-bold text-white">Todo lo que necesitas</h3>
+
+        <div class="text-center mb-20 space-y-4">
+          <h3 class="text-3xl md:text-4xl font-bold text-white leading-tight">
+            Todo lo que necesitas
+          </h3>
           <p class="text-slate-400 max-w-2xl mx-auto">
             Herramientas potentes para llevar tu enseñanza al siguiente nivel.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Feature 1 -->
-          <div class="group p-8 rounded-2xl bg-slate-800/40 border border-white/5 hover:border-indigo-500/50 hover:bg-slate-800/60 transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div class="relative z-10">
-              <div class="h-14 w-14 rounded-xl bg-slate-900 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-white/5 shadow-inner">
-                <VideoCameraIcon class="h-7 w-7 text-indigo-400" />
-              </div>
-              <h4 class="text-xl font-bold text-white mb-3">Transmisiones HD</h4>
-              <p class="text-slate-400 leading-relaxed">
-                Streaming de baja latencia y alta definición para que tus clases se vean cristalinas desde cualquier dispositivo.
-              </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+          <!-- Card -->
+          <div class="group p-8 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-blue-500/10 hover:border-blue-500/40 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10">
+            <div class="h-14 w-14 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-blue-500/20">
+              <VideoCameraIcon class="h-7 w-7 text-blue-400" />
             </div>
+            <h4 class="text-xl font-bold text-white mb-3">Transmisiones HD</h4>
+            <p class="text-slate-400 leading-relaxed">
+              Streaming de baja latencia y alta definición para que tus clases se vean cristalinas desde cualquier dispositivo.
+            </p>
           </div>
 
-          <!-- Feature 2 -->
-          <div class="group p-8 rounded-2xl bg-slate-800/40 border border-white/5 hover:border-purple-500/50 hover:bg-slate-800/60 transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div class="relative z-10">
-              <div class="h-14 w-14 rounded-xl bg-slate-900 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-white/5 shadow-inner">
-                <ChatBubbleLeftRightIcon class="h-7 w-7 text-purple-400" />
-              </div>
-              <h4 class="text-xl font-bold text-white mb-3">Chat Interactivo</h4>
-              <p class="text-slate-400 leading-relaxed">
-                Herramientas de moderación, reacciones en vivo y preguntas y respuestas para mantener a tu audiencia enganchada.
-              </p>
+          <!-- Card -->
+          <div class="group p-8 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-blue-500/10 hover:border-blue-500/40 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10">
+            <div class="h-14 w-14 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-blue-500/20">
+              <ChatBubbleLeftRightIcon class="h-7 w-7 text-blue-400" />
             </div>
+            <h4 class="text-xl font-bold text-white mb-3">Chat Interactivo</h4>
+            <p class="text-slate-400 leading-relaxed">
+              Herramientas de moderación, reacciones en vivo y preguntas y respuestas para mantener a tu audiencia enganchada.
+            </p>
           </div>
 
-          <!-- Feature 3 -->
-          <div class="group p-8 rounded-2xl bg-slate-800/40 border border-white/5 hover:border-pink-500/50 hover:bg-slate-800/60 transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div class="relative z-10">
-              <div class="h-14 w-14 rounded-xl bg-slate-900 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-white/5 shadow-inner">
-                <UserGroupIcon class="h-7 w-7 text-pink-400" />
-              </div>
-              <h4 class="text-xl font-bold text-white mb-3">Gestión Total</h4>
-              <p class="text-slate-400 leading-relaxed">
-                Controla roles, accesos y analiza el rendimiento de tus estudiantes con nuestro dashboard avanzado.
-              </p>
+          <!-- Card -->
+          <div class="group p-8 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-blue-500/10 hover:border-blue-500/40 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10">
+            <div class="h-14 w-14 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-blue-500/20">
+              <UserGroupIcon class="h-7 w-7 text-blue-400" />
             </div>
+            <h4 class="text-xl font-bold text-white mb-3">Gestión Total</h4>
+            <p class="text-slate-400 leading-relaxed">
+              Controla roles, accesos y analiza el rendimiento de tus estudiantes con nuestro dashboard avanzado.
+            </p>
           </div>
+
         </div>
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-slate-950 py-12 border-t border-white/5">
-      <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between opacity-60 hover:opacity-100 transition-opacity">
-        <p class="text-sm text-slate-400 mb-4 md:mb-0">
-          &copy; 2026 EduStream. Creado con pasión para la educación.
-        </p>
-        
+    <!-- FOOTER -->
+    <footer class="bg-slate-950 py-12 border-t border-blue-500/10">
+      <div class="max-w-7xl mx-auto px-6 text-center text-sm text-slate-500">
+        &copy; 2026 EduStream. Creado con pasión para la educación.
       </div>
     </footer>
+
   </div>
 </template>
 
@@ -147,8 +145,7 @@ import { useRouter } from 'vue-router'
 import {
   VideoCameraIcon,
   ChatBubbleLeftRightIcon,
-  UserGroupIcon,
-  ArrowRightOnRectangleIcon
+  UserGroupIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()

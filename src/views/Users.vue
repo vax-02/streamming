@@ -1,7 +1,6 @@
 <template>
   <div class="flex-col h-screen p-3 bg-gray-800">
     <div class="flex items-center justify-between mb-4">
-      
       <h1 class="text-2xl font-bold text-gray-200">Gestión de Usuarios</h1>
     </div>
     <div class="mb-[8vh] flex items-center justify-between mb-4">
@@ -9,7 +8,7 @@
         type="text"
         v-model="search"
         placeholder="Buscar por nombre o correo"
-        class="w-full max-w-md px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="w-[70%]  max-w-md px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <button
         class="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded-lg font-semibold"
@@ -19,6 +18,7 @@
       </button>
     </div>
 
+    <div class="overflow-x-auto">
     <table class="min-w-full border border-gray-700 rounded-lg overflow-hidden">
       <thead class="bg-gray-800 text-gray-300 uppercase text-sm">
         <tr>
@@ -55,8 +55,8 @@
           :key="user.id"
           class="hover:bg-gray-800 transition"
         >
-          <td class="px-6 py-3">
-            <img class="w-6 h-6 rounded-full object-cover" :src="user.photo" alt="" />
+          <td class="px-6 py-3 flex justify-center items-center">
+            <img class="w-6 h-6 rounded-full object-cover" :src="user.photo" alt="Foto usuario" />
           </td>
           <td class="px-6 py-3">{{ user.name }}</td>
           <td class="px-6 py-3">{{ user.email }}</td>
@@ -91,7 +91,7 @@
         </tr>
       </tbody>
     </table>
-
+</div>
     <!-- Paginador -->
     <div class="flex justify-center items-center mt-auto space-x-2 py-4">
       <button
@@ -125,7 +125,7 @@
           <div class="bg-gray-800 text-white rounded-xl shadow-lg w-full max-w-md">
             <!-- Header -->
             <div class="flex justify-between items-center border-b border-gray-700 px-6 py-4">
-              <h2 class="text-lg font-semibold">Agregar rio</h2>
+              <h2 class="text-lg font-semibold">Agregar usuario</h2>
               <button
                 @click="addUserModal = false"
                 class="text-gray-400 hover:text-white text-xl font-bold"

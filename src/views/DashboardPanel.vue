@@ -1,13 +1,13 @@
 <template>
-  <div class="grid lg:grid-cols-2 gap-8 mt-8 w-full">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-8 mt-2 md:mt-8  w-full">
     <!-- Horas de mayor actividad -->
     <section class="lg:col-span-2 bg-gray-900 border border-gray-700/50 rounded-2xl p-6 space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+        <h3 class="text-sm md:text-xl font-bold text-white flex items-center gap-2">
           <ChartBarIcon class="w-6 h-6 text-blue-400" />
           Horas de mayor actividad
         </h3>
-        <span class="text-xs text-gray-500 bg-gray-800 px-3 py-1 rounded-full">
+        <span class="text-[10px] md:text-sm text-gray-500 bg-gray-800 px-3 py-1 rounded-full">
           Hoy: {{ formatDate(new Date()) }}
         </span>
       </div>
@@ -18,18 +18,18 @@
       </div>
 
       <!-- Estadísticas destacadas -->
-      <div class="grid grid-cols-3 gap-4 mt-4">
+      <div class="grid grid-cols-3 gap-1  md:gap-4 mt-4">
         <div class="bg-gray-800/50 rounded-xl p-3 text-center">
-          <p class="text-2xl font-bold text-blue-400">{{ peakHour }}</p>
+          <p class="text-sm md:text-2xl font-bold text-blue-400">{{ peakHour }}</p>
           <p class="text-xs text-gray-400">Hora pico</p>
         </div>
         <div class="bg-gray-800/50 rounded-xl p-3 text-center">
-          <p class="text-2xl font-bold text-green-400">{{ peakHourMessages }}</p>
-          <p class="text-xs text-gray-400">Mensajes en hora pico</p>
+          <p class="text-sm md:text-2xl font-bold text-green-400">{{ peakHourMessages }}</p>
+          <p class="text-xs text-gray-400">Mensajes</p>
         </div>
         <div class="bg-gray-800/50 rounded-xl p-3 text-center">
-          <p class="text-2xl font-bold text-purple-400">{{ avgMessagesPerHour }}</p>
-          <p class="text-xs text-gray-400">Promedio por hora</p>
+          <p class="text-sm md:text-2xl font-bold text-purple-400">{{ avgMessagesPerHour }}</p>
+          <p class="text-xs text-gray-400">Prom. por hora</p>
         </div>
       </div>
     </section>

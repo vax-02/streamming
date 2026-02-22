@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed top-6 right-6 flex flex-col space-y-3 z-[100] max-w-sm w-full pointer-events-none">
+  <div class="fixed top-6 right-6 flex flex-col space-y-3 z-[100]  max-w-sm w-full pointer-events-none">
     <transition-group 
       name="toast" 
       tag="div" 
@@ -12,16 +12,17 @@
         :class="getTypeStyles(toast.type)"
       >
         <!-- Icon section -->
-        <div class="flex items-center justify-center px-4" :class="getIconBg(toast.type)">
-             <component :is="getIcon(toast.type)" class="w-6 h-6 text-white" />
+        <div class=" flex items-center justify-center px-4" :class="getIconBg(toast.type)">
+             <component :is="getIcon(toast.type)" class="w-2 h-2 md:w-6 md:h-6 text-white" />
+             
         </div>
 
         <!-- Content section -->
-        <div class="flex-1 p-4 flex flex-col justify-center">
+        <div class="flex-1 p-2 md:p-4 flex flex-col justify-center">
           <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
             {{ getTitle(toast.type) }}
           </h4>
-          <p class="text-sm font-medium text-white leading-relaxed">
+          <p class="text-xs md:text-sm font-medium text-white leading-relaxed">
             {{ toast.message }}
           </p>
         </div>

@@ -8,9 +8,9 @@
 
 
   <div class="flex h-screen bg-gray-900 text-white">
-    <div class="flex-1 p-8 overflow-y-auto">
-      <div class="max-w-3xl mx-auto bg-gray-800 p-8 rounded-2xl shadow-lg space-y-8">
-        <h2 class="text-3xl font-bold mb-4 text-center">Cambiar contraseña</h2>
+    <div class="flex-1 p-2 overflow-y-auto">
+      <div class="w-[100%] h-[75%] md:w-[50%] md:h-[80%] max-w-3xl mx-auto bg-gray-800 p-8 rounded-2xl shadow-lg space-y-8">
+        <h2 class="text-lg md:text-3xl font-bold mb-4 text-center">Cambiar contraseña</h2>
         <div class="bg-gray-700 p-4 rounded-lg space-y-4">          
           <div class="flex flex-col space-y-2">
             <label class="text-gray-300 text-sm">Contraseña actual</label>

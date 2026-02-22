@@ -1,9 +1,11 @@
 <template>
   <div class="flex h-screen" v-if="userData && userData.id">
-    <div class="w-30 bg-gray-900 flex flex-col items-center py-6 space-y-4 px-3">
+    <div class="w-14 md:w-24 bg-gray-900 flex flex-col items-center py-6 space-y-4 px-3">
       <router-link :to="{ name: 'dashboard' }" title="Inicio">
-        <div class="bg-blue-600 w-20 h-16 rounded-2xl flex items-center justify-center">
-          <img :src="Logo" alt="Logo" class="w-12 h-12 object-contain" />
+        <div
+          class="bg-gray-800 w-11 md:w-20 h-11 md:h-20 rounded-xl md:rounded-2xl flex items-center justify-center"
+        >
+          <img :src="Logo" alt="Logo" class="w-8 md:w-12 h-8 md:h-12 object-contain" />
         </div>
       </router-link>
 
@@ -11,7 +13,7 @@
         :to="{ name: 'statistics' }"
         v-if="userData.rol == 1"
         title="Estadísticas"
-        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        class="w-9 h-9 md:w-12 md:h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="text-white border-b-4 border-blue-500 font-semibold"
         exact-active-class="text-white border-b-4 border-blue-500"
       >
@@ -24,7 +26,7 @@
         :to="{ name: 'users' }"
         v-if="userData.rol == 1"
         title="Usuarios"
-        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        class="w-9 h-9 md:w-12 md:h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="text-white border-b-4 border-blue-500 font-semibold"
         exact-active-class="text-white border-b-4 border-blue-500"
       >
@@ -36,7 +38,7 @@
       <router-link
         :to="{ name: 'application' }"
         title="Solicitudes"
-        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        class="w-9 h-9 md:w-12 md:h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="text-white border-b-4 border-blue-500 font-semibold"
         exact-active-class="text-white border-b-4 border-blue-500"
       >
@@ -48,9 +50,9 @@
       <router-link
         :to="{ name: 'chats' }"
         title="Chats"
-        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        class="w-9 h-9 md:w-12 md:h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="text-white border-b-4 border-blue-500 font-semibold"
-exact-active-class="text-white border-b-4 border-blue-500"
+        exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
           <ChatBubbleLeftRightIcon class="w-6 h-6 text-purple-500" />
@@ -60,9 +62,9 @@ exact-active-class="text-white border-b-4 border-blue-500"
       <router-link
         :to="{ name: 'groups' }"
         title="Grupos"
-        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        class="w-9 h-9 md:w-12 md:h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="text-white border-b-4 border-blue-500 font-semibold"
-exact-active-class="text-white border-b-4 border-blue-500"
+        exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
           <UserGroupIcon class="w-6 h-6 text-green-500" />
@@ -72,9 +74,9 @@ exact-active-class="text-white border-b-4 border-blue-500"
       <router-link
         :to="{ name: 'transmitions' }"
         title="Transmisiones"
-        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        class="w-9 h-9 md:w-12 md:h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="text-white border-b-4 border-blue-500 font-semibold"
-exact-active-class="text-white border-b-4 border-blue-500"
+        exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
           <VideoCameraIcon class="w-6 h-6 text-blue-600" />
@@ -84,9 +86,9 @@ exact-active-class="text-white border-b-4 border-blue-500"
       <router-link
         :to="{ name: 'profile' }"
         title="Configuración"
-        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        class="w-9 h-9 md:w-12 md:h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="text-white border-b-4 border-blue-500 font-semibold"
-exact-active-class="text-white border-b-4 border-blue-500"
+        exact-active-class="text-white border-b-4 border-blue-500"
       >
         <span class="text-xs">
           <Cog6ToothIcon class="w-6 h-6 text-gray-400" />
@@ -96,7 +98,7 @@ exact-active-class="text-white border-b-4 border-blue-500"
       <button
         @click="logout"
         title="Cerrar sesión"
-        class="w-12 h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
+        class="w-9 h-9 md:w-12 md:h-12 bg-gray-700 rounded-full flex flex-col items-center justify-center hover:bg-blue-500 transition"
         active-class="text-white border-b-4 border-blue-500 font-semibold"
         exact-active-class="text-white border-b-4 border-blue-500"
       >
@@ -239,6 +241,7 @@ const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const toastRef = ref(null)
 const showLogoutConfirm = ref(false)
+const mobileMenuOpen = ref(false)
 import api from '@/services/api.js'
 
 // --- Signaling & Calls ---

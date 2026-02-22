@@ -25,7 +25,7 @@
               ]"
             >
               <component :is="tab.icon" class="h-4 w-4" />
-              <span>{{ tab.name }}</span>
+              <span class="hidden md:block">{{ tab.name }}</span>
             </button>
           </nav>
         </div>
@@ -38,13 +38,13 @@
           
         <header class="mb-8 pb-4 border-b border-gray-800 flex justify-between items-end">
             <div>
-              <h1 class="text-2xl font-bold text-white">{{ getTabTitle(currentTab) }}</h1>
+              <h1 class="text-md md:text-2xl font-bold text-white">{{ getTabTitle(currentTab) }}</h1>
             </div>
         </header>
 
         <!-- Section: Amigos -->
         <section v-if="currentTab === 'amigos'" class="space-y-6">
-            <div class="flex justify-between items-center bg-gray-800 p-4 rounded-xl border border-gray-700">
+            <div class="flex justify-between items-center bg-gray-800 p-2 md:p-4 rounded-xl border border-gray-700">
                 <input
                     type="text"
                     v-model="searchQuery"
@@ -53,9 +53,9 @@
                 />
             </div>
             
-             <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                 <div v-for="n in 4" :key="n" class="bg-gray-800 p-4 rounded-xl border border-gray-700 animate-pulse flex items-center space-x-4">
-                     <div class="w-12 h-12 bg-gray-700 rounded-full"></div>
+             <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-4">
+                 <div v-for="n in 4" :key="n" class="bg-gray-800 p-1 md:p-4 rounded-xl border border-gray-700 animate-pulse flex items-center space-x-4">
+                     <div class="w-6 h-6 md:w-12 md:h-12 bg-gray-700 rounded-full"></div>
                      <div class="flex-1 space-y-2">
                          <div class="h-4 bg-gray-700 rounded w-1/3"></div>
                          <div class="h-3 bg-gray-700 rounded w-1/2"></div>
@@ -149,7 +149,7 @@
 
          <!-- Section: Nuevos (Explorar) -->
         <section v-if="currentTab === 'nuevos'" class="space-y-6">
-             <div class="flex justify-between items-center bg-gray-800 p-4 rounded-xl border border-gray-700">
+             <div class="flex justify-between items-center bg-gray-800 p-2 md:p-4 rounded-xl border border-gray-700">
                 <input
                     type="text"
                     v-model="searchQuery2"
